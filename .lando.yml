@@ -1,0 +1,11 @@
+name: quest-tracker
+recipe: symfony
+config:
+  webroot: ./backend/public
+services:
+  appserver:
+    build_as_root:
+      - curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | bash
+      - apt install symfony-cli
+    build:
+      - cd backend && composer install
