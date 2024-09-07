@@ -5,7 +5,7 @@ Quest Tracker enables individuals and Guides to track their progress on their wr
 
 1. Install [Lando](https://lando.dev/). The default Lando setup will install Docker Desktop & Docker Compose on your machine.
 1. Start Lando with `lando start`. This will take a while, especially on the first time.
-1. Access the site in your browser at `quest-tracker.lndo.site`
+1. Access the site in your browser at `frontend.quest-tracker.lndo.site` (for a hot-reloading version of react) or `backend.quest-tracker.lndo.site` (to access symfony directly and a built version of the react app).
 
 # FAQ
 
