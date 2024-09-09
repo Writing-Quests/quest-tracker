@@ -2,6 +2,7 @@ name: quest-tracker
 recipe: symfony
 config:
   webroot: ./backend/public
+  database: mysql:8.0
 services:
   appserver:
     ssl: false
@@ -22,6 +23,8 @@ tooling:
     description: runs npm in the frontend directory
     dir: /app/frontend
     cmd: npm
+  php:
+    dir: /app/backend
 proxy:
   appserver:
     - backend.quest-tracker.lndo.site
