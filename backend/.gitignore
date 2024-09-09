@@ -1,4 +1,6 @@
 /bin/
+# Frontend build directory
+/public/app/
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
