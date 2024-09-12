@@ -28,6 +28,6 @@ tooling:
     dir: /app/backend
 proxy:
   appserver:
-    - backend.quest-tracker.lndo.site
+    - quest-tracker.lndo.site
   node:
     - frontend.quest-tracker.lndo.site
