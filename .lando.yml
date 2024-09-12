@@ -10,6 +10,7 @@ services:
       - curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | bash
       - apt install symfony-cli
     build:
+      - mkdir -p backend/public/app
       - cd backend && composer install
   node:
     type: node:20
