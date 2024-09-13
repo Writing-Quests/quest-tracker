@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 const API_URL = 'http://quest-tracker.lndo.site/api/'
@@ -6,26 +6,32 @@ const API_URL = 'http://quest-tracker.lndo.site/api/'
 function App() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [resp, setResp] = useState({})
-  const [resp2, setResp2] = useState({})
+  const [resp, setResp] = useState()
+  const [resp2, setResp2] = useState()
+  useEffect(() => {
+    handleClick()
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const resp = await fetch(API_URL+'login', {
+    const resp = await (await fetch(API_URL+'login', {
       method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ username, password }),
-    })
+    })).json()
     setResp(resp)
   }
   async function handleClick(e) {
-    e.preventDefault()
-    const resp = await fetch(API_URL+'test', {
+    e && e.preventDefault()
+    const resp = await (await fetch(API_URL+'whoami', {
       credentials: 'include',
-    })
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })).json()
     setResp2(resp)
   }
   return (
@@ -39,7 +45,7 @@ function App() {
       <h2>Response</h2>
       {JSON.stringify(resp)}
       <hr />
-      <button onClick={handleClick}>Test</button>
+      <button onClick={handleClick}>Who am I?</button>
       <h2>Response</h2>
       {JSON.stringify(resp2)}
     </>

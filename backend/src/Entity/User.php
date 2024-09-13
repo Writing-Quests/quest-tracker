@@ -12,19 +12,20 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
-#[ApiResource(
-    operations: [
-        new Get()
-    ]
+#[ApiResource]
+#[Get(
+    security: "is_granted('ROLE_ADMIN') or object == user"
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[ApiProperty(identifier: false)]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[ApiProperty(identifier: true)]
     private ?string $username = null;
 
     /**

@@ -18,12 +18,13 @@ class LoginController extends AbstractController
         if (null === $user) {
             return $this->json([
                 'message' => 'missing credentials',
+                'loggedIn' => false,
             ], Response::HTTP_UNAUTHORIZED);
         }
 
         // Automatically returns session in cookie
         return $this->json([
-            'hello' => 'hi',
+            'loggedIn' => true,
             'user' => $user->getUserIdentifier(),
         ]);
     }
