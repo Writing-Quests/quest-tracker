@@ -6,6 +6,9 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -39,6 +42,47 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $email = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $unverified_email = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $created_at = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $edited_at = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $email_verified_at = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $last_login_at = null;
+
+    #[ORM\Column(type: Types::BLOB, nullable: true)]
+    private $description = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $link = null;
+
+    #[ORM\Column(type: Types::DATETIMETZ_MUTABLE)]
+    private ?\DateTimeInterface $timezone = null;
+
+    #[ORM\Column]
+    private ?bool $public = false;
+
+    /**
+     * @var Collection<int, LoginToken>
+     */
+    #[ORM\OneToMany(targetEntity: LoginToken::class, mappedBy: 'user')]
+    private Collection $loginTokens;
+
+    public function __construct()
+    {
+        $this->loginTokens = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -113,5 +157,155 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    public function getUnverifiedEmail(): ?string
+    {
+        return $this->unverified_email;
+    }
+
+    public function setUnverifiedEmail(string $unverified_email): static
+    {
+        $this->unverified_email = $unverified_email;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $created_at): static
+    {
+        $this->created_at = $created_at;
+
+        return $this;
+    }
+
+    public function getEditedAt(): ?\DateTimeImmutable
+    {
+        return $this->edited_at;
+    }
+
+    public function setEditedAt(\DateTimeImmutable $edited_at): static
+    {
+        $this->edited_at = $edited_at;
+
+        return $this;
+    }
+
+    public function getEmailVerifiedAt(): ?\DateTimeImmutable
+    {
+        return $this->email_verified_at;
+    }
+
+    public function setEmailVerifiedAt(?\DateTimeImmutable $email_verified_at): static
+    {
+        $this->email_verified_at = $email_verified_at;
+
+        return $this;
+    }
+
+    public function getLastLoginAt(): ?\DateTimeImmutable
+    {
+        return $this->last_login_at;
+    }
+
+    public function setLastLoginAt(?\DateTimeImmutable $last_login_at): static
+    {
+        $this->last_login_at = $last_login_at;
+
+        return $this;
+    }
+
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    public function setDescription($description): static
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getLink(): ?string
+    {
+        return $this->link;
+    }
+
+    public function setLink(?string $link): static
+    {
+        $this->link = $link;
+
+        return $this;
+    }
+
+    public function getTimezone(): ?\DateTimeInterface
+    {
+        return $this->timezone;
+    }
+
+    public function setTimezone(\DateTimeInterface $timezone): static
+    {
+        $this->timezone = $timezone;
+
+        return $this;
+    }
+
+    public function isPublic(): ?bool
+    {
+        return $this->public;
+    }
+
+    public function setPublic(bool $public): static
+    {
+        $this->public = $public;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, LoginToken>
+     */
+    public function getLoginTokens(): Collection
+    {
+        return $this->loginTokens;
+    }
+
+    public function addLoginToken(LoginToken $loginToken): static
+    {
+        if (!$this->loginTokens->contains($loginToken)) {
+            $this->loginTokens->add($loginToken);
+            $loginToken->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLoginToken(LoginToken $loginToken): static
+    {
+        if ($this->loginTokens->removeElement($loginToken)) {
+            // set the owning side to null (unless already changed)
+            if ($loginToken->getUser() === $this) {
+                $loginToken->setUser(null);
+            }
+        }
+
+        return $this;
     }
 }
