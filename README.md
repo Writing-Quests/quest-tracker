@@ -18,3 +18,6 @@ Lando is set up to mimic the production environment. It includes Apache, PHP, an
 
 **Why isn't the backend URL displaying anything in the browser?**    
 Symfony isn't connected to the Vite dev server. You can build the frontend webapp using `lando npm run build`, but it's not necessary for local development. The backend URL should be able to serve everything (i.e. the API) just fine without this.
+
+**How do I access emails?**    
+For development, a "Mail Catcher" SMTP server runs with Docker/Lando and is automatically configured in Symfony. It will catch all emails and output them at http://localhost:1080. You can configure your own SMTP server in your `.env.local` file.

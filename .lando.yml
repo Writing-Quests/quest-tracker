@@ -18,6 +18,12 @@ services:
     port: 80
     build:
       - cd frontend && npm install
+  smtp:
+    type: l337
+    api: 4
+    image: "haravich/fake-smtp-server"
+    ports:
+      - 1080:1080
 tooling:
   npm:
     service: node
