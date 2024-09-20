@@ -18,6 +18,25 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
+label, input {
+  display: block;
+  text-align: left;
+}
+
+input {
+  margin: 5px 0 15px 0;
+  padding: 5px;
+}
+
+label {
+  font-weight: 700;
+}
+
+pre {
+  width: 100%;
+  word-wrap: break-word;
+}
+
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
