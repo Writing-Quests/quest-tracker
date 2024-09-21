@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
 
 use App\Repository\UserRepository;
@@ -12,38 +13,44 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
-#[ApiResource]
-#[Get(
-    security: "is_granted('ROLE_ADMIN') or object == user"
+#[ApiResource(
+    operations: [
+        new Get()
+    ],
+    security: "is_granted('ROLE_ADMIN') or object == user",
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[ApiProperty(identifier: false)]
+    #[ApiProperty(identifier: false, writable: false)]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180)]
-    #[ApiProperty(identifier: true)]
+    #[ORM\Column(length: 180, unique: true)]
+    #[ApiProperty(identifier: true, writable: false)]
     private ?string $username = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Ignore]
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
+    #[Ignore]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[ApiProperty(readable: true, writable: false)]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
@@ -77,6 +84,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, LoginToken>
      */
     #[ORM\OneToMany(targetEntity: LoginToken::class, mappedBy: 'user')]
+    #[Ignore]
     private Collection $loginTokens;
 
     public function __construct()
@@ -106,6 +114,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @see UserInterface
      */
+    #[Ignore]
     public function getUserIdentifier(): string
     {
         return (string) $this->username;
@@ -138,6 +147,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see PasswordAuthenticatedUserInterface
      */
+    #[Ignore]
     public function getPassword(): ?string
     {
         return $this->password;
@@ -171,6 +181,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Ignore]
     public function getUnverifiedEmail(): ?string
     {
         return $this->unverified_email;
