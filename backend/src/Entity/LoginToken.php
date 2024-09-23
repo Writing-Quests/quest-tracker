@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\LoginTokenRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
 
 #[ORM\Entity(repositoryClass: LoginTokenRepository::class)]
 #[ApiResource]
@@ -35,6 +36,14 @@ class LoginToken
     #[ORM\Column(type: Types::BLOB)]
     private $payload;
 
+    private function getTokenHasher () {
+      $factory = new PasswordHasherFactory([
+        'common' => ['algorithm' => 'bcrypt']
+      ]);
+  
+      return $factory->getPasswordHasher('common');
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -45,10 +54,18 @@ class LoginToken
         return $this->secret;
     }
 
+    public function verifySecret(string $plaintext): ?bool
+    {
+      $hasher = $this->getTokenHasher();
+      $hash = $this->secret;
+      return $hasher->verify($hash, $plaintext);
+    }
+
     public function setSecret(string $secret): static
     {
-        $this->secret = $secret;
-
+        $hasher = $this->getTokenHasher();
+        $secret_hash = $hasher->hash($secret);
+        $this->secret = $secret_hash;
         return $this;
     }
 
