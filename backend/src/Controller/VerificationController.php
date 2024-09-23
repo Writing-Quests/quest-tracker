@@ -3,50 +3,65 @@
 namespace App\Controller;
 
 use App\Entity\LoginToken;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class VerificationController extends AbstractController
 {
   #[Route('/api/user/verify/', name: 'verify_email', methods: ['GET'])]
-  public function verify (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): JsonResponse {
+  public function verify (Request $request, EntityManagerInterface $entityManager): JsonResponse {
     try {
       $params = $request->query;
       $email = $params->get('e');
       $token = $params->get('t');
-      $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload' => $email, 'type' => 'verify-email']);
+      $tokenRepository = $entityManager->getRepository(LoginToken::class);
+      $tokenEntry = $tokenRepository->findOneBy(['payload' => $email, 'type' => 'verify-email']);
       $resp = [
         'errors'=>[]
       ];
       if (!$tokenEntry) {
         $resp['verified'] = false;
-        array_push($resp['errors'],['id'=>'notFound', 'text'=>'No verify-email token found for ' . $email]);
+        $user = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+        if ($user->getEmailVerifiedAt() != null) {
+          $err_text = "The address $email is already verified.";
+        } else {
+          $err_text = "The verification link for $email is no longer valid. Sign in to your account to request a new verification link.";
+        }
+        array_push($resp['errors'],['id'=>'notFound', 'text'=>$err_text]);
       } else {
-        // TODO: verify that token sent matches token in database
-        // TODO: confirm that token isn't expired; if expired, put a "resend verification email" button
-        // TODO: update user object with "verified" timestamp
-        // TODO: delete token from database if expired OR if verified successfully
-        // TODO: a "request new verification" token flow
-        $resp['verified'] = 'maybe';
         $verifyTime = new \DateTimeImmutable();
         $isExpired = $verifyTime > $tokenEntry->getExpiresAt();
         $user = $tokenEntry->getUser();
-        $tokenMatches = $passwordHasher->isPasswordValid($user, $token);
+        $tokenMatches = $tokenEntry->verifySecret($token);
+        if ($tokenMatches && !$isExpired) { 
+          $resp['verified'] = true;
+          $user->setEmailVerifiedAt($verifyTime);
+          $user->setUnverifiedEmail(null);
+          // TODO: ask group: do we consider a verified email an "edited at"? or is that just for user edits?
+          $entityManager->persist($user);
+          $entityManager->remove($tokenEntry);
+        } else {
+          $resp['verified'] = false;
+          $err_text = "The verification link used is malformed/otherwise invalid. Try copy and pasting the link directly from your email to try again";
+          if ($isExpired) {
+            $entityManager->remove($tokenEntry);
+            $err_text = "The verification link for $email is no longer valid. Sign in to your account to request a new verification link.";
+          }
+          array_push($resp['errors'],['id'=>'notFound', 'text'=>$err_text]);
+        }
         $resp['isExpired'] = $isExpired;
         $resp['tokenMatches'] = $tokenMatches;
-        $resp['usingToken'] = $token;
       }
     } catch (\Exception $err) {
-      $resp['verified'] = false;
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
-    } finally {
-      return $this->json($resp);
-    }
+    } 
+    $entityManager->flush();
+    return $this->json($resp);
   }
 }

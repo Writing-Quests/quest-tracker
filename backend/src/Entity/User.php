@@ -53,7 +53,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ApiProperty(readable: true, writable: false)]
     private ?string $email = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255,nullable: true)]
     private ?string $unverified_email = null;
 
     #[ORM\Column]
@@ -187,7 +187,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->unverified_email;
     }
 
-    public function setUnverifiedEmail(string $unverified_email): static
+    public function setUnverifiedEmail($unverified_email): static
     {
         $this->unverified_email = $unverified_email;
 

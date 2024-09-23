@@ -6,8 +6,8 @@ use App\Entity\User;
 use App\Entity\LoginToken;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -45,27 +45,24 @@ class UserController extends AbstractController
             // everything is good, let's create the user
             $created = false;
             $createdAt = new \DateTimeImmutable();
-            $userTimezone = new \DateTimeImmutable(null, new \DateTimeZone($POST->get('timezone')));
+            $userTimezone = new \DateTimeImmutable('', new \DateTimeZone($POST->get('timezone')));
             $newUser = new User();
-            $newUser->setUsername($username);
-            $newUser->setEmail($email);
-            $newUser->setUnverifiedEmail($email);
-            $newUser->setCreatedAt($createdAt);
-            $newUser->setTimezone($userTimezone);
             $hashedPassword = $passwordHasher->hashPassword(
-                $newUser,
-                $POST->get('password')
+              $newUser,
+              $POST->get('password')
             );
-            $newUser->setPassword($hashedPassword);
+            ($newUser)
+              ->setUsername($username)
+              ->setEmail($email)
+              ->setUnverifiedEmail($email)
+              ->setCreatedAt($createdAt)
+              ->setTimezone($userTimezone)
+              ->setPassword($hashedPassword);
             $token = bin2hex(random_bytes(32));
             $verifyEmailToken = new LoginToken();
-            $verifyEmailToken->setUser($newUser);
-            $hashedToken = $passwordHasher->hashPassword(
-              $newUser,
-              $token
-            );
             ($verifyEmailToken)
-              ->setSecret($hashedToken)
+              ->setUser($newUser)
+              ->setSecret($token)
               ->setCreatedAt($createdAt)
               ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
               ->setType('verify-email')
@@ -77,13 +74,7 @@ class UserController extends AbstractController
             $entityManager->flush();
             $created = true;
             // TODO: set up the SMTP stuff for novelquests; using one of my mailers for testing right now.
-            $email = (new Email())
-              ->from('mailer@lfkwriters.com')
-              ->to($email)
-              ->subject('[Novel Quests] Verify Your Email Address')
-              ->text('Welcome to the Novel Quests tracker!\n\nPlease verify your email address by clicking the link below, or copy/pasting it into the browser:\n\n' . $verifyEmailURL . '\n\nThis link will expire in 24 hours. Visit the Novel Quests website to request a new verification  link as needed.')
-              ->html('<div><p>Welcome to the Novel Quests tracker!</p><p>Your account with the username ' . $username . ' has been created. Please verify your email address by clicking the link below, or copy/pasting it into your browser.<p>' . $verifyEmailURL . '<p>This link will expire in 24 hours.</p></div>'); // TODO: look up the twig integration for email for formatting
-            $mailer->send($email);
+            $resp['sentVerificationEmail'] = (new SendEmails)->sendFirstVerification($mailer, $username, $email, $verifyEmailURL);
           } catch (\Exception $err) {
             array_push($resp['errors'],['id'=> 'phpError', 'text'=>$err->getMessage()]);
           }
@@ -93,4 +84,25 @@ class UserController extends AbstractController
         $resp['created'] = $created;
         return $this->json($resp);
     }
+}
+
+class SendEmails {
+  public function sendFirstVerification ($mailer, $username, $email, $verifyEmailURL) {
+    try {
+      $email = (new Email())
+        ->from('mailer@lfkwriters.com')
+        ->to($email)
+        ->subject('[Novel Quests] Verify Your Email Address')
+        ->text('Welcome to the Novel Quests tracker!\n\nPlease verify your email address by clicking the link below, or copy/pasting it into the browser:\n\n' . $verifyEmailURL . '\n\nThis link will expire in 24 hours. Visit the Novel Quests website to request a new verification  link as needed.')
+        ->html('<div><p>Welcome to the Novel Quests tracker!</p><p>Your account with the username ' . $username . ' has been created. Please verify your email address by clicking the link below, or copy/pasting it into your browser.<p>' . $verifyEmailURL . '<p>This link will expire in 24 hours.</p></div>'); // TODO: look up the twig integration for email for formatting
+      $mailer->send($email);
+      return true;
+    } catch (\Exception $err) {
+      // TODO: put the error somewhere
+      return false;
+    }
+  }
+  // TODO: function: Resent verify email. (Did you not request this email)
+  // TODO: function: verification on email change.
+  // TODO: function: reset password mail.
 }
