@@ -176,9 +176,39 @@ export function UserVerifyEmail () {
 }
 
 export function UserResetPasswordRequest () {
+  const [email,setEmail] = useState('')
+  const [resetStatus,setResetStatus] = useState('')
+  async function submitResetPassword (e) {
+    e && e.preventDefault()
+    setResetStatus('')
+    const apiResult = await (await fetch(API_URL+'password/request/', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({'email':email}),
+    })).json()
+    console.log('return', apiResult)
+    if (!apiResult['emailSent']) { // email not sent
+      setResetStatus(`Error: ${apiResult['errors'][0]['text']}`) // this endpoint only ever returns one error right now.
+    } else {
+      setResetStatus('Success: pasword reset link has been sent to your email address. The link will expire in 24 hours.')
+    }
+  }
   return (
     <>
-      <p>User fills in email to request password reset link via email.</p>
+    <h1>Request Password Reset</h1>
+      <p>Enter your email address to request a password reset link.</p>
+      <form onSubmit={submitResetPassword}>
+
+        <label htmlFor='email'>Email Address</label>
+        <input type='email' id='email' placeholder='you@email.com' required value={email} onChange={(e) => setEmail(e.target.value)}/>
+
+        <input type="submit" value="Request Reset Link" />
+     </form>
+     <Link to="/login">Log in to your account</Link> | <Link to="/register">Create an account</Link>
+     <p>{resetStatus}</p>
     </>
   )
 }
