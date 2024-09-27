@@ -26,7 +26,7 @@ export function App() {
   }
   async function handleClick(e) {
     e && e.preventDefault()
-    const resp = await (await fetch(API_URL+'whoami', {
+    const resp = await (await fetch(API_URL+'users/$me', {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
