@@ -32,7 +32,6 @@ export function UserRegister () {
         },
         body: JSON.stringify(data),
       })).json()
-      console.log(apiResult);
       if (!apiResult.created) {
         setRegisterFailures(mapFailureArray(apiResult));
       } else {
@@ -145,7 +144,7 @@ export function UserProfile () {
 
 export function UserVerifyEmail () {
   async function checkTokenData (email,token) {
-    const resp = await (await fetch(API_URL+`user/verify?e=${email}&t=${token}`, {
+    const resp = await (await fetch(API_URL+`user/verify?e=${email}&t=${token}&type=verify-email`, {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
@@ -157,7 +156,6 @@ export function UserVerifyEmail () {
     } else {
       redirect_state['state']['notices'] = resp.errors;
     }
-    console.log(redirect_state)
     navigate('/login', redirect_state)
   }
   // eslint-disable-next-line no-unused-vars
@@ -189,7 +187,6 @@ export function UserResetPasswordRequest () {
       },
       body: JSON.stringify({'email':email}),
     })).json()
-    console.log('return', apiResult)
     if (!apiResult['emailSent']) { // email not sent
       setResetStatus(`Error: ${apiResult['errors'][0]['text']}`) // this endpoint only ever returns one error right now.
     } else {
@@ -214,9 +211,97 @@ export function UserResetPasswordRequest () {
 }
 
 export function UserResetPasswordFinish () {
+  // eslint-disable-next-line no-unused-vars
+  const [queryParameters, setQueryParameters] = useSearchParams()
+  const email = queryParameters.get('e')
+  const token = queryParameters.get('t')
+  const [username,setUsername] = useState('')
+  const [tokenValid,setTokenValid] = useState('')
+  const [tokenError,setTokenError] = useState('')
+  useEffect(() => {
+    checkTokenData()
+  }, [])
+  async function checkTokenData (e) {
+    const resp = await (await fetch(API_URL+`user/verify?e=${email}&t=${token}&type=reset-password`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })).json()
+    if (!resp.verified) {
+      setTokenValid(false)
+      setTokenError(mapFailureArray(resp))
+    } else {
+      setTokenValid(true)
+      setUsername(resp.username);
+    }
+  }
+  function ResetForm (attr) {
+    async function onSubmit (data) {
+      if (data.password === data.confirmPassword) {
+        const apiResult = await (await fetch(API_URL+'password/submit', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        })).json()
+        if (!apiResult.passwordChanged) {
+          (mapFailureArray(apiResult));
+        } else {
+          navigate(`/login`, { state: {
+            'notices': [
+              {id: 'changed', text: (apiResult.passwordChanged) ? 'Your password has been updated.' : null }
+            ]}
+          })
+        }
+      } else {
+        setError("passwordMatch", { type: "custom", message: "Password do not match" })
+      }
+    }
+
+   const navigate = useNavigate()
+    const {
+      register,
+      handleSubmit,
+      clearErrors,
+      setError,
+      formState: { errors },
+    } = useForm()
+    if (attr.display === true) {
+      return (
+        <>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <label htmlFor="username">Username</label>
+          <input {...register("username")} readOnly={true} value={attr.username} />
+
+          <label htmlFor='email'>Email Address</label>
+          <input type='email' {...register("email")} value={attr.email} readOnly={true} />
+
+          <label htmlFor='password'>Password</label>
+          <input type='password' {...register('password', { required: true })} />
+
+          <label htmlFor='confirmPassword'>Confirm Password</label>
+          <input type='password' {...register('confirmPassword', { required: true })} />
+
+          <input type="submit" value="Register" onClick={(e) => clearErrors()} />
+        </form>
+      <ul className='formErrors'>
+        {errors.passwordMatch && <li>Passwords do not match</li>}
+      </ul>
+      </>
+      )
+    }
+  }
   return (
     <>
-      <p>User form with disabled username, includes password and confirmpassword.</p>
+    <h1>Reset Your Password</h1>
+    <ResetForm display={tokenValid} token={token} username={username} email={email} />
+    <ul>
+    {tokenError}
+    </ul>
+    <Link to="/login">Log in to your account</Link> | <Link to="/reset">Reset Your Password</Link>
     </>
   )
 }

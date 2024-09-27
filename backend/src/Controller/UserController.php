@@ -85,7 +85,7 @@ class UserController extends AbstractController
       return $this->json($resp);
   }
 
-  #[Route('/api/password/request/', name: 'register_user', methods: ['POST'])]
+  #[Route('/api/password/request/', name: 'request_reset', methods: ['POST'])]
   public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse {
     $resp = [
       'errors'=>[],
@@ -115,7 +115,7 @@ class UserController extends AbstractController
         ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
         ->setType('reset-password')
         ->setPayload($email);
-      $resetURL = "http://frontend.quest-tracker.lndo.site/reset?e=$email&t=$token";
+      $resetURL = "http://frontend.quest-tracker.lndo.site/resetform?e=$email&t=$token";
       $entityManager->persist($resetPasswordToken);
       $emailSent = (new SendEmails)->sendPasswordResetLink($mailer, $email, $resetURL);
       if (!$emailSent) { // if sending the reset link fails
@@ -127,6 +127,36 @@ class UserController extends AbstractController
     $entityManager->flush();
     return $this->json($resp);
   }
+
+  #[Route('api/password/submit', name: 'finish_reset', methods: ['POST'])]
+  public function finishReset (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse {
+    $resp = [
+      'errors' => []
+    ];
+    try {
+      $POST = $request->getPayload();
+      $email = $POST->get('email');
+      $username = $POST->get('username');
+      $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+      $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload'=>$email, 'type'=>'reset-password']);
+      $hashedPassword = $passwordHasher->hashPassword(
+        $user,
+        $POST->get('password')
+      );
+      ($user)
+        ->setPassword($hashedPassword)
+        ->setEditedAt(new \DateTimeImmutable());
+      $entityManager->remove($tokenEntry);
+      $entityManager->flush();
+      $passwordChanged = true;
+      $resp['sentEmail'] = (new SendEmails)->notificationPasswordChange($mailer,$email);
+    } catch (\Exception $err) {
+      array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
+      $passwordChanged = false;
+    }
+    $resp['passwordChanged'] = $passwordChanged;
+    return $this->json($resp);
+  }
 }
 
 
@@ -134,13 +164,13 @@ class SendEmails {
   public function sendFirstVerification ($mailer, $username, $email, $verifyEmailURL) {
     // TODO: look up the twig integration for email for formatting
     try {
-      $email = (new Email())
+      $msg = (new Email())
         ->from('noreply@novelquest.org')
         ->to($email)
         ->subject('[Novel Quest] Verify Your Email Address')
         ->text('Welcome to the Novel Quests tracker!\n\nPlease verify your email address by clicking the link below, or copy/pasting it into the browser:\n\n' . $verifyEmailURL . '\n\nThis link will expire in 24 hours. Visit the Novel Quests website to request a new verification  link as needed.')
         ->html('<div><p>Welcome to the Novel Quests tracker!</p><p>Your account with the username ' . $username . ' has been created. Please verify your email address by clicking the link below, or copy/pasting it into your browser.<p>' . $verifyEmailURL . '<p>This link will expire in 24 hours.</p></div>'); 
-      $mailer->send($email);
+      $mailer->send($msg);
       return true;
     } catch (\Exception $err) {
       // TODO: put the error somewhere
@@ -154,13 +184,30 @@ class SendEmails {
 
   public function sendPasswordResetLink ($mailer, $email, $resetPasswordURL) {
     try {
-      $email = (new Email())
+      $msg = (new Email())
         ->from('noreply@novelquest.org')
         ->to($email)
         ->subject('[Novel Quest] Reset Your Password')
         ->text('Reset the password for your Novel Quest account by clicking the link below, or copy/pasting it into the browser:\n\n' . $resetPasswordURL . '\n\nThis link will expire in 24 hours. No changes will be able to your password unless you use this link.')
         ->html('<div><p>Reset the password for your Novel Quest account by clicking the link below, or copy/pasting it into the browser:<p>' . $resetPasswordURL . '<p>This link will expire in 24 hours. No changes will be able to your password unless you use this link.</p></div>'); 
-      $mailer->send($email);
+      $mailer->send($msg);
+      return true;
+    } catch (\Exception $err) {
+      // TODO: put the error somewhere
+      return false;
+    }
+  }
+
+
+  public function notificationPasswordChange ($mailer, $email) {
+    try {
+      $msg = (new Email())
+        ->from('noreply@novelquest.org')
+        ->to($email)
+        ->subject('[Novel Quest] Your Password Change')
+        ->text('This email is to let you know that your account password has been successfully changed.')
+        ->html('<div><p>This email is to let you know that your account password has been successfully changed.</p></div>');
+      $mailer->send($msg);
       return true;
     } catch (\Exception $err) {
       // TODO: put the error somewhere
