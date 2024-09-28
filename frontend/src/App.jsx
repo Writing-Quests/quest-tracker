@@ -1,54 +1,74 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-
-export const API_URL = 'http://quest-tracker.lndo.site/api/'
+import {
+  UserRegister,
+  UserVerifyEmail,
+  UserLogin,
+  UserProfile,
+  UserResetPasswordRequest,UserResetPasswordFinish
+} from './User.jsx'
+import Login from './components/Login'
+import { BrowserRouter,Routes,Route } from 'react-router-dom'
+import api from './services/api'
 
 export function App() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [resp, setResp] = useState()
-  const [resp2, setResp2] = useState()
-  useEffect(() => {
-    handleClick()
-  }, [])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [loggedIn, setLoggedIn] = useState(null)
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const resp = await (await fetch(API_URL+'login', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    })).json()
-    setResp(resp)
+  useEffect(() => { getLoggedInUser() }, [])
+
+  async function getLoggedInUser() {
+    setLoading(true)
+    try {
+      const resp = await api('users/$me', {
+         validateStatus: function (status) {
+           return (status >= 200 && status < 300) || status === 400;
+        }
+      })
+      if(resp.status === 400) {
+        setLoggedIn(false)
+      } else {
+        setLoggedIn(true)
+      }
+    } catch (e) {
+      console.log(e)
+      setError(e)
+    } finally {
+      setLoading(false)
+    }
   }
-  async function handleClick(e) {
-    e && e.preventDefault()
-    const resp = await (await fetch(API_URL+'users/$me', {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })).json()
-    setResp2(resp)
+
+  if(loading) {
+    return <div>Loading&hellip;</div>
   }
-  return (
-    <>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
-        <input type='text' placeholder='username' value={username} onChange={e => setUsername(e.target.value)} />
-        <input type='password' placeholder='password' value={password} onChange={e => setPassword(e.target.value)} />
-        <input type='submit' />
-      </form>
-      <h2>Response</h2>
-      {JSON.stringify(resp)}
-      <hr />
-      <button onClick={handleClick}>Who am I?</button>
-      <h2>Response</h2>
-      {JSON.stringify(resp2)}
-    </>
-  )
+  if(error) {
+    return <div>Error: {JSON.stringify(error)}</div>
+  }
+
+  if(loggedIn) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<UserProfile />} />
+          <Route path="/verify" element={<UserVerifyEmail />} />
+        </Routes>
+      </BrowserRouter>
+    )
+  } else {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<UserRegister />} />
+          <Route path="/verify" element={<UserVerifyEmail />} />
+          <Route path="/reset" element={<UserResetPasswordRequest />} />
+          <Route path="/resetform" element={<UserResetPasswordFinish />} />
+          <Route path="/login" element={<UserLogin />} />
+        </Routes>
+      </BrowserRouter>
+    )
+  }
+
 }
 

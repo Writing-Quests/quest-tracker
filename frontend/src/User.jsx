@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { getUserTZName } from './timezones.js'
-import { API_URL } from './App.jsx'
+import CONSTS from './CONSTS'
 import './App.css'
+
+const { API_URL } = CONSTS
 
 function mapFailureArray ({ errors }) {
   const errList = errors.map((msg) => <li key={msg.id}>{msg.text}</li>);
