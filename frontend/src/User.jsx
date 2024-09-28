@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { getUserTZName } from './timezones.js'
 import CONSTS from './CONSTS'
+import context from './services/context'
 import './App.css'
 
+const { LoggedInUserContext } = context
 const { API_URL } = CONSTS
 
 function mapFailureArray ({ errors }) {
@@ -137,9 +139,10 @@ export function UserLogin () {
 }
 
 export function UserProfile () {
+  const user = useContext(LoggedInUserContext)
   return (
     <>
-      <p>The eventual profile page. Get state if redircted because of change</p>
+      <p>Welcome {user.username}!</p>
     </>
   )
 }

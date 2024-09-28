@@ -10,11 +10,15 @@ import {
 import Login from './components/Login'
 import { BrowserRouter,Routes,Route } from 'react-router-dom'
 import api from './services/api'
+import Context from './services/context'
+
+const { LoggedInUserContext } = Context
 
 export function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [loggedIn, setLoggedIn] = useState(null)
+  const [data, setData] = useState(null)
 
   useEffect(() => { getLoggedInUser() }, [])
 
@@ -24,12 +28,13 @@ export function App() {
       const resp = await api('users/$me', {
          validateStatus: function (status) {
            return (status >= 200 && status < 300) || status === 400;
-        }
+        },
       })
       if(resp.status === 400) {
         setLoggedIn(false)
       } else {
         setLoggedIn(true)
+        setData(resp.data)
       }
     } catch (e) {
       console.log(e)
@@ -48,12 +53,14 @@ export function App() {
 
   if(loggedIn) {
     return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<UserProfile />} />
-          <Route path="/verify" element={<UserVerifyEmail />} />
-        </Routes>
-      </BrowserRouter>
+      <LoggedInUserContext.Provider value={data}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<UserProfile />} />
+            <Route path="/verify" element={<UserVerifyEmail />} />
+          </Routes>
+        </BrowserRouter>
+      </LoggedInUserContext.Provider>
     )
   } else {
     return (
