@@ -10,7 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
- * @implements ProviderInterface<User|null>
+ * @implements ProviderInterface<User|NotLoggedInRepresentation|null>
  */
 final class UserMeProvider implements ProviderInterface {
     public function __construct(
@@ -19,7 +19,7 @@ final class UserMeProvider implements ProviderInterface {
     ) {
     }
 
-    public function provide(Operation $operation, array $uriVariables = [], array $context = []): User|null
+    public function provide(Operation $operation, array $uriVariables = [], array $context = []): User|NotLoggedInRepresentation|null
     {
         $user = $this->security->getUser();
         if($user) {
@@ -28,7 +28,11 @@ final class UserMeProvider implements ProviderInterface {
                 ->getRepository(User::class)
                 ->find($user->getId());
         } else {
-            throw new BadRequestHttpException('must be logged in to use this endpoint');
+            return new NotLoggedInRepresentation();
         }
     }
+}
+
+final class NotLoggedInRepresentation {
+    public bool $anonymousUser = true;
 }

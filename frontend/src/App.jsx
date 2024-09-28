@@ -12,7 +12,7 @@ import { BrowserRouter,Routes,Route } from 'react-router-dom'
 import api from './services/api'
 import Context from './services/context'
 
-const { LoggedInUserContext } = Context
+const { LoggedInUserContext, GetLoggedInUserContext } = Context
 
 export function App() {
   const [loading, setLoading] = useState(true)
@@ -25,12 +25,8 @@ export function App() {
   async function getLoggedInUser() {
     setLoading(true)
     try {
-      const resp = await api('users/$me', {
-         validateStatus: function (status) {
-           return (status >= 200 && status < 300) || status === 400;
-        },
-      })
-      if(resp.status === 400) {
+      const resp = await api('users/$me')
+      if(resp.data?.anonymousUser || !resp.data?.username) {
         setLoggedIn(false)
       } else {
         setLoggedIn(true)
@@ -64,16 +60,18 @@ export function App() {
     )
   } else {
     return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<UserRegister />} />
-          <Route path="/verify" element={<UserVerifyEmail />} />
-          <Route path="/reset" element={<UserResetPasswordRequest />} />
-          <Route path="/resetform" element={<UserResetPasswordFinish />} />
-          <Route path="/login" element={<UserLogin />} />
-        </Routes>
-      </BrowserRouter>
+      <GetLoggedInUserContext.Provider value={getLoggedInUser}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/register" element={<UserRegister />} />
+            <Route path="/verify" element={<UserVerifyEmail />} />
+            <Route path="/reset" element={<UserResetPasswordRequest />} />
+            <Route path="/resetform" element={<UserResetPasswordFinish />} />
+            <Route path="/login" element={<UserLogin />} />
+          </Routes>
+        </BrowserRouter>
+      </GetLoggedInUserContext.Provider>
     )
   }
 

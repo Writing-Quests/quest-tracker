@@ -15,6 +15,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Ignore;
 use App\State\UserMeProvider;
+use App\State\NotLoggedInRepresentation;
 //use App\Filter\UserMeFilter;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -24,6 +25,8 @@ use App\State\UserMeProvider;
         new Get(
             uriTemplate: '/users/$me',
             provider: UserMeProvider::class,
+            output: NotLoggedInRepresentation::class,
+            security: "true",
         ),
         new Get(),
     ],
