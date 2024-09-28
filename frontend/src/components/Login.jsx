@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import api from '../services/api'
 import Context from '../services/context'
 import useTitle from '../services/useTitle'
-import wave from '../wave.svg'
+import wave from '../assets/wave.svg'
 
 const { GetLoggedInUserContext } = Context
 
