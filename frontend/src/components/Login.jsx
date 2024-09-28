@@ -10,21 +10,28 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [resp, setResp] = useState()
   const [resp2, setResp2] = useState()
-  useEffect(() => {
-    handleClick()
-  }, [])
+  //useEffect(() => {
+    //handleClick()
+  //}, [])
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const resp = await (await fetch(API_URL+'login', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    })).json()
-    setResp(resp)
+  function handleSubmit(e) {
+    e.preventDefault();
+    (async () => {
+      const resp = await (await fetch(API_URL+'auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      })).json()
+      setResp(resp)
+      //const resp = await api.post('auth/login', { username, password }, { withCredentials: false })
+      //if(resp.data?.loggedIn) {
+        //window.location = '/'
+      //}
+      //setResp(resp)
+    })()
   }
   async function handleClick(e) {
     e?.preventDefault()
@@ -33,7 +40,7 @@ export default function Login() {
   }
   return (
     <>
-      <h1>Login</h1>
+      <h1>Loginn</h1>
       <form onSubmit={handleSubmit}>
         <input type='text' placeholder='username' value={username} onChange={e => setUsername(e.target.value)} />
         <input type='password' placeholder='password' value={password} onChange={e => setPassword(e.target.value)} />

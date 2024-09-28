@@ -10,10 +10,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\User;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
-class LoginController extends AbstractController
+class AuthController extends AbstractController
 {
-    #[Route('/api/login', name: 'login', methods: ['POST'])]
-    public function index(#[CurrentUser] ?User $user): JsonResponse
+    #[Route('/api/auth/login', name: 'login', methods: ['POST'])]
+    public function login(#[CurrentUser] ?User $user): JsonResponse
     {
         if (null === $user) {
             return $this->json([
@@ -27,5 +27,14 @@ class LoginController extends AbstractController
             'loggedIn' => true,
             'user' => $user->getUserIdentifier(),
         ]);
+    }
+
+    #[Route('/api/auth/logout', name: 'logout', methods: ['POST'])]
+    public function logout(#[CurrentUser] ?User $user): JsonResponse
+    {
+        if (null !== $user) {
+            return $this->json([ 'loggedOut' => true ]);
+        }
+        return $this->json([ 'loggedOut' => false ]);
     }
 }

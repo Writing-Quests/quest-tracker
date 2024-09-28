@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { getUserTZName } from './timezones.js'
 import CONSTS from './CONSTS'
 import context from './services/context'
+import api from './services/api'
 import './App.css'
 
 const { LoggedInUserContext } = context
@@ -140,9 +141,14 @@ export function UserLogin () {
 
 export function UserProfile () {
   const user = useContext(LoggedInUserContext)
+  async function handleLogout() {
+    await api.post('auth/logout')
+    window.location = '/'
+  }
   return (
     <>
       <p>Welcome {user.username}!</p>
+      <button onClick={handleLogout}>Logout</button>
     </>
   )
 }
