@@ -11,15 +11,24 @@ export default function Login() {
   const [resp, setResp] = useState()
   const [resp2, setResp2] = useState()
   const getLoggedInUser = useContext(GetLoggedInUserContext)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState()
 
   function handleSubmit(e) {
     e.preventDefault();
     (async () => {
-      const resp = await api.post('auth/login', { username, password })
-      if(resp.data?.loggedIn) {
-        getLoggedInUser()
+      setLoading(true)
+      try {
+        const resp = await api.post('auth/login', { username, password })
+        if(resp.data?.loggedIn) {
+          getLoggedInUser()
+        }
+        setResp(resp)
+      } catch (e) {
+        setError(e)
+      } finally {
+        setLoading(false)
       }
-      setResp(resp)
     })()
   }
   async function handleClick(e) {
@@ -27,13 +36,15 @@ export default function Login() {
     const resp = await api('users/$me')
     setResp2(resp.data)
   }
+  const formProps = {disabled: loading}
   return (
     <>
-      <h1>Loginn</h1>
+      <h1>Login</h1>
+      {error && <div>Error: {JSON.stringify(error)}</div>}
       <form onSubmit={handleSubmit}>
-        <input type='text' placeholder='username' value={username} onChange={e => setUsername(e.target.value)} />
-        <input type='password' placeholder='password' value={password} onChange={e => setPassword(e.target.value)} />
-        <input type='submit' />
+        <input type='text' placeholder='username' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
+        <input type='password' placeholder='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
+        <input type='submit' {...formProps} />
       </form>
       <h2>Response</h2>
       {JSON.stringify(resp)}
