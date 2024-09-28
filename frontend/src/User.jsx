@@ -85,14 +85,10 @@ export function UserLogin () {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [resp, setResp] = useState()
-  const [resp2, setResp2] = useState()
-  const [notices,setNotices] = useState('');
+  const [notices, setNotices] = useState('');
   const {state} = useLocation();
   useEffect(() => {
-    handleClick()
-  }, [])
-  useEffect(() => {
-    if (state.notices) { 
+    if (state.notices) {
       const notices = state.notices.map((notices) => <p key={notices.id}>{notices.text}</p>)
       setNotices(notices);
     }
@@ -109,16 +105,6 @@ export function UserLogin () {
     })).json()
     setResp(resp)
   }
-  async function handleClick(e) {
-    e && e.preventDefault()
-    const resp = await (await fetch(API_URL+'whoami', {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })).json()
-    setResp2(resp)
-  }
   return (
     <>
       <h1>Login</h1>
@@ -131,10 +117,6 @@ export function UserLogin () {
       <Link to="/register">Create Account</Link> | <Link to="/reset">Reset Password</Link>
       <h2>Response</h2>
       {JSON.stringify(resp)}
-      <hr />
-      <button onClick={handleClick}>Who am I?</button>
-      <h2>Response</h2>
-      {JSON.stringify(resp2)}
     </>
   )
 }

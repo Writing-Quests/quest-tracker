@@ -11,6 +11,7 @@ import Login from './components/Login'
 import { BrowserRouter,Routes,Route } from 'react-router-dom'
 import api from './services/api'
 import Context from './services/context'
+import useTitle from './services/useTitle'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
 
@@ -21,6 +22,10 @@ export function App() {
   const [data, setData] = useState(null)
 
   useEffect(() => { getLoggedInUser() }, [])
+
+  let title = ''
+  if(loading) { title = 'Loading...' }
+  useTitle(title)
 
   async function getLoggedInUser() {
     setLoading(true)
@@ -39,7 +44,6 @@ export function App() {
       setLoading(false)
     }
   }
-
   if(loading) {
     return <div>Loading&hellip;</div>
   }
