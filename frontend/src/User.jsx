@@ -5,7 +5,6 @@ import { getUserTZName } from './timezones.js'
 import CONSTS from './CONSTS'
 import context from './services/context'
 import api from './services/api'
-import './App.css'
 
 const { LoggedInUserContext } = context
 const { API_URL } = CONSTS

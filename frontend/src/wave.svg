@@ -1,0 +1,12 @@
+<svg width='800' height='20' viewBox='0 0 800 20' xmlns="http://www.w3.org/2000/svg" xmlns:xlink= "http://www.w3.org/1999/xlink">
+  <path style='fill: #C45237'>
+    <animate
+      attributeName='d'
+      begin="0s"
+      dur="8s"
+      repeatCount="indefinite"
+      from="M -800,10 q 200,10 400,0 q 200,-10 400,0 q 200,10 400,0 q 200,-10 400,0 q 200,10 400,0 l 0,10 L -800,20 L -800,10 z"
+      to="  M    0,10 q 200,10 400,0 q 200,-10 400,0 q 200,10 400,0 q 200,-10 400,0 q 200,10 400,0 l 0,10 L    0,20 L    0,10 z"
+    />
+  </path>
+</svg>
