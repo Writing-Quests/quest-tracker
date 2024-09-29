@@ -3,9 +3,9 @@ import {
   UserRegister,
   UserVerifyEmail,
   UserLogin,
-  UserProfile,
   UserResetPasswordRequest,UserResetPasswordFinish
-} from './User.jsx'
+} from './components/User'
+import UserProfile from './components/User/Profile'
 import Login from './components/Login'
 import { BrowserRouter,Routes,Route } from 'react-router-dom'
 import api from './services/api'

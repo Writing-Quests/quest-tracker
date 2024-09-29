@@ -1,12 +1,9 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { getUserTZName } from './timezones.js'
-import CONSTS from './CONSTS'
-import context from './services/context'
-import api from './services/api'
+import { getUserTZName } from '../timezones.js'
+import CONSTS from '../CONSTS'
 
-const { LoggedInUserContext } = context
 const { API_URL } = CONSTS
 
 function mapFailureArray ({ errors }) {
@@ -120,19 +117,6 @@ export function UserLogin () {
   )
 }
 
-export function UserProfile () {
-  const user = useContext(LoggedInUserContext)
-  async function handleLogout() {
-    await api.post('auth/logout')
-    window.location = '/'
-  }
-  return (
-    <>
-      <p>Welcome {user.username}!</p>
-      <button onClick={handleLogout}>Logout</button>
-    </>
-  )
-}
 
 export function UserVerifyEmail () {
   async function checkTokenData (email,token) {
