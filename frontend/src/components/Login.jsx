@@ -9,6 +9,15 @@ import InputGroup from './InputGroup'
 
 const { GetLoggedInUserContext } = Context
 
+const ErrorContainer = styled.div`
+  width: 100%;
+  background-color: #FFDCD3;
+  margin: 10px 0;
+  border: 1px solid #EA846A;
+  border-radius: 3px;
+  padding: 10px;
+`
+
 const LogoContainer = styled.div`
   max-width: 500px;
   display: flex;
@@ -32,6 +41,7 @@ const AnimatedContainer = styled.div`
   margin-top: 20px;
   background-color: var(--color-primary);
   position: relative;
+  padding-bottom: 30px;
   &::before {
     content: '';
     display: block;
@@ -97,7 +107,8 @@ export default function Login() {
       <AnimatedContainer>
         <CenteredContainer>
           <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Welcome!</h1>
-          {error && <div>Error: {JSON.stringify(error)}</div>}
+          {(error && error.status === 400) && <ErrorContainer><strong>Incorrect username/password.</strong> Try again or create a new account.</ErrorContainer>}
+          {(error && error.status !== 400) && <ErrorContainer>Unknown error. Try again.</ErrorContainer>}
           <form onSubmit={handleSubmit}>
             <InputGroup>
               <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
@@ -107,7 +118,7 @@ export default function Login() {
           </form>
         </CenteredContainer>
       </AnimatedContainer>
-      <CenteredContainer style={{textAlign: 'center', marginTop: '40px', fontSize: '0.7rem'}}>
+      <CenteredContainer style={{textAlign: 'center', marginTop: '40px', fontSize: '0.7rem', marginBottom: '30px'}}>
         <span>Copyright © {new Date().getFullYear()}</span>
         <br />
         <span>Learn more at <a href='https://writingquests.org'>writingquests.org</a></span>
