@@ -103,7 +103,7 @@ export default function Login() {
               <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
               <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
             </InputGroup>
-            <input type='submit' value='Login' {...formProps} />
+            <Input type='submit' value='Login' {...formProps} />
           </form>
         </CenteredContainer>
       </AnimatedContainer>
