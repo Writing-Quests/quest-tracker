@@ -4,13 +4,34 @@ import api from '../services/api'
 import Context from '../services/context'
 import useTitle from '../services/useTitle'
 import wave from '../assets/wave.svg'
+import Input from './Input'
+import InputGroup from './InputGroup'
 
 const { GetLoggedInUserContext } = Context
 
+const LogoContainer = styled.div`
+  max-width: 500px;
+  display: flex;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 50px;
+  justify-content: center;
+  align-items: center;
+`
+
+const SiteTitle = styled.div`
+  font-family: 'Playfair Display', serif;
+  font-size: 35px;
+  font-weight: bold;
+  color: var(--color-primary);
+  margin-left: 10px;
+`
+
 const AnimatedContainer = styled.div`
-  height: 100%;
+  min-height: calc(100vh - 250px);
   margin-top: 20px;
   background-color: var(--color-primary);
+  position: relative;
   &::before {
     content: '';
     display: block;
@@ -30,9 +51,16 @@ const AnimatedContainer = styled.div`
     width: 100vw;
     height: 20px;
     transform: rotate(180deg);
-    position: relative;
-    top: 20px;
+    position: absolute;
+    bottom: -20px;
   }
+`
+
+const CenteredContainer = styled.div`
+  margin: auto;
+  max-width: min(500px, calc(100vw - 40px));
+  display: flex;
+  flex-direction: column;
 `
 
 export default function Login() {
@@ -62,16 +90,28 @@ export default function Login() {
   const formProps = {disabled: loading}
   return (
     <>
-      <div>Writing Quests</div>
+      <LogoContainer>
+        <img src='/logo.svg' style={{maxWidth: '75px'}} />
+        <SiteTitle>Writing Quests</SiteTitle>
+      </LogoContainer>
       <AnimatedContainer>
-        <h1>Login</h1>
-        {error && <div>Error: {JSON.stringify(error)}</div>}
-        <form onSubmit={handleSubmit}>
-          <input type='text' placeholder='username' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
-          <input type='password' placeholder='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
-          <input type='submit' value='Login' {...formProps} />
-        </form>
+        <CenteredContainer>
+          <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Welcome!</h1>
+          {error && <div>Error: {JSON.stringify(error)}</div>}
+          <form onSubmit={handleSubmit}>
+            <InputGroup>
+              <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
+              <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
+            </InputGroup>
+            <input type='submit' value='Login' {...formProps} />
+          </form>
+        </CenteredContainer>
       </AnimatedContainer>
+      <CenteredContainer style={{textAlign: 'center', marginTop: '40px', fontSize: '0.7rem'}}>
+        <span>Copyright © {new Date().getFullYear()}</span>
+        <br />
+        <span>Learn more at <a href='https://writingquests.org'>writingquests.org</a></span>
+      </CenteredContainer>
     </>
   )
 }
