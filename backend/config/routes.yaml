@@ -8,3 +8,6 @@ react:
     defaults: { _controller: 'App\Controller\StaticController::index' }
     requirements:
         req: ".*"
+app_logout:
+    path: /api/logout
+    methods: GET

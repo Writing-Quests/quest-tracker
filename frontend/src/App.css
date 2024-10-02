@@ -18,7 +18,7 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-label, input {
+label, input:not([type=checkbox]) {
   display: block;
   text-align: left;
 }
@@ -35,6 +35,23 @@ label {
 pre {
   width: 100%;
   word-wrap: break-word;
+}
+
+.userAvatar {
+  float: left;
+  border: 1px solid grey;
+  border-radius: 5px;
+}
+
+#tempMenu {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  font-size: 0.75rem;
+}
+
+#tempMenu > * {
+  margin: 5px 10px;
 }
 
 @keyframes logo-spin {

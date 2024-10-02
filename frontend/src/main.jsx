@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.jsx'
-import { UserRegister, UserVerifyEmail, UserLogin, UserProfile, UserResetPasswordRequest,UserResetPasswordFinish } from './User.jsx'
+import { UserRegister, UserVerifyEmail, UserLogin, UserViewProfile, UserEditProfile, UserResetPasswordRequest,UserResetPasswordFinish } from './User.jsx'
 import './index.css'
 import { BrowserRouter,Routes,Route } from 'react-router-dom'
 
@@ -15,7 +15,8 @@ createRoot(document.getElementById('root')).render(
       <Route path="/reset" element={<UserResetPasswordRequest />} />
       <Route path="/resetform" element={<UserResetPasswordFinish />} />
       <Route path="/login" element={<UserLogin />} />
-      <Route path="/profile" element={<UserProfile />} />
+      <Route path="/profile/:username" element={<UserViewProfile />} />
+      <Route path="/profile/edit" element={<UserEditProfile />} />
     </Routes>
     </BrowserRouter>
   </StrictMode>,

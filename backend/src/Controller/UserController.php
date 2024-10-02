@@ -4,11 +4,14 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Entity\LoginToken;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -67,7 +70,7 @@ class UserController extends AbstractController
             ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
             ->setType('verify-email')
             ->setPayload($email);
-          $verifyEmailURL = "http://frontend.quest-tracker.lndo.site/verify?e=$email&t=$token";
+          $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$email.'&t='.$token;
           $resp['url'] = $verifyEmailURL;
           $entityManager->persist($verifyEmailToken);
           $entityManager->persist($newUser);
@@ -86,7 +89,8 @@ class UserController extends AbstractController
   }
 
   #[Route('/api/password/request/', name: 'request_reset', methods: ['POST'])]
-  public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse {
+  public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse 
+  {
     $resp = [
       'errors'=>[],
       'emailSent'=>false // it's false until it succeeds
@@ -115,7 +119,7 @@ class UserController extends AbstractController
         ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
         ->setType('reset-password')
         ->setPayload($email);
-      $resetURL = "http://frontend.quest-tracker.lndo.site/resetform?e=$email&t=$token";
+      $resetURL = 'http://frontend.quest-tracker.lndo.site/resetform?e='.$email.'&t='.$token;
       $entityManager->persist($resetPasswordToken);
       $emailSent = (new SendEmails)->sendPasswordResetLink($mailer, $email, $resetURL);
       if (!$emailSent) { // if sending the reset link fails
@@ -129,7 +133,8 @@ class UserController extends AbstractController
   }
 
   #[Route('api/password/submit', name: 'finish_reset', methods: ['POST'])]
-  public function finishReset (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse {
+  public function finishReset (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
+  {
     $resp = [
       'errors' => []
     ];
@@ -155,6 +160,118 @@ class UserController extends AbstractController
       $passwordChanged = false;
     }
     $resp['passwordChanged'] = $passwordChanged;
+    return $this->json($resp);
+  }
+
+  #[Route('api/profile/get', name: 'view_profile', methods: ['GET','POST'])]
+  public function getUserProfile (#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse 
+  {
+    try {
+      // my thinking: GET === looking at a profile; POST === getting fields in order to edit. Toying with it. 
+      /*
+      IF POST: 
+      return $this->json([
+          'message' => 'missing credentials',
+          'loggedIn' => false,
+        ], Response::HTTP_UNAUTHORIZED);
+      */
+      $loggedIn = ($user != null); // this is stupid i hate this lol
+      $loggedInUser = ($loggedIn) ? $user->getUserIdentifier() : null;
+      /*
+        TODO: return unauthorized if the user is not logged in and the profile is private. buddies don't exist yet, but later, check for that.
+        
+      */
+      // https://docs.gravatar.com/api/avatars/images/
+      if ($request->isMethod('GET')) {
+        $req_username = $request->query->get('username');
+        $req_user_info = $entityManager->getRepository(User::class)->findOneBy(['username'=>$req_username]);
+        $profileOwner = ($user->getUserIdentifier() == $req_username);
+        $profilePublic = $req_user_info->isPublic();
+      } else if ($request->isMethod('POST')) { # POST used on edit profile 
+        $req_username = $loggedInUser;
+        $req_user_info = $user; 
+        if (!$loggedIn) {
+          return $this->json([
+            'message' => 'missing credentials',
+            'loggedIn' => false,
+          ], Response::HTTP_UNAUTHORIZED);
+        }
+      }
+      $profileOwner = ($user->getUserIdentifier() == $req_username);
+      $profilePublic = $req_user_info->isPublic();
+      if ((!$profileOwner || !$loggedIn) && !$profilePublic) { 
+        // two conditionals; 
+        //  if you're not the profile owner and the profile is not public
+        //  if you're not logged in and the profile is not public
+        throw $this->createNotFoundException('Profile not found');
+      }
+      // TODO: this will need to return project data as well in the future
+      $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $req_user_info->getEmail() ) ) ) . '?d=404&s=100&r=pg';
+      $resp = [
+        'username'=>$req_user_info->getUsername(),
+        'link'=>$req_user_info->getLink(),
+        'description'=>$req_user_info->getDescription(),
+        'gravatar'=>$gravatar_url,
+        'loggedIn'=>$loggedIn,
+        'loggedInUser'=>$loggedInUser,
+        'profileOwner'=>$profileOwner,
+        'public'=>$profilePublic
+      ];
+      if ($request->isMethod('POST')) {
+        $resp['email'] = $user->getEmail();
+        $resp['unverifiedEmail'] = $user->getUnverifiedEmail();
+        $resp['emailVerified'] = ($user->getUnverifiedEmail() == null); // unverifiedmail is set to null when email is verified
+      }
+    } catch (\Exception $err) {
+      $resp = [
+        'loggedIn'=>$loggedIn,
+        'loggedInUser'=>$loggedInUser,
+        'errors'=>[['id'=>'phpError','text'=>$err->getMessage()]]
+      ];
+    }
+    return $this->json($resp);
+  }
+
+  #[Route('api/profile/edit', name: 'edit_profile', methods: ['POST'])]
+  public function updateUserProfile(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse
+  {
+    if (!$user) {
+      return $this->json([
+        'loggedIn' => false,
+      ], Response::HTTP_UNAUTHORIZED);
+    }
+    try{
+      $POST = $request->getPayload();
+      $allKeys = $POST->all();
+      foreach ($POST->all() as $key=>$value) {
+        switch ($key) {
+          case 'description':
+            $user->setDescription($value);
+          break;
+
+          case 'link':
+            $user->setLink($value);
+          break;
+
+          case 'public':
+            $user->isPublic($value);
+          break;
+
+          case 'emailChange':
+            // TODO: a whole change email rigamarole
+          break;
+
+          case 'passwordChange':
+            // TODO: a whole change password rigamaole.
+          break;
+        }
+        $entityManager->persist($user);
+        $entityManager->flush();
+        $resp = ['updated'=>true];
+      }
+    } catch (\Exception $err) {
+      $resp = ['updated'=>false,'error'=>[['id'=>'phpError','text'=>$err->getMessage()]]];
+    }
     return $this->json($resp);
   }
 }

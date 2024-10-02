@@ -8,7 +8,7 @@ security:
         app_user_provider:
             entity:
                 class: App\Entity\User
-                property: username
+                #property: username
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -18,6 +18,11 @@ security:
             provider: app_user_provider
             json_login:
                 check_path: login
+            logout:
+              path: app_logout
+            remember_me:
+              secret:   '%kernel.secret%'
+              lifetime: 604800
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
