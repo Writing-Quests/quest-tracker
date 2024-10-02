@@ -14,12 +14,21 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Ignore;
+use App\State\UserMeProvider;
+use App\State\NotLoggedInRepresentation;
+//use App\Filter\UserMeFilter;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
 #[ApiResource(
     operations: [
-        new Get()
+        new Get(
+            uriTemplate: '/users/$me',
+            provider: UserMeProvider::class,
+            output: NotLoggedInRepresentation::class,
+            security: "true",
+        ),
+        new Get(),
     ],
     security: "is_granted('ROLE_ADMIN') or object == user",
 )]
