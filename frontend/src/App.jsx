@@ -1,93 +1,82 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import './App.css'
+import {
+  UserRegister,
+  UserVerifyEmail,
+  UserLogin,
+  UserResetPasswordRequest,UserResetPasswordFinish
+} from './components/User'
+import UserProfile from './components/User/Profile'
+import Login from './components/Login'
+import { BrowserRouter,Routes,Route } from 'react-router-dom'
+import api from './services/api'
+import Context from './services/context'
+import useTitle from './services/useTitle'
 
-export const API_URL = 'http://quest-tracker.lndo.site/api/'
-
-export function TempMenu (attr) {
-  const navigate = useNavigate()
-  async function sendLogout() {
-    console.log('clicked logout')
-    const logout_resp = await (await fetch(API_URL+'logout',{
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })).json()
-    if (logout_resp === true) {
-      navigate(`/login`, { state: {
-        'notices': [
-          {id: 'loggedOut', text: 'You have been logged out.' }
-        ]}
-      })
-    }
-  }
-  if (attr.loggedIn) {
-    const profileURL = "/profile/"+attr.username
-    return (
-      <div id="tempMenu">
-        <Link to={profileURL}>View Profile</Link>
-        <a href="#" onClick={sendLogout}>Logout</a>
-      </div>
-    ) 
-  } else {
-    return (
-      <div id="tempMenu">
-        <Link to="/login">Login</Link>
-        <Link to="/register">Create an Account</Link>
-        <Link to="/reset">Reset Your Password</Link>
-      </div>
-    )
-  }
-}
+const { LoggedInUserContext, GetLoggedInUserContext } = Context
 
 export function App() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [resp, setResp] = useState()
-  const [resp2, setResp2] = useState()
-  useEffect(() => {
-    handleClick()
-  }, [])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [loggedIn, setLoggedIn] = useState(null)
+  const [data, setData] = useState(null)
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const resp = await (await fetch(API_URL+'login', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    })).json()
-    setResp(resp)
+  useEffect(() => { getLoggedInUser() }, [])
+
+  let title = ''
+  if(loading) { title = 'Loading...' }
+  useTitle(title)
+
+  async function getLoggedInUser() {
+    setLoading(true)
+    try {
+      const resp = await api('users/$me')
+      if(resp.data?.anonymousUser || !resp.data?.username) {
+        setLoggedIn(false)
+      } else {
+        setLoggedIn(true)
+        setData(resp.data)
+      }
+    } catch (e) {
+      console.log(e)
+      setError(e)
+    } finally {
+      setLoading(false)
+    }
   }
-  async function handleClick(e) {
-    e && e.preventDefault()
-    const resp = await (await fetch(API_URL+'whoami', {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })).json()
-    setResp2(resp)
+  if(loading) {
+    return <div>Loading&hellip;</div>
   }
-  return (
-    <>
-      <p>Note: /login redirects here (/) unless they were trying to access a login-protected page that was stored in the state. This way they're not logging in against and again when already logged in.</p>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
-        <input type='text' placeholder='username' value={username} onChange={e => setUsername(e.target.value)} />
-        <input type='password' placeholder='password' value={password} onChange={e => setPassword(e.target.value)} />
-        <input type='submit' />
-      </form>
-      <h2>Response</h2>
-      {JSON.stringify(resp)}
-      <hr />
-      <button onClick={handleClick}>Who am I?</button>
-      <h2>Response</h2>
-      {JSON.stringify(resp2)}
-    </>
-  )
+  if(error) {
+    return <div>Error: {JSON.stringify(error)}</div>
+  }
+
+  if(loggedIn) {
+    return (
+      <LoggedInUserContext.Provider value={data}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<UserProfile />} />
+            <Route path="/verify" element={<UserVerifyEmail />} />
+          </Routes>
+        </BrowserRouter>
+      </LoggedInUserContext.Provider>
+    )
+  } else {
+    return (
+      <GetLoggedInUserContext.Provider value={getLoggedInUser}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/register" element={<UserRegister />} />
+            <Route path="/verify" element={<UserVerifyEmail />} />
+            <Route path="/reset" element={<UserResetPasswordRequest />} />
+            <Route path="/resetform" element={<UserResetPasswordFinish />} />
+            <Route path="/login" element={<UserLogin />} />
+          </Routes>
+        </BrowserRouter>
+      </GetLoggedInUserContext.Provider>
+    )
+  }
+
 }
 

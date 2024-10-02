@@ -19,5 +19,6 @@ createRoot(document.getElementById('root')).render(
       <Route path="/profile/edit" element={<UserEditProfile />} />
     </Routes>
     </BrowserRouter>
+    <App />
   </StrictMode>,
 )
