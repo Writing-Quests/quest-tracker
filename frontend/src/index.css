@@ -22,3 +22,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+hr {
+  width: 100px;
+  border: none;
+  border-top: 0.5px solid white;
+  margin: 30px auto;
+}

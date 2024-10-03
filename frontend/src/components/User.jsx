@@ -1,94 +1,14 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { getUserTZName } from '../timezones.js'
 import CONSTS from '../CONSTS'
-import styled from 'styled-components'
-import api from '../services/api'
-import Context from '../services/context'
-import useTitle from '../services/useTitle'
-import Input from './Forms/Input'
-import InputGroup from './Forms/InputGroup'
-import Page from './Page'
-import { AnimatedContainer, CenteredContainer } from './Containers'
+import { ErrorContainer } from './Containers'
 
-const { GetLoggedInUserContext } = Context
-
-const ErrorContainer = styled.div`
-  width: 100%;
-  background-color: #FFDCD3;
-  margin: 10px 0;
-  border: 1px solid #EA846A;
-  border-radius: 3px;
-  padding: 10px;
-`
 const { API_URL } = CONSTS
 
 function mapFailureArray ({ errors }) {
   const errList = errors.map((msg) => <ErrorContainer key={msg.id}>{msg.text}</ErrorContainer>)
   return errList
-}
-
-export function UserRegister () {
-  useTitle('Create an Account')
-  const navigate = useNavigate()
-  const [username,setUsername] = useState('')
-  const [email,setEmail] = useState('')
-  const [password,setPassword] = useState('')
-  const [confirmPassword,setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error,setError] = useState('')
-  async function handleSubmit (e) {
-    e && e.preventDefault()
-    setLoading(true)
-    try {
-      const currentTimezoneOffset = (new Date().getTimezoneOffset()/60) * -1 // not using this right now, but we have it
-      const data = {
-        timezone: getUserTZName(currentTimezoneOffset),
-        username: username,
-        email: email,
-        password: password
-      }
-      if (password !== confirmPassword) { throw new Error("Password do not match." ) }
-      if (password == '' || confirmPassword == '') { throw new Error("Password is required") }
-      if (username == '') { throw new Error("Username is required.") }
-      if (email == '') { throw new Error("Email is required.") }
-      if (error) { setError(null) }
-      const resp = await api.post('user/create/', data)
-      if (!resp.data.created) {
-        throw new Error(`Account not created: ${resp.data.errors[0].text}`)
-      } else {
-        let createStatus = 'Your account has been created! Log in to get started.'
-        if (resp.data.sentVerificationEmail) { createStatus += ' A verification email has been sent to your email address.'}
-        // TODO: route back to  login with the createStatus info
-      }
-    } catch (err) {
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-  const formProps = {disabled: loading}
-  return (
-    <Page>
-      <AnimatedContainer>
-        <CenteredContainer>
-          <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Create an Account</h1>
-          {error && error.status && <ErrorContainer>Unknown error. Try again.</ErrorContainer>}
-          {error && <ErrorContainer>{error.message}</ErrorContainer>}
-          <form onSubmit={handleSubmit}>
-            <InputGroup>
-              <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
-              <Input label='Email' type='email' value={email} onChange={e => setEmail(e.target.value)} {...formProps} />
-              <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
-              <Input label='Confirm Password' type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} {...formProps} />
-            </InputGroup>
-            <Input type='submit' value='Create Account' {...formProps} />
-          </form>
-        </CenteredContainer>
-      </AnimatedContainer>
-    </Page>
-  )
 }
 
 export function UserVerifyEmail () {

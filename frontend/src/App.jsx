@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import {
-  UserRegister,
   UserVerifyEmail,
   UserResetPasswordRequest,UserResetPasswordFinish
 } from './components/User'
 import UserProfile from './components/User/Profile'
 import Login from './components/Login'
-import { BrowserRouter,Routes,Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import api from './services/api'
 import Context from './services/context'
 import useTitle from './services/useTitle'
@@ -66,8 +65,8 @@ export function App() {
       <GetLoggedInUserContext.Provider value={getLoggedInUser}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/register" element={<UserRegister />} />
+            <Route path="/" element={<Login form='login' />} />
+            <Route path="/register" element={<Login form='register'/>} />
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/reset" element={<UserResetPasswordRequest />} />
             <Route path="/resetform" element={<UserResetPasswordFinish />} />

@@ -34,7 +34,7 @@ const Label = styled.label`
   }
 `
 
-const StyledButtonInput = styled.input`
+const CTAButton = styled.button`
   width: 100%;
   padding: 15px 0;
   margin-top: 6px;
@@ -55,17 +55,44 @@ const StyledButtonInput = styled.input`
     cursor: not-allowed;
     opacity: 0.75;
   }
-  &[^disabled]:hover {
+  &:not([disabled]):hover {
     border-bottom-width: 4px;
     top: -2px;
     background-color: #353535;
     margin-bottom: 0;
   }
-  &[^disabled]:active {
+  &:not([disabled]):active {
     border-bottom-width: 2px;
     top: 0;
     background-color: #252525;
     margin-bottom: 2px;
+  }
+`
+
+const OutlineButton = styled.button`
+  width: 100%;
+  padding: 15px 0;
+  margin-top: 6px;
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  &[disabled]{
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+  &:not([disabled]):hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    outline: 1px solid white;
+  }
+  &:not([disabled]):active {
+    background-color: rgba(255, 255, 255, 0.15);
+    outline: 2px solid #252525;
   }
 `
 
@@ -83,7 +110,7 @@ TextInput.propTypes = {
 
 // eslint-disable-next-line no-unused-vars
 function ButtonInput({elStyle, label: _,...props}) {
-  return <StyledButtonInput style={elStyle} {...props} />
+  return <CTAButton as="input" style={elStyle} {...props} />
 }
 ButtonInput.propTypes = {
   elStyle: PropTypes.object,
@@ -122,4 +149,17 @@ Input.propTypes = {
   firstInGroup: PropTypes.bool,
   lastInGroup: PropTypes.bool,
   type: PropTypes.string.isRequired,
+}
+
+export function Button({type, ...props}) {
+  switch(type) {
+    case 'outline':
+      return <OutlineButton {...props} />
+    case 'cta':
+    default:
+      return <CTAButton {...props} />
+  }
+}
+Button.propTypes = {
+  type: PropTypes.string,
 }
