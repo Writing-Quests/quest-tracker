@@ -88,8 +88,8 @@ class UserController extends AbstractController
       return $this->json($resp);
   }
 
-  #[Route('/api/password/request/', name: 'request_reset', methods: ['POST'])]
-  public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse 
+  #[Route('/api/password/request', name: 'request_reset', methods: ['POST'])]
+  public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse
   {
     $resp = [
       'errors'=>[],

@@ -11,6 +11,9 @@ const StyledTextInput = styled.input`
   &:focus {
     outline: none;
   }
+  &[readonly] {
+    cursor: not-allowed;
+  }
 `
 
 const Label = styled.label`
@@ -31,6 +34,10 @@ const Label = styled.label`
   &[disabled]{
     cursor: not-allowed;
     opacity: 0.75;
+  }
+  &[readonly] {
+    cursor: not-allowed;
+    filter: brightness(0.8);
   }
 `
 
@@ -96,8 +103,29 @@ const OutlineButton = styled.button`
   }
 `
 
+const LinkButton = styled.button`
+  width: 100%;
+  padding: 15px 0;
+  margin-top: 6px;
+  background-color: transparent;
+  color: white;
+  border: none;
+  font-weight: normal;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  &[disabled]{
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+  &:not([disabled]):hover {
+    text-decoration: underline;
+  }
+`
+
 function TextInput({elStyle, label, ...props}) {
-  return <Label style={elStyle} disabled={props.disabled}>
+  return <Label style={elStyle} disabled={props.disabled} readOnly={props.readOnly}>
     <span style={{position: 'relative', top: '-4px'}}>{label}</span>
     <StyledTextInput {...props} />
   </Label>
@@ -156,8 +184,10 @@ export function Button({type, ...props}) {
     case 'outline':
       return <OutlineButton {...props} />
     case 'cta':
-    default:
       return <CTAButton {...props} />
+    case 'link':
+    default:
+      return <LinkButton {...props} />
   }
 }
 Button.propTypes = {

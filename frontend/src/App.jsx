@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   UserVerifyEmail,
-  UserResetPasswordRequest,UserResetPasswordFinish
+  UserResetPasswordFinish
 } from './components/User'
 import UserProfile from './components/User/Profile'
 import Login from './components/Login'
@@ -67,8 +67,8 @@ export function App() {
           <Routes>
             <Route path="/" element={<Login form='login' />} />
             <Route path="/register" element={<Login form='register'/>} />
+            <Route path="/reset" element={<Login form='reset' />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
-            <Route path="/reset" element={<UserResetPasswordRequest />} />
             <Route path="/resetform" element={<UserResetPasswordFinish />} />
           </Routes>
         </BrowserRouter>

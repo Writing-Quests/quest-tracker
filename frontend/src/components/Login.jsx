@@ -11,6 +11,42 @@ import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer 
 
 const { GetLoggedInUserContext } = Context
 
+function PasswordResetForm() {
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  async function submitResetPassword(e) {
+    e && e.preventDefault()
+    setLoading(true)
+    setError(null)
+    try {
+      const apiResult = await api.post('password/request', {email})
+      if (!apiResult.data?.emailSent) { // email not sent
+        const errorMessage = apiResult.data.errors?.[0]?.text || "password reset request wasn't processed"
+        setError(`Error: ${errorMessage}`)
+      } else {
+        setSuccess(true)
+      }
+    } catch {
+      setError("Error: password reset request wasn't processed.")
+    } finally {
+      setLoading(false)
+    }
+  }
+  const formProps = {disabled: loading}
+  return <>
+    <h2 style={{color: 'white'}}>Reset your password</h2>
+    {success && <SuccessContainer>Success! Your password reset link has been sent to your email address. The link will expire in 24 hours.</SuccessContainer>}
+    {error && <ErrorContainer>{error}</ErrorContainer>}
+    <form onSubmit={submitResetPassword}>
+      <Input type='email' id='email' placeholder='you@example.com' required value={email} onChange={(e) => setEmail(e.target.value)} label='Email address' {...formProps} />
+      <Input type="submit" value="Reset password" />
+    </form>
+  </>
+}
+
 function RegisterForm({onSuccess}) {
   useTitle('New account')
   const [username, setUsername] = useState('')
@@ -116,10 +152,12 @@ export default function Login({form: initialForm}) {
   function handleChangeForm(newForm) {
     setForm(newForm)
     // This is just a cosmetic URL change that bypasses react router
-    if(newForm === 'login') {
-      window.history.pushState('login', 'Login', '/')
-    } else {
+    if(newForm === 'register') {
       window.history.pushState('register', 'Register', '/register')
+    } else if (newForm === 'reset') {
+      window.history.pushState('reset', 'Reset Password', '/reset')
+    } else {
+      window.history.pushState('login', 'Login', '/')
     }
   }
 
@@ -146,13 +184,18 @@ export default function Login({form: initialForm}) {
                 </>
               }
               <LoginForm />
-            </> : <>
+              <Button type='link' onClick={() => handleChangeForm('reset')}>Forgot your password?</Button>
+            </> : (form === 'register') ? <>
               <RegisterForm onSuccess={handleNewAccount} />
               <hr />
               <Button type='outline' onClick={() => handleChangeForm('login')}>
                 <span style={{fontWeight: '200'}}>Already have an account?</span> Log in
               </Button>
-            </>}
+            </> : (form === 'reset') ? <>
+              <PasswordResetForm />
+              <Button type='link' onClick={() => handleChangeForm('login')}>&larr; Log in</Button>
+            </>
+            : <div>Page not found</div>}
         </CenteredContainer>
       </AnimatedContainer>
     </Page>
