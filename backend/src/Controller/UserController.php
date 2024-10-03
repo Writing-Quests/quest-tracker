@@ -163,18 +163,10 @@ class UserController extends AbstractController
     return $this->json($resp);
   }
 
-  #[Route('api/profile/get', name: 'view_profile', methods: ['GET','POST'])]
+  #[Route('api/profile/get', name: 'view_profile_grab', methods: ['GET'])]
   public function getUserProfile (#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse 
   {
     try {
-      // my thinking: GET === looking at a profile; POST === getting fields in order to edit. Toying with it. 
-      /*
-      IF POST: 
-      return $this->json([
-          'message' => 'missing credentials',
-          'loggedIn' => false,
-        ], Response::HTTP_UNAUTHORIZED);
-      */
       $loggedIn = ($user != null); // this is stupid i hate this lol
       $loggedInUser = ($loggedIn) ? $user->getUserIdentifier() : null;
       /*
@@ -182,46 +174,10 @@ class UserController extends AbstractController
         
       */
       // https://docs.gravatar.com/api/avatars/images/
-      if ($request->isMethod('GET')) {
-        $req_username = $request->query->get('username');
-        $req_user_info = $entityManager->getRepository(User::class)->findOneBy(['username'=>$req_username]);
-        $profileOwner = ($user->getUserIdentifier() == $req_username);
-        $profilePublic = $req_user_info->isPublic();
-      } else if ($request->isMethod('POST')) { # POST used on edit profile 
-        $req_username = $loggedInUser;
-        $req_user_info = $user; 
-        if (!$loggedIn) {
-          return $this->json([
-            'message' => 'missing credentials',
-            'loggedIn' => false,
-          ], Response::HTTP_UNAUTHORIZED);
-        }
-      }
-      $profileOwner = ($user->getUserIdentifier() == $req_username);
-      $profilePublic = $req_user_info->isPublic();
-      if ((!$profileOwner || !$loggedIn) && !$profilePublic) { 
-        // two conditionals; 
-        //  if you're not the profile owner and the profile is not public
-        //  if you're not logged in and the profile is not public
-        throw $this->createNotFoundException('Profile not found');
-      }
-      // TODO: this will need to return project data as well in the future
-      $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $req_user_info->getEmail() ) ) ) . '?d=404&s=100&r=pg';
-      $resp = [
-        'username'=>$req_user_info->getUsername(),
-        'link'=>$req_user_info->getLink(),
-        'description'=>$req_user_info->getDescription(),
-        'gravatar'=>$gravatar_url,
-        'loggedIn'=>$loggedIn,
-        'loggedInUser'=>$loggedInUser,
-        'profileOwner'=>$profileOwner,
-        'public'=>$profilePublic
-      ];
-      if ($request->isMethod('POST')) {
-        $resp['email'] = $user->getEmail();
-        $resp['unverifiedEmail'] = $user->getUnverifiedEmail();
-        $resp['emailVerified'] = ($user->getUnverifiedEmail() == null); // unverifiedmail is set to null when email is verified
-      }
+      
+      $requested_username = $request->query->get('username');
+      $requested_user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$requested_username]);
+      $resp = (new UserProfile())->getProfileInfo($requested_user,$user);
     } catch (\Exception $err) {
       $resp = [
         'loggedIn'=>$loggedIn,
@@ -276,6 +232,36 @@ class UserController extends AbstractController
   }
 }
 
+class UserProfile {
+  public function getProfileInfo($requested_user,$loggedIn_user) {
+    $profile = [];
+    $profilePublic = $requested_user->isPublic();
+    $profileOwner = ($loggedIn_user->getUserIdentifier() == $requested_user->getUserIdentifier());
+    $profilePublic = $requested_user->isPublic();
+    if ((!$profileOwner || $loggedIn_user != null) && !$profilePublic) { 
+      // two conditionals; 
+      //  if you're not the profile owner and the profile is not public
+      //  if you're not logged in and the profile is not public
+      return null;
+    }
+    // TODO: this will need to return project data as well in the future
+    $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $requested_user->getEmail() ) ) ) . '?d=404&s=100&r=pg';
+    $profile = [
+      'username'=>$requested_user->getUsername(),
+      'link'=>$requested_user->getLink(),
+      'description'=>$requested_user->getDescription(),
+      'gravatar'=>$gravatar_url,
+      'profileOwner'=>$profileOwner,
+      'public'=>$profilePublic
+    ];
+    if ($profileOwner) {
+      $profile['email'] = $requested_user->getEmail();
+      $profile['unverifiedEmail'] = $requested_user->getUnverifiedEmail();
+      $profile['emailVerified'] = ($requested_user->getUnverifiedEmail() == null); // unverifiedmail is set to null when email is verified
+    }
+    return $profile;
+  }
+}
 
 class SendEmails {
   public function sendFirstVerification ($mailer, $username, $email, $verifyEmailURL) {
