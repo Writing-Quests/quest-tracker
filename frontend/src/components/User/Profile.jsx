@@ -1,7 +1,8 @@
-import { useContext } from 'react'
+import { useContext,useState,useEffect } from 'react'
 import context from '../../services/context'
 import Page from '../Page'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
+import api from '../../services/api'
 
 const { LoggedInUserContext } = context
 
@@ -23,9 +24,16 @@ const GOAL = 50000
 const LENGTH = 30
 
 export default function Profile () {
+  async function getProfileInformation ({username}) {
+    const resp = await api.get('profile/get', { params: { 'username': username }})
+    setProfile(resp.data)
+  }
   const user = useContext(LoggedInUserContext)
+  const [profile,setProfile] = useState('')
+  useEffect(() => {
+    getProfileInformation(user)
+  },[user])
   return <Page>
-    <p>Welcome {user.username}! Your email address is {user.email}.</p>
     <ResponsiveContainer width={1000} height={500}>
       <AreaChart data={EXAMPLE_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
         <defs>
@@ -42,5 +50,9 @@ export default function Profile () {
         <ReferenceLine label="Par" stroke="green" strokeDasharray="3 3" segment={[{ x: 1, y: 0 }, { x: LENGTH, y: GOAL}]} />
       </AreaChart>
     </ResponsiveContainer>
+    <h1>{user.username}</h1>
+    {profile.link && <div><a href={profile.link} target="_blank">{profile.link}</a></div>}
+    {profile.description && <div>${profile.description}</div>}
+    {profile.profileOwner === false && <div>Report</div>}
   </Page>
 }

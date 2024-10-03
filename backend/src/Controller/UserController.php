@@ -163,16 +163,12 @@ class UserController extends AbstractController
     return $this->json($resp);
   }
 
-  #[Route('api/profile/get', name: 'view_profile_grab', methods: ['GET'])]
+  #[Route('api/profile/get', name: 'view_profile', methods: ['GET'])]
   public function getUserProfile (#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse 
   {
     try {
       $loggedIn = ($user != null); // this is stupid i hate this lol
       $loggedInUser = ($loggedIn) ? $user->getUserIdentifier() : null;
-      /*
-        TODO: return unauthorized if the user is not logged in and the profile is private. buddies don't exist yet, but later, check for that.
-        
-      */
       // https://docs.gravatar.com/api/avatars/images/
       
       $requested_username = $request->query->get('username');
@@ -210,7 +206,7 @@ class UserController extends AbstractController
           break;
 
           case 'public':
-            $user->isPublic($value);
+            $user->setPublic($value);
           break;
 
           case 'emailChange':
@@ -238,7 +234,7 @@ class UserProfile {
     $profilePublic = $requested_user->isPublic();
     $profileOwner = ($loggedIn_user->getUserIdentifier() == $requested_user->getUserIdentifier());
     $profilePublic = $requested_user->isPublic();
-    if ((!$profileOwner || $loggedIn_user != null) && !$profilePublic) { 
+    if ((!$profileOwner || $loggedIn_user == null) && !$profilePublic) { 
       // two conditionals; 
       //  if you're not the profile owner and the profile is not public
       //  if you're not logged in and the profile is not public

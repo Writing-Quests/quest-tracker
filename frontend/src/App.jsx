@@ -55,6 +55,7 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<UserProfile />} />
+            <Route path="/profile/:username" element={<UserProfile />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
           </Routes>
         </BrowserRouter>
