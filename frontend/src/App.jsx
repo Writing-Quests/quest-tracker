@@ -54,7 +54,7 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<UserProfile />} />
-            <Route path="/profile/:username" element={<UserProfile />} />
+            <Route path="/profile/:username?" element={<UserProfile />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
           </Routes>
         </BrowserRouter>
@@ -70,6 +70,8 @@ export function App() {
             <Route path="/reset" element={<Login form='reset' />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/resetform" element={<UserResetPasswordFinish />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/profile/:username?" element={<UserProfile />} />
           </Routes>
         </BrowserRouter>
       </GetLoggedInUserContext.Provider>
