@@ -1,122 +1,94 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useContext } from 'react'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { getUserTZName } from '../timezones.js'
 import CONSTS from '../CONSTS'
+import styled from 'styled-components'
+import api from '../services/api'
+import Context from '../services/context'
+import useTitle from '../services/useTitle'
+import Input from './Forms/Input'
+import InputGroup from './Forms/InputGroup'
+import Page from './Page'
+import { AnimatedContainer, CenteredContainer } from './Containers'
 
+const { GetLoggedInUserContext } = Context
+
+const ErrorContainer = styled.div`
+  width: 100%;
+  background-color: #FFDCD3;
+  margin: 10px 0;
+  border: 1px solid #EA846A;
+  border-radius: 3px;
+  padding: 10px;
+`
 const { API_URL } = CONSTS
 
 function mapFailureArray ({ errors }) {
-  const errList = errors.map((msg) => <li key={msg.id}>{msg.text}</li>);
-  return errList;
+  const errList = errors.map((msg) => <ErrorContainer key={msg.id}>{msg.text}</ErrorContainer>)
+  return errList
 }
 
 export function UserRegister () {
-  const {
-    register,
-    handleSubmit,
-    setError,
-    clearErrors,
-    formState: { errors },
-  } = useForm()
+  useTitle('Create an Account')
   const navigate = useNavigate()
-  const [registerFailures,setRegisterFailures] = useState('')
-  async function onSubmit (data) {
-    const currentTimezoneOffset = (new Date().getTimezoneOffset()/60) * -1 // not using this right now, but we have it
-    if (data.password === data.confirmPassword) {
-      data.timezone = getUserTZName(currentTimezoneOffset);
-      const apiResult = await (await fetch(API_URL+'user/create/', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })).json()
-      if (!apiResult.created) {
-        setRegisterFailures(mapFailureArray(apiResult));
-      } else {
-        navigate(`/login`, { state: {
-          'notices': [
-            {id: 'created', text: (apiResult.created) ? 'Your account has been created! Log in to get started.' : null },
-            {id: 'sentVerificationEmail', text: (apiResult.sentVerificationEmail) ? 'A verification email has been sent to your email address.': null }
-          ]}
-        })
+  const [username,setUsername] = useState('')
+  const [email,setEmail] = useState('')
+  const [password,setPassword] = useState('')
+  const [confirmPassword,setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error,setError] = useState('')
+  async function handleSubmit (e) {
+    e && e.preventDefault()
+    setLoading(true)
+    try {
+      const currentTimezoneOffset = (new Date().getTimezoneOffset()/60) * -1 // not using this right now, but we have it
+      const data = {
+        timezone: getUserTZName(currentTimezoneOffset),
+        username: username,
+        email: email,
+        password: password
       }
-    } else {
-      setError("passwordMatch", { type: "custom", message: "Password do not match" })
+      if (password !== confirmPassword) { throw new Error("Password do not match." ) }
+      if (password == '' || confirmPassword == '') { throw new Error("Password is required") }
+      if (username == '') { throw new Error("Username is required.") }
+      if (email == '') { throw new Error("Email is required.") }
+      if (error) { setError(null) }
+      const resp = await api.post('user/create/', data)
+      if (!resp.data.created) {
+        throw new Error(`Account not created: ${resp.data.errors[0].text}`)
+      } else {
+        let createStatus = 'Your account has been created! Log in to get started.'
+        if (resp.data.sentVerificationEmail) { createStatus += ' A verification email has been sent to your email address.'}
+        // TODO: route back to  login with the createStatus info
+      }
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
     }
   }
+  const formProps = {disabled: loading}
   return (
-    <>
-    <h1>Create an Account</h1>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <label htmlFor="username">Username</label>
-        <input {...register("username", { required: true})}/>
-
-        <label htmlFor='email'>Email Address</label>
-        <input type='email' {...register("email", { required: true })}/>
-
-        <label htmlFor='password'>Password</label>
-        <input type='password' {...register('password', { required: true })} />
-
-        <label htmlFor='confirmPassword'>Confirm Password</label>
-        <input type='password' {...register('confirmPassword', { required: true })} />
-
-        <input type="submit" value="Register" onClick={(e) => clearErrors()} />
-     </form>
-     <Link to="/login">Log in to your account</Link> | <Link to="/reset">Reset Your Password</Link>
-
-    <ul className='formErrors'>
-      {errors.username && <li>Username field is required</li>}
-      {errors.email && <li>A valid email address is required</li>}
-      {errors.passwordMatch && <li>Passwords do not match</li>}
-      {registerFailures}
-    </ul>
-    </>
+    <Page>
+      <AnimatedContainer>
+        <CenteredContainer>
+          <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Create an Account</h1>
+          {error && error.status && <ErrorContainer>Unknown error. Try again.</ErrorContainer>}
+          {error && <ErrorContainer>{error.message}</ErrorContainer>}
+          <form onSubmit={handleSubmit}>
+            <InputGroup>
+              <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
+              <Input label='Email' type='email' value={email} onChange={e => setEmail(e.target.value)} {...formProps} />
+              <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
+              <Input label='Confirm Password' type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} {...formProps} />
+            </InputGroup>
+            <Input type='submit' value='Create Account' {...formProps} />
+          </form>
+        </CenteredContainer>
+      </AnimatedContainer>
+    </Page>
   )
 }
-
-export function UserLogin () {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [resp, setResp] = useState()
-  const [notices, setNotices] = useState('');
-  const {state} = useLocation();
-  useEffect(() => {
-    if (state.notices) {
-      const notices = state.notices.map((notices) => <p key={notices.id}>{notices.text}</p>)
-      setNotices(notices);
-    }
-  },[])
-  async function handleSubmit(e) {
-    e.preventDefault()
-    const resp = await (await fetch(API_URL+'login', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    })).json()
-    setResp(resp)
-  }
-  return (
-    <>
-      <h1>Login</h1>
-      {notices}
-      <form onSubmit={handleSubmit}>
-        <input type='text' placeholder='username' value={username} onChange={e => setUsername(e.target.value)} />
-        <input type='password' placeholder='password' value={password} onChange={e => setPassword(e.target.value)} />
-        <input type='submit' />
-      </form>
-      <Link to="/register">Create Account</Link> | <Link to="/reset">Reset Password</Link>
-      <h2>Response</h2>
-      {JSON.stringify(resp)}
-    </>
-  )
-}
-
 
 export function UserVerifyEmail () {
   async function checkTokenData (email,token) {
@@ -130,7 +102,7 @@ export function UserVerifyEmail () {
     if (resp.verified === true) {
       redirect_state['state']['notices'].push({ 'id': 'email-verified', 'text': 'Your email address has been verified.'})
     } else {
-      redirect_state['state']['notices'] = resp.errors;
+      redirect_state['state']['notices'] = resp.errors
     }
     navigate('/login', redirect_state)
   }
@@ -140,7 +112,7 @@ export function UserVerifyEmail () {
   const email = queryParameters.get('e')
   const token = queryParameters.get('t')
   useEffect(() => {
-    checkTokenData(email,token);
+    checkTokenData(email,token)
   },[])
   return (
     <>
@@ -187,7 +159,6 @@ export function UserResetPasswordRequest () {
 }
 
 export function UserResetPasswordFinish () {
-  // eslint-disable-next-line no-unused-vars
   const [queryParameters, setQueryParameters] = useSearchParams()
   const email = queryParameters.get('e')
   const token = queryParameters.get('t')
@@ -209,7 +180,7 @@ export function UserResetPasswordFinish () {
       setTokenError(mapFailureArray(resp))
     } else {
       setTokenValid(true)
-      setUsername(resp.username);
+      setUsername(resp.username)
     }
   }
   function ResetForm (attr) {
@@ -224,7 +195,7 @@ export function UserResetPasswordFinish () {
           body: JSON.stringify(data),
         })).json()
         if (!apiResult.passwordChanged) {
-          (mapFailureArray(apiResult));
+          (mapFailureArray(apiResult))
         } else {
           navigate(`/login`, { state: {
             'notices': [

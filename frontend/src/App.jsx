@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import {
   UserRegister,
   UserVerifyEmail,
-  UserLogin,
   UserResetPasswordRequest,UserResetPasswordFinish
 } from './components/User'
 import UserProfile from './components/User/Profile'
@@ -56,6 +55,7 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<UserProfile />} />
+            <Route path="/profile/:username" element={<UserProfile />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
           </Routes>
         </BrowserRouter>
@@ -71,7 +71,7 @@ export function App() {
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/reset" element={<UserResetPasswordRequest />} />
             <Route path="/resetform" element={<UserResetPasswordFinish />} />
-            <Route path="/login" element={<UserLogin />} />
+            <Route path="/login" element={<Login />} />
           </Routes>
         </BrowserRouter>
       </GetLoggedInUserContext.Provider>
