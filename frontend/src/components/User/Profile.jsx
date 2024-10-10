@@ -1,12 +1,12 @@
 import { useContext, useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import axios from 'axios'
 import context from '../../services/context'
 import Page from '../Page'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import api from '../../services/api'
 import Notices from '../Notices'
+import Loading from '../Loading'
 
 const { LoggedInUserContext } = context
 
@@ -35,21 +35,24 @@ const GOAL = 50000
 const LENGTH = 30
 
 export default function Profile () {
-  async function getProfileInformation (username) {
+  async function getProfileInformation(username) {
     if (username !== '') {
-      const resp = await api.get('profile/get', { params: { 'username': username }})
-      const gravatar = await axios.get(resp.data.gravatar);
-      console.log(gravatar)
+      let resp
+      try {
+        resp = await api.get('profile/get', { params: { 'username': username }})
+      } catch (e) {
+        console.error('Error getting profile')
+        console.error(e)
+      }
       setProfile(resp.data)
-      console.log(profile)
       setLoading(false)
     }
   }
-  const [profile,setProfile] = useState('')
-  const [loading,setLoading] = useState(true)
-  const [lookupUser,setLookupUser] = useState('')
+  const [profile, setProfile] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [lookupUser, setLookupUser] = useState('')
   const user = useContext(LoggedInUserContext)
-  const {username} = useParams();
+  const { username } = useParams()
   useEffect(() => {
     if (!username && !user) { // user is not logged in and viewing their own profile via /profile
       window.location.href = '/'
@@ -59,12 +62,18 @@ export default function Profile () {
     console.log(lookupUser)
     getProfileInformation(lookupUser)
   }, [user])
+  if(loading) {
+    return <Page>
+      <Notices />
+      <h1>Loading&hellip;</h1>
+      <Loading />
+    </Page>
+  }
   return <Page>
     <Notices />
     <UserAvatar src={profile.gravatar} alt="User avatar for user, via Gravatar" />
-    <h1>{username}</h1>
-    {profile.link && <div><a href={profile.link} target="_blank">{profile.link}</a></div>}
-    {profile.description && <div>${profile.description}</div>}
+    <h1>{profile.username}</h1>
+    {profile.description && <div>{profile.description}</div>}
     {profile.profileOwner === false && <div>Report</div>}
     <ResponsiveContainer width={1000} height={500}>
       <AreaChart data={EXAMPLE_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
