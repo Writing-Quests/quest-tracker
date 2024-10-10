@@ -1,4 +1,5 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useRef } from 'react'
+import PropTypes from 'prop-types'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import api from '../services/api'
@@ -61,13 +62,74 @@ export function UserVerifyEmail () {
   </Page>
 }
 
-export function UserResetPasswordFinish () {
+// TODO: What happens if someone is already logged in?
+function ResetForm({username, email}) {
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [formValidity, setFormValidity] = useState(false)
+  const formRef = useRef(null)
+  const navigate = useNavigate()
+  useEffect(() => {
+    if(!formRef?.current) { return }
+    setFormValidity(formRef.current.checkValidity())
+  }, [formRef, password, confirmPassword])
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError(null)
+    if(loading) { return }
+    if(!formValidity) { return }
+    if(password !== confirmPassword) { return }
+    setLoading(true)
+    try {
+      const res = await api.post('password/submit', {username, email, password})
+      if(res?.data?.passwordChanged) {
+        navigate('/login', {state: {notices: [{type: 'success', text: 'Your password has been updated. Login to continue.'}]}})
+      } else {
+        if(res?.data?.errors) {
+          setError(`Error: Couldn't change password. ${JSON.stringify(res.data.errors)}`)
+        }
+      }
+    } catch(e) {
+      console.error(e)
+      setError("Error: Couldn't change password")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formProps = {disabled: loading}
+
+  return <>
+    {error && <ErrorContainer>{error}</ErrorContainer>}
+    <form onSubmit={handleSubmit} ref={formRef}>
+      <InputGroup>
+        <Input type='text' readOnly={true} value={username} label='Username' />
+        <Input type='email' value={email} readOnly={true} label='Email address' />
+      </InputGroup>
+      <InputGroup>
+        <Input type='password' label='New password' required={true} value={password} onChange={e => setPassword(e.target.value)} minLength='4' {...formProps} />
+        <Input type='password' label='Confirm new password' required={true} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} minLength='4' {...formProps} />
+      </InputGroup>
+      <Input type="submit" value="Reset password" {...formProps} />
+    </form>
+    {(password !== confirmPassword && password.length > 1 && confirmPassword.length > 1) && <ErrorContainer>Passwords must match</ErrorContainer>}
+  </>
+}
+ResetForm.propTypes = {
+  username: PropTypes.string.isRequired,
+  email: PropTypes.string.isRequired,
+}
+
+export function UserResetPasswordFinish() {
   const [queryParameters] = useSearchParams()
   const email = queryParameters.get('e')
   const token = queryParameters.get('t')
   const [username, setUsername] = useState('')
   const [tokenValid,setTokenValid] = useState('')
-  const [tokenError,setTokenError] = useState('')
+  const [tokenError, setTokenError] = useState('')
   const [loading, setLoading] = useState(false)
   useEffect(() => {
     checkTokenData()
@@ -89,62 +151,15 @@ export function UserResetPasswordFinish () {
       setLoading(false)
     }
   }
-  function ResetForm (attr) {
-    async function onSubmit (data) {
-      if (data.password === data.confirmPassword) {
-        const apiResult = await api.post('password/submit', data)
-        if (!apiResult.data.passwordChanged) {
-          (mapFailureArray(apiResult.data))
-        } else {
-          navigate(`/login`, { state: {
-            'notices': [
-              {id: 'changed', text: (apiResult.data.passwordChanged) ? 'Your password has been updated.' : null }
-            ]}
-          })
-        }
-      } else {
-        setError("passwordMatch", { type: "custom", message: "Password do not match" })
-      }
-    }
-
-   const navigate = useNavigate()
-    const {
-      register,
-      handleSubmit,
-      clearErrors,
-      setError,
-      formState: { errors },
-    } = useForm()
-    if (attr.display === true) {
-      return <>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <InputGroup>
-            <Input {...register("username")} readOnly={true} value={attr.username} label='Username' />
-            <Input type='email' {...register("email")} value={attr.email} readOnly={true} label='Email address' />
-          </InputGroup>
-          <InputGroup>
-            <Input type='password' {...register('password', { required: true })} label='New password' />
-            <Input type='password' {...register('confirmPassword', { required: true })} label='Confirm new password' />
-          </InputGroup>
-          <Input type="submit" value="Register" onClick={() => clearErrors()} />
-        </form>
-        <ul className='formErrors'>
-          {errors.passwordMatch && <li>Passwords do not match</li>}
-        </ul>
-      </>
-    }
-  }
-  return (
-    <Page>
-      <AnimatedContainer>
-        <CenteredContainer>
-          <Button type='link' as={Link} to='/'>&larr; Log in</Button>
-          <h1 style={{color: 'white'}}>Reset Your Password</h1>
-          <ul>{tokenError}</ul>
-          {loading && <div>Loading&hellip;</div>}
-          <ResetForm display={tokenValid} token={token} username={username} email={email} />
-        </CenteredContainer>
-      </AnimatedContainer>
-    </Page>
-  )
+  return <Page>
+    <AnimatedContainer>
+      <CenteredContainer>
+        <Button type='link' as={Link} to='/'>&larr; Log in</Button>
+        <h1 style={{color: 'white'}}>Reset Your Password</h1>
+        {tokenError}
+        {loading && <Loading />}
+        {tokenValid && <ResetForm token={token} username={username} email={email} />}
+      </CenteredContainer>
+    </AnimatedContainer>
+  </Page>
 }

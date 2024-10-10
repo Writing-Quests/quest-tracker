@@ -42,10 +42,10 @@ function PasswordResetForm() {
     <h2 style={{color: 'white'}}>Reset your password</h2>
     {success && <SuccessContainer>Success! Your password reset link has been sent to your email address. The link will expire in 24 hours.</SuccessContainer>}
     {error && <ErrorContainer>{error}</ErrorContainer>}
-    <form onSubmit={submitResetPassword}>
+    {success || <form onSubmit={submitResetPassword}>
       <Input type='email' id='email' placeholder='you@example.com' required value={email} onChange={(e) => setEmail(e.target.value)} label='Email address' {...formProps} />
       <Input type="submit" value="Reset password" />
-    </form>
+    </form>}
   </>
 }
 
