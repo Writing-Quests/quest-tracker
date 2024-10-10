@@ -5,7 +5,7 @@ import {
 } from './components/User'
 import UserProfile from './components/User/Profile'
 import Login from './components/Login'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import api from './services/api'
 import Context from './services/context'
 import useTitle from './services/useTitle'
@@ -56,6 +56,7 @@ export function App() {
             <Route path="/" element={<UserProfile />} />
             <Route path="/profile/:username?" element={<UserProfile />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
+            <Route path="*" element={<Navigate to='/' replace />} />
           </Routes>
         </BrowserRouter>
       </LoggedInUserContext.Provider>
