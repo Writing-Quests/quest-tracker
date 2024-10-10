@@ -1,4 +1,4 @@
-import { useContext,useState,useEffect } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import axios from 'axios'
@@ -6,6 +6,7 @@ import context from '../../services/context'
 import Page from '../Page'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import api from '../../services/api'
+import Notices from '../Notices'
 
 const { LoggedInUserContext } = context
 
@@ -57,8 +58,9 @@ export default function Profile () {
     }
     console.log(lookupUser)
     getProfileInformation(lookupUser)
-  },[user])
+  }, [user])
   return <Page>
+    <Notices />
     <UserAvatar src={profile.gravatar} alt="User avatar for user, via Gravatar" />
     <h1>{username}</h1>
     {profile.link && <div><a href={profile.link} target="_blank">{profile.link}</a></div>}

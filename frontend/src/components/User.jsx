@@ -1,49 +1,64 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import api from '../services/api'
+import context from '../services/context'
 import Input, { Button } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
-import CONSTS from '../CONSTS'
 import Page from './Page'
+import Loading from './Loading'
 import { AnimatedContainer, CenteredContainer, ErrorContainer } from './Containers'
 
-const { API_URL } = CONSTS
+const { LoggedInUserContext } = context
 
 function mapFailureArray ({ errors }) {
   const errList = errors.map((msg) => <ErrorContainer key={msg.id}>{msg.text}</ErrorContainer>)
   return errList
 }
 
+// TODO: what happens when a user tries to verify while logged into another account?
 export function UserVerifyEmail () {
-  async function checkTokenData (email,token) {
-    const resp = await (await fetch(API_URL+`user/verify?e=${email}&t=${token}&type=verify-email`, {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })).json()
-    const redirect_state = { state: { notices: []}}
-    if (resp.verified === true) {
-      redirect_state['state']['notices'].push({ 'id': 'email-verified', 'text': 'Your email address has been verified.'})
-    } else {
-      redirect_state['state']['notices'] = resp.errors
-    }
-    navigate('/login', redirect_state)
-  }
-  // eslint-disable-next-line no-unused-vars
-  const [queryParameters, setQueryParameters] = useSearchParams()
+  const loggedIn = Boolean(useContext(LoggedInUserContext))
+  const [queryParameters] = useSearchParams()
   const navigate = useNavigate()
   const email = queryParameters.get('e')
   const token = queryParameters.get('t')
   useEffect(() => {
-    checkTokenData(email, token)
-  }, [email, token])
-  return (
-    <>
-      <svg xmlns="http://www.w3.org/2000/svg" width={96} height={96} viewBox="0 0 24 24"><g fill="none" stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}><path strokeDasharray={16} strokeDashoffset={16} d="M12 3c4.97 0 9 4.03 9 9"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="16;0"></animate><animateTransform attributeName="transform" dur="1.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"></animateTransform></path><path strokeDasharray={64} strokeDashoffset={64} strokeOpacity={0.3} d="M12 3c4.97 0 9 4.03 9 9c0 4.97 -4.03 9 -9 9c-4.97 0 -9 -4.03 -9 -9c0 -4.97 4.03 -9 9 -9Z"><animate fill="freeze" attributeName="stroke-dashoffset" dur="1.2s" values="64;0"></animate></path></g></svg>
-    </>
-  )
+    (async () => {
+      let resp
+      let message
+      try {
+        if(!email || !token) {
+          throw new Error("Invalid verification link")
+        }
+        resp = await api.get('user/verify', {params:
+          {e: email, t: token, type: 'verify-email'}
+        })
+        if (resp.data.verified === true) {
+          message = {type: 'success', text: `Your email address (${email}) has been verified!`}
+        } else {
+          message = {type: 'error', text: `Error verifying your email address: ${JSON.stringify(resp.errors)}`}
+        }
+      } catch (e) {
+        console.log(e)
+        message = {type: 'error', text: `Error verifying your email address`}
+      }
+      if(loggedIn) {
+        navigate('/profile', {state: {notices: [message]}})
+      }
+      else {
+        navigate('/login', {state: {notices: [message]}})
+      }
+    })()
+  }, [email, token, loggedIn, navigate])
+  return <Page>
+    <AnimatedContainer>
+      <CenteredContainer>
+        <h1 style={{color: 'white'}}>Verifying your email address&hellip;</h1>
+        <Loading />
+      </CenteredContainer>
+    </AnimatedContainer>
+  </Page>
 }
 
 export function UserResetPasswordFinish () {

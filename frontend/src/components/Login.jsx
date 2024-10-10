@@ -1,5 +1,6 @@
 import { useState, useContext } from 'react'
 import PropTypes from 'prop-types'
+import { useLocation } from 'react-router-dom'
 import api from '../services/api'
 import Context from '../services/context'
 import useTitle from '../services/useTitle'
@@ -8,6 +9,7 @@ import InputGroup from './Forms/InputGroup'
 import Page from './Page'
 import { getUserTZName } from '../timezones.js'
 import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer } from './Containers'
+import Notices from './Notices'
 
 const { GetLoggedInUserContext } = Context
 
@@ -148,6 +150,7 @@ function LoginForm() {
 export default function Login({form: initialForm}) {
   const [form, setForm] = useState(initialForm || 'login')
   const [madeNewAccount, setMadeNewAccount] = useState(false)
+  const location = useLocation()
 
   function handleChangeForm(newForm) {
     setForm(newForm)
@@ -166,40 +169,39 @@ export default function Login({form: initialForm}) {
     setMadeNewAccount(true)
   }
 
-  return (
-    <Page>
-      <AnimatedContainer>
-        <CenteredContainer>
-          <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Welcome!</h1>
-          {(form === 'login') ?
-            <>
-              {madeNewAccount ?
-                <SuccessContainer>Your account has been created! Log in to get started.</SuccessContainer>
-              :
-                <>
-                  <Button type='outline' onClick={() => handleChangeForm('register')}>
-                    Create new account <span style={{fontWeight: '200'}}>(100% free!)</span>
-                  </Button>
-                  <hr />
-                </>
-              }
-              <LoginForm />
-              <Button type='link' onClick={() => handleChangeForm('reset')}>Forgot your password?</Button>
-            </> : (form === 'register') ? <>
-              <RegisterForm onSuccess={handleNewAccount} />
-              <hr />
-              <Button type='outline' onClick={() => handleChangeForm('login')}>
-                <span style={{fontWeight: '200'}}>Already have an account?</span> Log in
-              </Button>
-            </> : (form === 'reset') ? <>
-              <PasswordResetForm />
-              <Button type='link' onClick={() => handleChangeForm('login')}>&larr; Log in</Button>
-            </>
-            : <div>Page not found</div>}
-        </CenteredContainer>
-      </AnimatedContainer>
-    </Page>
-  )
+  return <Page>
+    <AnimatedContainer>
+      <CenteredContainer>
+        <Notices />
+        <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Welcome!</h1>
+        {(form === 'login') ?
+          <>
+            {madeNewAccount ?
+              <SuccessContainer>Your account has been created! Log in to get started.</SuccessContainer>
+            :
+              <>
+                <Button type='outline' onClick={() => handleChangeForm('register')}>
+                  Create new account <span style={{fontWeight: '200'}}>(100% free!)</span>
+                </Button>
+                <hr />
+              </>
+            }
+            <LoginForm />
+            <Button type='link' onClick={() => handleChangeForm('reset')}>Forgot your password?</Button>
+          </> : (form === 'register') ? <>
+            <RegisterForm onSuccess={handleNewAccount} />
+            <hr />
+            <Button type='outline' onClick={() => handleChangeForm('login')}>
+              <span style={{fontWeight: '200'}}>Already have an account?</span> Log in
+            </Button>
+          </> : (form === 'reset') ? <>
+            <PasswordResetForm />
+            <Button type='link' onClick={() => handleChangeForm('login')}>&larr; Log in</Button>
+          </>
+          : <div>Page not found</div>}
+      </CenteredContainer>
+    </AnimatedContainer>
+  </Page>
 }
 Login.propTypes = {
   form: PropTypes.string,
