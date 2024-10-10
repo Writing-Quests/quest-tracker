@@ -43,13 +43,14 @@ export default function Profile () {
       } catch (e) {
         console.error('Error getting profile')
         console.error(e)
+      } finally {
+        setLoading(false)
       }
       setProfile(resp.data)
-      setLoading(false)
     }
   }
   const [profile, setProfile] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [lookupUser, setLookupUser] = useState('')
   const user = useContext(LoggedInUserContext)
   const { username } = useParams()
