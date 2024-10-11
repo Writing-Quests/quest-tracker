@@ -7,6 +7,7 @@ import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContai
 import api from '../../services/api'
 import Notices from '../Notices'
 import Loading from '../Loading'
+import Testing from './Testing'
 
 const { LoggedInUserContext } = context
 
@@ -71,6 +72,7 @@ export default function Profile () {
     </Page>
   }
   return <Page>
+    <Testing />
     <Notices />
     <UserAvatar src={profile.gravatar} alt="User avatar for user, via Gravatar" />
     <h1>{profile.username}</h1>
