@@ -54,7 +54,8 @@ export function UserRegister () {
       if (username == '') { throw new Error("Username is required.") }
       if (email == '') { throw new Error("Email is required.") }
       if (error) { setError(null) }
-      const resp = await api.post('user/create/', data)
+      const resp = await api.post('user/$create/', data)
+      console.log(resp)
       if (!resp.data.created) {
         throw new Error(`Account not created: ${resp.data.errors[0].text}`)
       } else {
@@ -93,7 +94,7 @@ export function UserRegister () {
 
 export function UserVerifyEmail () {
   async function checkTokenData (email,token) {
-    const resp = await (await fetch(API_URL+`user/verify?e=${email}&t=${token}&type=verify-email`, {
+    const resp = await (await fetch(API_URL+`user/$verify?e=${email}&t=${token}&type=verify-email`, {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
@@ -128,7 +129,7 @@ export function UserResetPasswordRequest () {
   async function submitResetPassword (e) {
     e && e.preventDefault()
     setResetStatus('')
-    const apiResult = await (await fetch(API_URL+'password/request/', {
+    const apiResult = await (await fetch(API_URL+'password/$request/', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -170,7 +171,7 @@ export function UserResetPasswordFinish () {
     checkTokenData()
   }, [])
   async function checkTokenData (e) {
-    const resp = await (await fetch(API_URL+`user/verify?e=${email}&t=${token}&type=reset-password`, {
+    const resp = await (await fetch(API_URL+`user/$verify?e=${email}&t=${token}&type=reset-password`, {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
@@ -187,7 +188,7 @@ export function UserResetPasswordFinish () {
   function ResetForm (attr) {
     async function onSubmit (data) {
       if (data.password === data.confirmPassword) {
-        const apiResult = await (await fetch(API_URL+'password/submit', {
+        const apiResult = await (await fetch(API_URL+'password/$submit', {
           method: 'POST',
           credentials: 'include',
           headers: {

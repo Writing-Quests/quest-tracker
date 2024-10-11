@@ -4,11 +4,11 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Entity\LoginToken;
+use App\State\MailManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class UserController extends AbstractController
 {
-  #[Route('/api/user/create/', name: 'register_user', methods: ['POST'])]
+  #[Route('/api/user/$create/', name: 'register_user', methods: ['POST'])]
   public function create_user (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
   {
       $resp = [
@@ -77,7 +77,9 @@ class UserController extends AbstractController
           $entityManager->flush();
           $created = true;
           // TODO: set up the SMTP stuff for novelquests; using one of my mailers for testing right now.
-          $resp['sentVerificationEmail'] = (new SendEmails)->sendFirstVerification($mailer, $username, $email, $verifyEmailURL);
+          $newUserMsg = (new MailManager)->createFirstVerification($username, $email, $verifyEmailURL);
+          $mailer->send($newUserMsg);
+          $resp['sentVerificationEmail'] = true;
         } catch (\Exception $err) {
           array_push($resp['errors'],['id'=> 'phpError', 'text'=>$err->getMessage()]);
         }
@@ -88,51 +90,54 @@ class UserController extends AbstractController
       return $this->json($resp);
   }
 
-  #[Route('/api/password/request/', name: 'request_reset', methods: ['POST'])]
+  #[Route('/api/password/$request/', name: 'request_reset', methods: ['POST'])]
   public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse 
   {
-    $resp = [
-      'errors'=>[],
-      'emailSent'=>false // it's false until it succeeds
-    ];
-    $POST = $request->getPayload();
-    $email = $POST->get('email');
-    $user = $entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
-    if (!$user) {
-      array_push($resp['errors'],['id'=>'notFound', 'text'=>'Email address not found.']);
-    } else if ($user->getEmailVerifiedAt() == null) {
-      array_push($resp['errors'],['id'=>'notFound', 'text'=>'Email address not verified.']);
-    } else {
-      // email address is valid and has been verified
-      $tokenRepository = $entityManager->getRepository(LoginToken::class);
-      $pending_reset = $tokenRepository->findOneBy(['payload'=>$email, 'type'=>'reset-password']);
-      $current_datetime = new \DateTimeImmutable();
-      if ($pending_reset) { // there is a current 'reset-password' token -- delete it so we don't have multiples hanging out
-        $entityManager->remove($pending_reset);
-      }
-      $token = bin2hex(random_bytes(32));
-      $resetPasswordToken = new LoginToken();
-      ($resetPasswordToken)
-        ->setUser($user)
-        ->setSecret($token)
-        ->setCreatedAt($current_datetime)
-        ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
-        ->setType('reset-password')
-        ->setPayload($email);
-      $resetURL = 'http://frontend.quest-tracker.lndo.site/resetform?e='.$email.'&t='.$token;
-      $entityManager->persist($resetPasswordToken);
-      $emailSent = (new SendEmails)->sendPasswordResetLink($mailer, $email, $resetURL);
-      if (!$emailSent) { // if sending the reset link fails
-        array_push($resp['errors'],['id'=>'emailFailed', 'text'=>'An error occurred while sending this email. Please try again.']);
+    try {
+      $resp = [
+        'errors'=>[],
+        'emailSent'=>false // it's false until it succeeds
+      ];
+      $POST = $request->getPayload();
+      $email = $POST->get('email');
+      $user = $entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
+      if (!$user) {
+        array_push($resp['errors'],['id'=>'notFound', 'text'=>'Email address not found.']);
+      } else if ($user->getEmailVerifiedAt() == null) {
+        array_push($resp['errors'],['id'=>'notFound', 'text'=>'Email address not verified.']);
       } else {
-        $resp['emailSent'] = $emailSent;
+        // email address is valid and has been verified
+        $tokenRepository = $entityManager->getRepository(LoginToken::class);
+        $pending_reset = $tokenRepository->findOneBy(['payload'=>$email, 'type'=>'reset-password']);
+        $current_datetime = new \DateTimeImmutable();
+        if ($pending_reset) { // there is a current 'reset-password' token -- delete it so we don't have multiples hanging out
+          $entityManager->remove($pending_reset);
+        }
+        $token = bin2hex(random_bytes(32));
+        $resetPasswordToken = new LoginToken();
+        ($resetPasswordToken)
+          ->setUser($user)
+          ->setSecret($token)
+          ->setCreatedAt($current_datetime)
+          ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
+          ->setType('reset-password')
+          ->setPayload($email);
+        $resetURL = 'http://frontend.quest-tracker.lndo.site/resetform?e='.$email.'&t='.$token;
+        $entityManager->persist($resetPasswordToken);
+        $resetPasswordMsg = (new MailManager)->createPasswordReset($email, $resetURL);
+        $mailer->send($resetPasswordMsg);
+        $resp['emailSent'] = true;
       }
+    } catch (\Exception $err) {
+      array_push($resp['errors'],['id'=>'emailFailed', 'text'=>'An error occurred while sending this email. Please try again.']);
+      array_push($resp['errors'],['id'=>'phpErr', 'text'=>$err->getMessage()]);
+    } finally {
+      $entityManager->flush();
+      return $this->json($resp);
     }
-    $entityManager->flush();
-    return $this->json($resp);
   }
 
-  #[Route('api/password/submit', name: 'finish_reset', methods: ['POST'])]
+  #[Route('api/password/$submit', name: 'finish_reset', methods: ['POST'])]
   public function finishReset (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
   {
     $resp = [
@@ -154,7 +159,8 @@ class UserController extends AbstractController
       $entityManager->remove($tokenEntry);
       $entityManager->flush();
       $passwordChanged = true;
-      $resp['sentEmail'] = (new SendEmails)->notificationPasswordChange($mailer,$email);
+      $confirmMsg = (new MailManager)->notificationPasswordChange($email);
+      $mailer->send($confirmMsg);
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
       $passwordChanged = false;
@@ -163,39 +169,39 @@ class UserController extends AbstractController
     return $this->json($resp);
   }
 
-  #[Route('api/profile/get', name: 'view_profile', methods: ['GET'])]
+  #[Route('api/profile/$get', name: 'view_profile', methods: ['GET'])]
   public function getUserProfile (#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse 
   {
     try {
-      $loggedIn = ($user != null); // this is stupid i hate this lol
-      $loggedInUser = ($loggedIn) ? $user->getUserIdentifier() : null;
       // https://docs.gravatar.com/api/avatars/images/
-      
       $requested_username = $request->query->get('username');
       $requested_user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$requested_username]);
+      if (!$requested_user) { // no user found by that username
+        throw $this->createNotFoundException('User not found');
+      }
       $resp = (new UserProfile())->getProfileInfo($requested_user,$user);
+      if (!$resp) { // we return null if it's a private profile and it's not your private profile; buddies later
+        throw $this->createNotFoundException('User not found');
+      }
+      $status = 200;
     } catch (\Exception $err) {
       $resp = [
-        'loggedIn'=>$loggedIn,
-        'loggedInUser'=>$loggedInUser,
         'errors'=>[['id'=>'phpError','text'=>$err->getMessage()]]
       ];
+      $status = 404;
+    } finally {
+      return $this->json($resp,$status);
     }
-    return $this->json($resp);
   }
 
-  #[Route('api/profile/edit', name: 'edit_profile', methods: ['POST'])]
-  public function updateUserProfile(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse
+  #[Route('api/profile/$edit', name: 'edit_profile', methods: ['POST'])]
+  public function updateUserProfile(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
   {
-    if (!$user) {
-      return $this->json([
-        'loggedIn' => false,
-      ], Response::HTTP_UNAUTHORIZED);
-    }
     try{
-      $POST = $request->getPayload();
-      $allKeys = $POST->all();
-      foreach ($POST->all() as $key=>$value) {
+      $resp = ['errors'=>[]];
+      $POST = $request->getPayload()->all();
+      $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
+      foreach ($POST as $key=>$value) {
         switch ($key) {
           case 'description':
             $user->setDescription($value);
@@ -210,7 +216,29 @@ class UserController extends AbstractController
           break;
 
           case 'emailChange':
-            // TODO: a whole change email rigamarole
+            // TODO: check for an existing, non-expired token, in case they hit "save changes" twice or something.
+            $email = $POST['unverifiedEmail'];
+            $emailInUse = $entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
+            if (!$emailInUse) {
+              $oldEmail = $POST['email'];
+              $user->setUnverifiedEmail($email);
+              $token = bin2hex(random_bytes(32));
+              $verifyEmailToken = new LoginToken();
+              ($verifyEmailToken)
+                ->setUser($user)
+                ->setSecret($token)
+                ->setCreatedAt(new \DateTimeImmutable())
+                ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
+                ->setType('verify-email')
+                ->setPayload($email);
+              $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$email.'&t='.$token;
+              $entityManager->persist($verifyEmailToken);
+              $newVerificationMsg = (new MailManager)->createNewVerification($POST['username'], $email, $oldEmail, $verifyEmailURL);
+              $mailer->send($newVerificationMsg);
+            } else {
+              $resp['revertEmail'] = $user->getUnverifiedEmail();
+              throw new \Exception('Email address not changed; ' . $email . ' already in use.');
+            }
           break;
 
           case 'passwordChange':
@@ -218,23 +246,76 @@ class UserController extends AbstractController
           break;
         }
         $entityManager->persist($user);
-        $entityManager->flush();
-        $resp = ['updated'=>true];
       }
+      $entityManager->flush();
+      $resp['updated'] = true;
     } catch (\Exception $err) {
-      $resp = ['updated'=>false,'error'=>[['id'=>'phpError','text'=>$err->getMessage()]]];
+      $resp['updated'] = false;
+      array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
     }
     return $this->json($resp);
+  }
+
+  #[Route('api/profile/$public', name: 'all_public_profiles', methods: ['GET'])]
+  public function showAllPublicProfiles(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse
+  {
+    $publicUsers = $entityManager->getRepository(User::class)->findBy(['public'=>1]);
+    $profiles = [];
+    foreach ($publicUsers as $user) {
+      array_push($profiles, (new UserProfile)->publicCard($user));
+    }
+    return $this->json($profiles);
+  }
+
+  #[Route('api/user/$revert', name: 'revert_email', methods: ['POST'])]
+  public function revertVerifiedEmail(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse
+  {
+    // TODO: email user when their email is reverted to the old verified address?
+    try{
+      $resp = ['errors'=>[]];
+      $POST = $request->getPayload()->all();
+      $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
+      $pendingToken = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload'=>$POST['unverifiedEmail'], 'type'=>'verify-email']);
+      $resp['token'] = $pendingToken->getSecret();
+      if ($pendingToken) {
+        $entityManager->remove($pendingToken);
+      }
+      $user->setUnverifiedEmail(null);
+      $entityManager->persist($user);
+      $entityManager->flush();
+      $resp['changed'] = true;
+      $resp['profile'] = (new UserProfile)->getOwnProfile($user);
+    } catch (\Exception $err) {
+      array_push($resp['errors'],['id'=>'phpErr', 'text'=>$err->getMessage()]);
+    } finally {
+      return $this->json($resp);
+    }
   }
 }
 
 class UserProfile {
-  public function getProfileInfo($requested_user,$loggedIn_user) {
+  public function publicCard($requested_user) {
+    $profile = [];
+    $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $requested_user->getEmail() ) ) ) . '?d=404&s=75&r=pg';
+    $profile = [
+      'username'=>$requested_user->getUsername(),
+      'description'=>$requested_user->getDescription(),
+      'gravatar'=>$this->checkGravarExists($gravatar_url),
+      'memberSince'=>$requested_user->getCreatedAt()
+    ];
+    return $profile;
+  }
+
+  public function getProfileInfo($requested_user,$loggedInUser) {
     $profile = [];
     $profilePublic = $requested_user->isPublic();
-    $profileOwner = ($loggedIn_user->getUserIdentifier() == $requested_user->getUserIdentifier());
+    if ($loggedInUser != null) {
+      $profileOwner = ($loggedInUser->getUserIdentifier() == $requested_user->getUserIdentifier());
+    } else {
+      $profileOwner = false;
+    }
     $profilePublic = $requested_user->isPublic();
-    if ((!$profileOwner || $loggedIn_user == null) && !$profilePublic) { 
+    if ((!$profileOwner || $loggedInUser == null) && !$profilePublic) { 
       // two conditionals; 
       //  if you're not the profile owner and the profile is not public
       //  if you're not logged in and the profile is not public
@@ -246,71 +327,47 @@ class UserProfile {
       'username'=>$requested_user->getUsername(),
       'link'=>$requested_user->getLink(),
       'description'=>$requested_user->getDescription(),
-      'gravatar'=>$gravatar_url,
+      'gravatar'=>$this->checkGravarExists($gravatar_url),
       'profileOwner'=>$profileOwner,
-      'public'=>$profilePublic
+      'public'=>$profilePublic,
+      'memberSince'=>$requested_user->getCreatedAt()
     ];
     if ($profileOwner) {
       $profile['email'] = $requested_user->getEmail();
       $profile['unverifiedEmail'] = $requested_user->getUnverifiedEmail();
       $profile['emailVerified'] = ($requested_user->getUnverifiedEmail() == null); // unverifiedmail is set to null when email is verified
     }
+    $profile['status'] = 200;
     return $profile;
   }
-}
 
-class SendEmails {
-  public function sendFirstVerification ($mailer, $username, $email, $verifyEmailURL) {
-    // TODO: look up the twig integration for email for formatting
-    try {
-      $msg = (new Email())
-        ->from('noreply@novelquest.org')
-        ->to($email)
-        ->subject('[Novel Quest] Verify Your Email Address')
-        ->text('Welcome to the Novel Quests tracker!\n\nPlease verify your email address by clicking the link below, or copy/pasting it into the browser:\n\n' . $verifyEmailURL . '\n\nThis link will expire in 24 hours. Visit the Novel Quests website to request a new verification  link as needed.')
-        ->html('<div><p>Welcome to the Novel Quests tracker!</p><p>Your account with the username ' . $username . ' has been created. Please verify your email address by clicking the link below, or copy/pasting it into your browser.<p>' . $verifyEmailURL . '<p>This link will expire in 24 hours.</p></div>'); 
-      $mailer->send($msg);
-      return true;
-    } catch (\Exception $err) {
-      // TODO: put the error somewhere
-      return false;
-    }
+  public function getOwnProfile($loggedInUser) {
+    $profile = [];
+    $profilePublic = $loggedInUser->isPublic();
+    $profileOwner = true;
+    $profile = [
+      'username'=>$loggedInUser->getUsername(),
+      'link'=>$loggedInUser->getLink(),
+      'description'=>$loggedInUser->getDescription(),
+      'profileOwner'=>$profileOwner,
+      'public'=>$profilePublic,
+      'memberSince'=>$loggedInUser->getCreatedAt(),
+      'email'=>$loggedInUser->getEmail(),
+      'unverifiedEmail'=>$loggedInUser->getUnverifiedEmail(),
+      'emailVerified'=>($loggedInUser->getUnverifiedEmail() == null)
+    ];
+    $profile['status'] = 200;
+    return $profile;
   }
 
-  // TODO: function: Resent verify email. (Did you not request this email? Note to self: what did I mean about the parathentical???)
-  
-  // TODO: function: verification on email change.
-
-  public function sendPasswordResetLink ($mailer, $email, $resetPasswordURL) {
-    try {
-      $msg = (new Email())
-        ->from('noreply@novelquest.org')
-        ->to($email)
-        ->subject('[Novel Quest] Reset Your Password')
-        ->text('Reset the password for your Novel Quest account by clicking the link below, or copy/pasting it into the browser:\n\n' . $resetPasswordURL . '\n\nThis link will expire in 24 hours. No changes will be able to your password unless you use this link.')
-        ->html('<div><p>Reset the password for your Novel Quest account by clicking the link below, or copy/pasting it into the browser:<p>' . $resetPasswordURL . '<p>This link will expire in 24 hours. No changes will be able to your password unless you use this link.</p></div>'); 
-      $mailer->send($msg);
-      return true;
-    } catch (\Exception $err) {
-      // TODO: put the error somewhere
-      return false;
+  private function checkGravarExists ($url) {
+    $avatar = $url;
+    $headers = @get_headers($avatar);
+    if(!$headers || $headers[0] == 'HTTP/1.1 404 Not Found') {
+      return null;
     }
-  }
-
-
-  public function notificationPasswordChange ($mailer, $email) {
-    try {
-      $msg = (new Email())
-        ->from('noreply@novelquest.org')
-        ->to($email)
-        ->subject('[Novel Quest] Your Password Change')
-        ->text('This email is to let you know that your account password has been successfully changed.')
-        ->html('<div><p>This email is to let you know that your account password has been successfully changed.</p></div>');
-      $mailer->send($msg);
-      return true;
-    } catch (\Exception $err) {
-      // TODO: put the error somewhere
-      return false;
+    else {
+      return $url;
     }
   }
 }

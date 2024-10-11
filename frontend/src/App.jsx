@@ -4,8 +4,9 @@ import {
   UserVerifyEmail,
   UserResetPasswordRequest,UserResetPasswordFinish
 } from './components/User'
-import UserProfile from './components/User/Profile'
+import { UserProfile,SpecificProfile,AllPublicProfiles } from './components/User/Profile'
 import Login from './components/Login'
+import Settings from './components/Settings'
 import { BrowserRouter,Routes,Route } from 'react-router-dom'
 import api from './services/api'
 import Context from './services/context'
@@ -55,8 +56,11 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<UserProfile />} />
-            <Route path="/profile/:username?" element={<UserProfile />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/profile/:username" element={<SpecificProfile />} />
+            <Route path="/profiles/public" element={<AllPublicProfiles />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </BrowserRouter>
       </LoggedInUserContext.Provider>
@@ -72,7 +76,8 @@ export function App() {
             <Route path="/reset" element={<UserResetPasswordRequest />} />
             <Route path="/resetform" element={<UserResetPasswordFinish />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/profile/:username?" element={<UserProfile />} />
+            <Route path="/profile/:username?" element={<SpecificProfile />} />
+            <Route path="/profiles/public" element={<AllPublicProfiles />} />
           </Routes>
         </BrowserRouter>
       </GetLoggedInUserContext.Provider>

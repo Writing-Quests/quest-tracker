@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\LoginToken;
 use App\Entity\User;
+use App\State\MailManager;
+use Symfony\Component\Mailer\MailerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,7 +16,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class VerificationController extends AbstractController
 {
-  #[Route('/api/user/verify/', name: 'verify_email', methods: ['GET'])]
+  #[Route('/api/user/$verify/', name: 'verify_email', methods: ['GET'])]
   public function verify (Request $request, EntityManagerInterface $entityManager): JsonResponse {
     try {
       $params = $request->query;
@@ -45,6 +47,40 @@ class VerificationController extends AbstractController
     $entityManager->flush();
     return $this->json($resp);
   }
+
+  #[Route('/api/user/$resend', name: 'resend_verification', methods: ['POST'])]
+  public function resendVerification (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse {
+    try {
+      $resp = ['errors'=>[]];
+      $verifiedEmail = $request->getPayload()->get('email');
+      $unverifiedEmail = $request->getPayload()->get('unverifiedEmail');
+      $username = $request->getPayload()->get('username');
+      $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload' => $unverifiedEmail, 'type' => 'verify-email']);
+      $currentTime = new \DateTimeImmutable();
+      $isExpired = $currentTime > $tokenEntry->getExpiresAt();
+      if ($isExpired) { // make a new token, update the current entry, and send the email
+        $token = bin2hex(random_bytes(32));
+        ($tokenEntry)
+          ->setSecret($token)
+          ->setCreatedAt($currentTime)
+          ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
+          ->setType('verify-email')
+          ->setPayload($unverifiedEmail);
+        $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$token;
+        $entityManager->persist($tokenEntry);
+        $entityManager->flush();
+      } else {
+        $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$tokenEntry->getSecret();
+      }
+      $verificationMsg = (new MailManager)->createNewVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL);
+      $mailer->send($verificationMsg);
+      $resp['sent'] = true;
+    } catch (\Exception $err) {
+      array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
+    }
+    $entityManager->flush();
+    return $this->json($resp);
+  }
   
   private function finish_email_verify ($entityManager,$tokenEntry,$user,$email,$token) {
     // TODO: make sure this still works after modifications
@@ -68,7 +104,6 @@ class VerificationController extends AbstractController
         $this_resp['verified'] = true;
         $user->setEmailVerifiedAt($verifyTime);
         $user->setUnverifiedEmail(null);
-        // TODO: ask group: do we consider a verified email an "edited at"? or is that just for user edits?
         $entityManager->persist($user);
         $entityManager->remove($tokenEntry);
       } else {

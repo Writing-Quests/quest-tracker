@@ -56,16 +56,12 @@ class LoginToken
 
     public function verifySecret(string $plaintext): ?bool
     {
-      $hasher = $this->getTokenHasher();
-      $hash = $this->secret;
-      return $hasher->verify($hash, $plaintext);
+      return $this->secret == $plaintext;
     }
 
     public function setSecret(string $secret): static
     {
-        $hasher = $this->getTokenHasher();
-        $secret_hash = $hasher->hash($secret);
-        $this->secret = $secret_hash;
+        $this->secret = $secret;
         return $this;
     }
 
