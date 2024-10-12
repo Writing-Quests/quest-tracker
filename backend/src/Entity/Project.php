@@ -2,8 +2,6 @@
 
 namespace App\Entity;
 
-use DateTime;
-
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -16,12 +14,16 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\HasLifecycleCallbacks]
+#[ORM\EntityListeners(["App\Listener\ProjectListener"])]
 #[ApiResource(
     operations: [
         new Get(),
         new GetCollection(),
-        new Post(),
-    ]
+        new Post(
+            security: "is_granted('ROLE_USER')",
+        ),
+    ],
+    security: "object.isPublic() or is_granted('ROLE_ADMIN') or (object.getUser() == user)",
 )]
 class Project
 {
@@ -45,11 +47,11 @@ class Project
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $title = null;
 
-    #[ORM\Column]
-    private array $details = [];
+    #[ORM\Column(options: ["default" => "(JSON_OBJECT())"])]
+    private ?array $details = null;
 
     #[ORM\Column(nullable: false, options: ["default" => false])]
-    private ?bool $public = null;
+    private ?bool $public = false;
 
     public function getId(): ?int
     {
@@ -126,18 +128,5 @@ class Project
         $this->public = $public;
 
         return $this;
-    }
-
-    #[ORM\PrePersist]
-    public function prePersist(): void
-    {
-        // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
-        $this->created_at = new DateTime();
-        $this->edited_at = new DateTime();
-    }
-    #[ORM\PreUpdate]
-    public function preUpdate(): void
-    {
-        $this->edited_at = new DateTime();
     }
 }

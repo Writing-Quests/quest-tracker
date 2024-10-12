@@ -26,7 +26,7 @@ final class Version20241010175733 extends AbstractMigration
           created_at DATETIME NOT NULL DEFAULT NOW(),
           edited_at DATETIME NOT NULL DEFAULT NOW(),
           title VARCHAR(255) DEFAULT NULL,
-          details JSON NOT NULL,
+          details JSON DEFAULT (JSON_OBJECT()),
           public TINYINT(1) DEFAULT 0 NOT NULL,
           INDEX IDX_2FB3D0EEA76ED395 (user_id),
           PRIMARY KEY(id)

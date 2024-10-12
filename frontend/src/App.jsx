@@ -27,7 +27,7 @@ export function App() {
   async function getLoggedInUser() {
     setLoading(true)
     try {
-      const resp = await api('users/$me')
+      const resp = await api('me')
       if(resp.data?.anonymousUser || !resp.data?.username) {
         setLoggedIn(false)
       } else {

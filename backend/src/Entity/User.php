@@ -5,6 +5,7 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -16,7 +17,6 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Ignore;
 use App\State\UserMeProvider;
 use App\State\NotLoggedInRepresentation;
-//use App\Filter\UserMeFilter;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
@@ -24,7 +24,7 @@ use App\State\NotLoggedInRepresentation;
     operations: [
         new Get(),
         new Get(
-            uriTemplate: '/users/$me',
+            uriTemplate: '/me',
             provider: UserMeProvider::class,
             output: NotLoggedInRepresentation::class,
             security: "true",
