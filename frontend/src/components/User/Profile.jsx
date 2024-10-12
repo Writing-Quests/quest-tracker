@@ -68,7 +68,7 @@ export default function Profile () {
   }
   return <Page>
     <Notices />
-    <UserAvatar src={profile.gravatar} alt="User avatar for user, via Gravatar" />
+    <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" />
     <h1>{profile.username}</h1>
     {profile.description && <div>{profile.description}</div>}
     {profile.username !== user.username && <div>Report</div>}
