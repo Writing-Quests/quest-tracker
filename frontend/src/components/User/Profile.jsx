@@ -1,13 +1,13 @@
 import { useContext, useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import styled from 'styled-components'
 import context from '../../services/context'
 import Page from '../Page'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import api from '../../services/api'
+import { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
-import Testing from './Testing'
 
 const { LoggedInUserContext } = context
 
@@ -36,34 +36,29 @@ const GOAL = 50000
 const LENGTH = 30
 
 export default function Profile () {
-  async function getProfileInformation(username) {
-    if (username !== '') {
-      let resp
+  const navigate = useNavigate()
+  const [profile, setProfile] = useState('')
+  const [loading, setLoading] = useState(false)
+  const user = useContext(LoggedInUserContext)
+  const { username } = useParams()
+  useEffect(() => {
+    let lookupUser
+    if(username?.length) { lookupUser = username }
+    else { lookupUser = user.username }
+    if(!lookupUser?.length) { return }
+    (async () => {
+      setLoading(true)
       try {
-        resp = await api.get('profile/get', { params: { 'username': username }})
+        const resp = await api.get(`users/${lookupUser}`)
+        setProfile(resp.data)
       } catch (e) {
         console.error('Error getting profile')
         console.error(e)
       } finally {
         setLoading(false)
       }
-      setProfile(resp.data)
-    }
-  }
-  const [profile, setProfile] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [lookupUser, setLookupUser] = useState('')
-  const user = useContext(LoggedInUserContext)
-  const { username } = useParams()
-  useEffect(() => {
-    if (!username && !user) { // user is not logged in and viewing their own profile via /profile
-      window.location.href = '/'
-    } else {
-      setLookupUser(username || user.username)
-    }
-    console.log(lookupUser)
-    getProfileInformation(lookupUser)
-  }, [user])
+    })()
+  }, [user, username])
   if(loading) {
     return <Page>
       <Notices />
@@ -72,12 +67,11 @@ export default function Profile () {
     </Page>
   }
   return <Page>
-    <Testing />
     <Notices />
     <UserAvatar src={profile.gravatar} alt="User avatar for user, via Gravatar" />
     <h1>{profile.username}</h1>
     {profile.description && <div>{profile.description}</div>}
-    {profile.profileOwner === false && <div>Report</div>}
+    {profile.username !== user.username && <div>Report</div>}
     <ResponsiveContainer width={1000} height={500}>
       <AreaChart data={EXAMPLE_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
         <defs>
@@ -94,5 +88,12 @@ export default function Profile () {
         <ReferenceLine label="Par" stroke="green" strokeDasharray="3 3" segment={[{ x: 1, y: 0 }, { x: LENGTH, y: GOAL}]} />
       </AreaChart>
     </ResponsiveContainer>
+    <h2>Projects</h2>
+    <ul>
+      {profile?.project_data?.map(p =>
+        <li key={p.id}><Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link></li>
+      )}
+    </ul>
+    <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
   </Page>
 }

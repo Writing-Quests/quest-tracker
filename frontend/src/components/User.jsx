@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
 import api from '../services/api'
 import context from '../services/context'
 import Input, { Button } from './Forms/Input'

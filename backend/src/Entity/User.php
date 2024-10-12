@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -15,6 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Ignore;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 use App\State\UserMeProvider;
 use App\State\NotLoggedInRepresentation;
 
@@ -101,13 +103,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Project>
      */
-    #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user')]
+    #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user', fetch: 'EAGER')]
     private Collection $projects;
 
     public function __construct()
     {
         $this->loginTokens = new ArrayCollection();
         $this->projects = new ArrayCollection();
+    }
+
+    #[ApiResource (writable: false)]
+    public function getGravatarUrl(): ?string
+    {
+        if($this->email) {
+            return 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $this->email))) . '?d=404&s=100&r=pg';
+        }
     }
 
     public function getId(): ?int
@@ -341,7 +351,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Project>
      */
-    public function getProjects(): Collection
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    public function getProjects(): ?Collection
+    {
+        return $this->projects;
+    }
+
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    public function getProjectData(): ?Collection
     {
         return $this->projects;
     }

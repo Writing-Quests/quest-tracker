@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
 use App\Repository\ProjectRepository;
@@ -21,6 +22,9 @@ use Doctrine\ORM\Mapping as ORM;
         new GetCollection(),
         new Post(
             security: "is_granted('ROLE_USER')",
+        ),
+        new Patch(
+            security: "is_granted('ROLE_ADMIN') or (object.getUser() == user)",
         ),
     ],
     security: "object.isPublic() or is_granted('ROLE_ADMIN') or (object.getUser() == user)",
