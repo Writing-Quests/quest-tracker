@@ -22,13 +22,13 @@ use App\State\NotLoggedInRepresentation;
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
 #[ApiResource(
     operations: [
+        new Get(),
         new Get(
             uriTemplate: '/users/$me',
             provider: UserMeProvider::class,
             output: NotLoggedInRepresentation::class,
             security: "true",
         ),
-        new Get(),
     ],
     security: "is_granted('ROLE_ADMIN') or object == user",
 )]
@@ -65,10 +65,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255,nullable: true)]
     private ?string $unverified_email = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
+    #[ApiProperty(writable: false)]
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(nullable: true)]
+    #[ApiProperty(writable: false)]
     private ?\DateTimeImmutable $edited_at = null;
 
     #[ORM\Column(nullable: true)]
@@ -364,5 +366,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $this;
+    }
+    #[ORM\PreUpdate]
+    public function preUpdate(): void
+    {
+        $this->edited_at = new DateTime();
     }
 }

@@ -2,16 +2,20 @@
 
 namespace App\Entity;
 
+use DateTime;
+
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
 use App\Repository\ProjectRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [
         new Get(),
@@ -32,7 +36,7 @@ class Project
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "NOW()"])]
     #[ApiProperty(writable: false)]
-    private ?\DateTimeInterface $created_at = null;
+    private ?\DateTimeInterface $created_at;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "NOW()"])]
     #[ApiProperty(writable: false)]
@@ -122,5 +126,18 @@ class Project
         $this->public = $public;
 
         return $this;
+    }
+
+    #[ORM\PrePersist]
+    public function prePersist(): void
+    {
+        // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
+        $this->created_at = new DateTime();
+        $this->edited_at = new DateTime();
+    }
+    #[ORM\PreUpdate]
+    public function preUpdate(): void
+    {
+        $this->edited_at = new DateTime();
     }
 }

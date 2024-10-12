@@ -9,6 +9,12 @@ export default function Testing() {
     setLoading(true)
     try {
       setData(await api.post('projects', {
+        'user_id': 1,
+        'user': '/api/users/user5',
+        'title': 'hello',
+        //'created_at': '2024-01-01',
+        'edited_at': '2024-01-01',
+        'public': false,
       }))
     } catch (e) {
       setError(e)
