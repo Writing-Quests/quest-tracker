@@ -68,18 +68,21 @@ class VerificationController extends AbstractController
           ->setPayload($unverifiedEmail);
         $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$token;
         $entityManager->persist($tokenEntry);
-        $entityManager->flush();
       } else {
-        $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$tokenEntry->getSecret();
+        $token = $tokenEntry->getSecret();
+        $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$token;
       }
+      $resp['token'] = $token;
       $verificationMsg = (new MailManager)->createNewVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL);
-      $mailer->send($verificationMsg);
+      $resp['mailer'] = $mailer->send($verificationMsg);
       $resp['sent'] = true;
     } catch (\Exception $err) {
+      $resp['sent'] = false;
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
+    } finally {
+      $entityManager->flush();
+      return $this->json($resp);
     }
-    $entityManager->flush();
-    return $this->json($resp);
   }
   
   private function finish_email_verify ($entityManager,$tokenEntry,$user,$email,$token) {
