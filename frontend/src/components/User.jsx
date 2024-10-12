@@ -1,256 +1,165 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useRef } from 'react'
+import PropTypes from 'prop-types'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { getUserTZName } from '../timezones.js'
-import CONSTS from '../CONSTS'
-import styled from 'styled-components'
 import api from '../services/api'
-import Context from '../services/context'
-import useTitle from '../services/useTitle'
-import Input from './Forms/Input'
+import context from '../services/context'
+import Input, { Button } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
 import Page from './Page'
-import { AnimatedContainer, CenteredContainer } from './Containers'
+import Loading from './Loading'
+import { AnimatedContainer, CenteredContainer, ErrorContainer } from './Containers'
 
-const { GetLoggedInUserContext } = Context
-
-const ErrorContainer = styled.div`
-  width: 100%;
-  background-color: #FFDCD3;
-  margin: 10px 0;
-  border: 1px solid #EA846A;
-  border-radius: 3px;
-  padding: 10px;
-`
-const { API_URL } = CONSTS
+const { LoggedInUserContext } = context
 
 function mapFailureArray ({ errors }) {
   const errList = errors.map((msg) => <ErrorContainer key={msg.id}>{msg.text}</ErrorContainer>)
   return errList
 }
 
-export function UserRegister () {
-  useTitle('Create an Account')
+// TODO: what happens when a user tries to verify while logged into another account?
+export function UserVerifyEmail () {
+  const loggedIn = Boolean(useContext(LoggedInUserContext))
+  const [queryParameters] = useSearchParams()
   const navigate = useNavigate()
-  const [username,setUsername] = useState('')
-  const [email,setEmail] = useState('')
-  const [password,setPassword] = useState('')
-  const [confirmPassword,setConfirmPassword] = useState('')
+  const email = queryParameters.get('e')
+  const token = queryParameters.get('t')
+  useEffect(() => {
+    (async () => {
+      let resp
+      let message
+      try {
+        if(!email || !token) {
+          throw new Error("Invalid verification link")
+        }
+        resp = await api.get('user/verify', {params:
+          {e: email, t: token, type: 'verify-email'}
+        })
+        if (resp.data.verified === true) {
+          message = {type: 'success', text: `Your email address (${email}) has been verified!`}
+        } else {
+          message = {type: 'error', text: `Error verifying your email address: ${JSON.stringify(resp.errors)}`}
+        }
+      } catch (e) {
+        console.log(e)
+        message = {type: 'error', text: `Error verifying your email address`}
+      }
+      if(loggedIn) {
+        navigate('/profile', {state: {notices: [message]}})
+      }
+      else {
+        navigate('/login', {state: {notices: [message]}})
+      }
+    })()
+  }, [email, token, loggedIn, navigate])
+  return <Page>
+    <AnimatedContainer>
+      <CenteredContainer>
+        <h1 style={{color: 'white'}}>Verifying your email address&hellip;</h1>
+        <Loading />
+      </CenteredContainer>
+    </AnimatedContainer>
+  </Page>
+}
+
+// TODO: What happens if someone is already logged in?
+function ResetForm({username, email}) {
+  const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [error,setError] = useState('')
-  async function handleSubmit (e) {
-    e && e.preventDefault()
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [formValidity, setFormValidity] = useState(false)
+  const formRef = useRef(null)
+  const navigate = useNavigate()
+  useEffect(() => {
+    if(!formRef?.current) { return }
+    setFormValidity(formRef.current.checkValidity())
+  }, [formRef, password, confirmPassword])
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError(null)
+    if(loading) { return }
+    if(!formValidity) { return }
+    if(password !== confirmPassword) { return }
     setLoading(true)
     try {
-      const currentTimezoneOffset = (new Date().getTimezoneOffset()/60) * -1 // not using this right now, but we have it
-      const data = {
-        timezone: getUserTZName(currentTimezoneOffset),
-        username: username,
-        email: email,
-        password: password
-      }
-      if (password !== confirmPassword) { throw new Error("Password do not match." ) }
-      if (password == '' || confirmPassword == '') { throw new Error("Password is required") }
-      if (username == '') { throw new Error("Username is required.") }
-      if (email == '') { throw new Error("Email is required.") }
-      if (error) { setError(null) }
-      const resp = await api.post('user/$create/', data)
-      console.log(resp)
-      if (!resp.data.created) {
-        throw new Error(`Account not created: ${resp.data.errors[0].text}`)
+      const res = await api.post('password/submit', {username, email, password})
+      if(res?.data?.passwordChanged) {
+        navigate('/login', {state: {notices: [{type: 'success', text: 'Your password has been updated. Login to continue.'}]}})
       } else {
-        let createStatus = 'Your account has been created! Log in to get started.'
-        if (resp.data.sentVerificationEmail) { createStatus += ' A verification email has been sent to your email address.'}
-        // TODO: route back to  login with the createStatus info
+        if(res?.data?.errors) {
+          setError(`Error: Couldn't change password. ${JSON.stringify(res.data.errors)}`)
+        }
       }
-    } catch (err) {
-      setError(err)
+    } catch(e) {
+      console.error(e)
+      setError("Error: Couldn't change password")
     } finally {
       setLoading(false)
     }
   }
+
   const formProps = {disabled: loading}
-  return (
-    <Page>
-      <AnimatedContainer>
-        <CenteredContainer>
-          <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Create an Account</h1>
-          {error && error.status && <ErrorContainer>Unknown error. Try again.</ErrorContainer>}
-          {error && <ErrorContainer>{error.message}</ErrorContainer>}
-          <form onSubmit={handleSubmit}>
-            <InputGroup>
-              <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
-              <Input label='Email' type='email' value={email} onChange={e => setEmail(e.target.value)} {...formProps} />
-              <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
-              <Input label='Confirm Password' type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} {...formProps} />
-            </InputGroup>
-            <Input type='submit' value='Create Account' {...formProps} />
-          </form>
-        </CenteredContainer>
-      </AnimatedContainer>
-    </Page>
-  )
+
+  return <>
+    {error && <ErrorContainer>{error}</ErrorContainer>}
+    <form onSubmit={handleSubmit} ref={formRef}>
+      <InputGroup>
+        <Input type='text' readOnly={true} value={username} label='Username' />
+        <Input type='email' value={email} readOnly={true} label='Email address' />
+      </InputGroup>
+      <InputGroup>
+        <Input type='password' label='New password' required={true} value={password} onChange={e => setPassword(e.target.value)} minLength='4' {...formProps} />
+        <Input type='password' label='Confirm new password' required={true} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} minLength='4' {...formProps} />
+      </InputGroup>
+      <Input type="submit" value="Reset password" {...formProps} />
+    </form>
+    {(password !== confirmPassword && password.length > 1 && confirmPassword.length > 1) && <ErrorContainer>Passwords must match</ErrorContainer>}
+  </>
+}
+ResetForm.propTypes = {
+  username: PropTypes.string.isRequired,
+  email: PropTypes.string.isRequired,
 }
 
-export function UserVerifyEmail () {
-  async function checkTokenData (email,token) {
-    const resp = await (await fetch(API_URL+`user/$verify?e=${email}&t=${token}&type=verify-email`, {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })).json()
-    const redirect_state = { state: { notices: []}}
-    if (resp.verified === true) {
-      redirect_state['state']['notices'].push({ 'id': 'email-verified', 'text': 'Your email address has been verified.'})
-    } else {
-      redirect_state['state']['notices'] = resp.errors
-    }
-    navigate('/login', redirect_state)
-  }
-  // eslint-disable-next-line no-unused-vars
-  const [queryParameters, setQueryParameters] = useSearchParams()
-  const navigate = useNavigate()
+export function UserResetPasswordFinish() {
+  const [queryParameters] = useSearchParams()
   const email = queryParameters.get('e')
   const token = queryParameters.get('t')
-  useEffect(() => {
-    checkTokenData(email,token)
-  },[])
-  return (
-    <>
-      <svg xmlns="http://www.w3.org/2000/svg" width={96} height={96} viewBox="0 0 24 24"><g fill="none" stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}><path strokeDasharray={16} strokeDashoffset={16} d="M12 3c4.97 0 9 4.03 9 9"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="16;0"></animate><animateTransform attributeName="transform" dur="1.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"></animateTransform></path><path strokeDasharray={64} strokeDashoffset={64} strokeOpacity={0.3} d="M12 3c4.97 0 9 4.03 9 9c0 4.97 -4.03 9 -9 9c-4.97 0 -9 -4.03 -9 -9c0 -4.97 4.03 -9 9 -9Z"><animate fill="freeze" attributeName="stroke-dashoffset" dur="1.2s" values="64;0"></animate></path></g></svg>
-    </>
-  )
-}
-
-export function UserResetPasswordRequest () {
-  const [email,setEmail] = useState('')
-  const [resetStatus,setResetStatus] = useState('')
-  async function submitResetPassword (e) {
-    e && e.preventDefault()
-    setResetStatus('')
-    const apiResult = await (await fetch(API_URL+'password/$request/', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({'email':email}),
-    })).json()
-    if (!apiResult['emailSent']) { // email not sent
-      setResetStatus(`Error: ${apiResult['errors'][0]['text']}`) // this endpoint only ever returns one error right now.
-    } else {
-      setResetStatus('Success: pasword reset link has been sent to your email address. The link will expire in 24 hours.')
-    }
-  }
-  return (
-    <>
-    <h1>Request Password Reset</h1>
-      <p>Enter your email address to request a password reset link.</p>
-      <form onSubmit={submitResetPassword}>
-
-        <label htmlFor='email'>Email Address</label>
-        <input type='email' id='email' placeholder='you@email.com' required value={email} onChange={(e) => setEmail(e.target.value)}/>
-
-        <input type="submit" value="Request Reset Link" />
-     </form>
-     <Link to="/login">Log in to your account</Link> | <Link to="/register">Create an account</Link>
-     <p>{resetStatus}</p>
-    </>
-  )
-}
-
-export function UserResetPasswordFinish () {
-  const [queryParameters, setQueryParameters] = useSearchParams()
-  const email = queryParameters.get('e')
-  const token = queryParameters.get('t')
-  const [username,setUsername] = useState('')
+  const [username, setUsername] = useState('')
   const [tokenValid,setTokenValid] = useState('')
-  const [tokenError,setTokenError] = useState('')
+  const [tokenError, setTokenError] = useState('')
+  const [loading, setLoading] = useState(false)
   useEffect(() => {
     checkTokenData()
   }, [])
-  async function checkTokenData (e) {
-    const resp = await (await fetch(API_URL+`user/$verify?e=${email}&t=${token}&type=reset-password`, {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })).json()
-    if (!resp.verified) {
-      setTokenValid(false)
-      setTokenError(mapFailureArray(resp))
-    } else {
-      setTokenValid(true)
-      setUsername(resp.username)
-    }
-  }
-  function ResetForm (attr) {
-    async function onSubmit (data) {
-      if (data.password === data.confirmPassword) {
-        const apiResult = await (await fetch(API_URL+'password/$submit', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        })).json()
-        if (!apiResult.passwordChanged) {
-          (mapFailureArray(apiResult))
-        } else {
-          navigate(`/login`, { state: {
-            'notices': [
-              {id: 'changed', text: (apiResult.passwordChanged) ? 'Your password has been updated.' : null }
-            ]}
-          })
-        }
+  async function checkTokenData() {
+    setLoading(true)
+    try {
+      const resp = await api('user/verify', {params: {e: email, t: token, type: 'reset-password'}})
+      if (!resp.data.verified) {
+        setTokenValid(false)
+        setTokenError(mapFailureArray(resp.data))
       } else {
-        setError("passwordMatch", { type: "custom", message: "Password do not match" })
+        setTokenValid(true)
+        setUsername(resp.data.username)
       }
-    }
-
-   const navigate = useNavigate()
-    const {
-      register,
-      handleSubmit,
-      clearErrors,
-      setError,
-      formState: { errors },
-    } = useForm()
-    if (attr.display === true) {
-      return (
-        <>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <label htmlFor="username">Username</label>
-          <input {...register("username")} readOnly={true} value={attr.username} />
-
-          <label htmlFor='email'>Email Address</label>
-          <input type='email' {...register("email")} value={attr.email} readOnly={true} />
-
-          <label htmlFor='password'>Password</label>
-          <input type='password' {...register('password', { required: true })} />
-
-          <label htmlFor='confirmPassword'>Confirm Password</label>
-          <input type='password' {...register('confirmPassword', { required: true })} />
-
-          <input type="submit" value="Register" onClick={(e) => clearErrors()} />
-        </form>
-      <ul className='formErrors'>
-        {errors.passwordMatch && <li>Passwords do not match</li>}
-      </ul>
-      </>
-      )
+    } catch {
+      setTokenValid(false)
+    } finally {
+      setLoading(false)
     }
   }
-  return (
-    <>
-    <h1>Reset Your Password</h1>
-    <ResetForm display={tokenValid} token={token} username={username} email={email} />
-    <ul>
-    {tokenError}
-    </ul>
-    <Link to="/login">Log in to your account</Link> | <Link to="/reset">Reset Your Password</Link>
-    </>
-  )
+  return <Page>
+    <AnimatedContainer>
+      <CenteredContainer>
+        <Button type='link' as={Link} to='/'>&larr; Log in</Button>
+        <h1 style={{color: 'white'}}>Reset Your Password</h1>
+        {tokenError}
+        {loading && <Loading />}
+        {tokenValid && <ResetForm token={token} username={username} email={email} />}
+      </CenteredContainer>
+    </AnimatedContainer>
+  </Page>
 }

@@ -1,9 +1,15 @@
 import { Children, cloneElement } from 'react'
+import styled from 'styled-components'
 import PropTypes from 'prop-types'
+
+const StyledInputGroup = styled.div`
+  margin-top: 10px;
+  margin-bottom: 10px;
+`
 
 export default function InputGroup({children}) {
   const maxIndex = Children.count(children)-1
-  return <>
+  return <StyledInputGroup>
     {Children.map(children, (child, i) =>
       cloneElement(child, {
         grouped: Boolean(maxIndex),
@@ -11,7 +17,7 @@ export default function InputGroup({children}) {
         lastInGroup: (i === maxIndex),
       })
     )}
-  </>
+  </StyledInputGroup>
 }
 
 InputGroup.propTypes = {

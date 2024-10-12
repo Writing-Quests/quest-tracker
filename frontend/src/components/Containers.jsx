@@ -37,3 +37,21 @@ export const CenteredContainer = styled.div`
   display: flex;
   flex-direction: column;
 `
+
+export const ErrorContainer = styled.div`
+  width: 100%;
+  background-color: #FFDCD3;
+  margin: 10px 0;
+  border: 1px solid #EA846A;
+  border-radius: 3px;
+  padding: 10px;
+`
+
+export const SuccessContainer = styled.div`
+  width: 100%;
+  background-color: #ddffd3;
+  margin: 10px 0;
+  border: 1px solid #1c8c0e;
+  border-radius: 3px;
+  padding: 10px;
+`

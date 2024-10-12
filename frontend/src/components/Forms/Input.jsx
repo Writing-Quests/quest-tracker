@@ -11,6 +11,9 @@ const StyledTextInput = styled.input`
   &:focus {
     outline: none;
   }
+  &[readonly] {
+    cursor: not-allowed;
+  }
 `
 
 const StyledTextarea = styled.textarea`
@@ -46,9 +49,13 @@ const Label = styled.label`
     cursor: not-allowed;
     opacity: 0.75;
   }
+  &[readonly] {
+    cursor: not-allowed;
+    filter: brightness(0.8);
+  }
 `
 
-const StyledButtonInput = styled.input`
+const CTAButton = styled.button`
   width: 100%;
   padding: 15px 0;
   margin-top: 6px;
@@ -69,17 +76,65 @@ const StyledButtonInput = styled.input`
     cursor: not-allowed;
     opacity: 0.75;
   }
-  &[^disabled]:hover {
+  &:not([disabled]):hover {
     border-bottom-width: 4px;
     top: -2px;
     background-color: #353535;
     margin-bottom: 0;
   }
-  &[^disabled]:active {
+  &:not([disabled]):active {
     border-bottom-width: 2px;
     top: 0;
     background-color: #252525;
     margin-bottom: 2px;
+  }
+`
+
+const OutlineButton = styled.button`
+  width: 100%;
+  padding: 15px 0;
+  margin-top: 6px;
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  &[disabled]{
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+  &:not([disabled]):hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    outline: 1px solid white;
+  }
+  &:not([disabled]):active {
+    background-color: rgba(255, 255, 255, 0.15);
+    outline: 2px solid #252525;
+  }
+`
+
+const LinkButton = styled.button`
+  width: 100%;
+  padding: 15px 0;
+  margin-top: 6px;
+  background-color: transparent;
+  color: white;
+  border: none;
+  font-weight: normal;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  &[disabled]{
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+  &:not([disabled]):hover {
+    text-decoration: underline;
   }
 `
 
@@ -96,7 +151,7 @@ TextareaInput.propTypes = {
 }
 
 function TextInput({elStyle, label, ...props}) {
-  return <Label style={elStyle} disabled={props.disabled}>
+  return <Label style={elStyle} disabled={props.disabled} readOnly={props.readOnly}>
     <span style={{position: 'relative', top: '-4px'}}>{label}</span>
     <StyledTextInput {...props} />
   </Label>
@@ -109,7 +164,7 @@ TextInput.propTypes = {
 
 // eslint-disable-next-line no-unused-vars
 function ButtonInput({elStyle, label: _,...props}) {
-  return <StyledButtonInput style={elStyle} {...props} />
+  return <CTAButton as="input" style={elStyle} {...props} />
 }
 ButtonInput.propTypes = {
   elStyle: PropTypes.object,
@@ -150,4 +205,19 @@ Input.propTypes = {
   firstInGroup: PropTypes.bool,
   lastInGroup: PropTypes.bool,
   type: PropTypes.string.isRequired,
+}
+
+export function Button({type, ...props}) {
+  switch(type) {
+    case 'outline':
+      return <OutlineButton {...props} />
+    case 'cta':
+      return <CTAButton {...props} />
+    case 'link':
+    default:
+      return <LinkButton {...props} />
+  }
+}
+Button.propTypes = {
+  type: PropTypes.string,
 }

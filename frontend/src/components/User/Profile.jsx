@@ -1,10 +1,12 @@
 /* eslint-disable react/prop-types */
-import { useContext,useState,useEffect } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import styled from 'styled-components'
 import context from '../../services/context'
 import Page from '../Page'
 import api from '../../services/api'
+import Notices from '../Notices'
+import Loading from '../Loading'
 
 const { LoggedInUserContext } = context
 
@@ -37,6 +39,35 @@ const ErrorContainer = styled.div`
   border-radius: 3px;
   padding: 10px;
 `
+//const EXAMPLE_DATA = {
+  //progress: [1667, 3002, 3002, 5032, 5038, 7000],
+  //goal: 50000,
+  //days: 30,
+//}
+
+const EXAMPLE_DATA = [
+  {day: 1, words: 1667},
+  {day: 2, words: 3002},
+  {day: 3, words: 3002},
+  {day: 4, words: 5032},
+  {day: 5, words: 5038},
+  {day: 6, words: 7000},
+]
+const GOAL = 50000
+const LENGTH = 30
+
+export default function Profile () {
+  async function getProfileInformation(username) {
+    if (username !== '') {
+      let resp
+      try {
+        resp = await api.get('profile/get', { params: { 'username': username }})
+      } catch (e) {
+        console.error('Error getting profile')
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
 
 function ProfileLeadInfo (props) {
   const profile = props.profile
@@ -63,6 +94,9 @@ export function UserProfile () {
       setLoading(false)
     }
   }
+  const [profile, setProfile] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [lookupUser, setLookupUser] = useState('')
   const [profile,setProfile] = useState('')
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState(null)
@@ -103,82 +137,44 @@ export function SpecificProfile () {
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState(null)
   const {username} = useParams();
+  const { username } = useParams()
   useEffect(() => {
-    getProfileInformation(username)
-  },[])
-  if(loading) {
-    return <Page>Loading&hellip;</Page>
-  }
-  if (error !== null) {
-    let msg = 'An unknown error occured.'
-    if (error.status === 404) {
-      msg = `No profile found for username: ${username}.`
+    if (!username && !user) { // user is not logged in and viewing their own profile via /profile
+      window.location.href = '/'
+    } else {
+      setLookupUser(username || user.username)
     }
+    console.log(lookupUser)
+    getProfileInformation(lookupUser)
+  }, [user])
+  if(loading) {
     return <Page>
-      <ErrorContainer>{msg}</ErrorContainer>
-      <p>See <Link to="/profiles/public">all public users</Link>.</p>
-    </Page>
-  } else {
-    return <Page>
-      <ProfileDataContainer>
-        <ProfileLeadInfo profile={profile} username={username} />
-      </ProfileDataContainer>
-    </Page>
-  }
-}
-
-export function AllPublicProfiles () {
-  const ProfileCard = styled.div`
-    clear: both;
-    width: 75%;
-    margin: 10px auto;
-    border: 1px solid #AF402D;
-    border-radius: 3px;
-    padding: 10px;
-    cursor: pointer;
-    position: relative;
-  `
-
-  const CardAvatar = styled.img`
-    width: 75px;
-    float: left;
-    margin: 0 10px 10px 0;
-  `
-
-  const EstablishedAt = styled.span`
-    position: abolute;
-    font-size: 0.8rem;
-    font-style: italic;
-    bottom: 10px;
-    right: 10px;
-  `
-  function ProfileInner(props) {
-    const profile = props.profile
-    return <>
-      { profile.gravatar && <CardAvatar src={profile.gravatar} />}
-      <h1 style={{margin: '0'}}>{profile.username}</h1>
-      { profile.description && <p>{profile.description}</p> }
-      <EstablishedAt>Since {profile.memberSince.substring(0,4)}</EstablishedAt>
-    </>
-  }
-  async function getAllProfiles () {
-    const resp = await api.get('profile/$public')
-    setLoading(false)
-    const cardsMap = resp.data.map((card) => <ProfileCard key={card.username} onClick={() => {window.location.href = `/profile/${card.username}`}}><ProfileInner profile={card} /></ProfileCard>)
-    setCards(cardsMap)
-  }
-  const [loading,setLoading] = useState(true)
-  const [cards,setCards] = useState('')
-  useEffect(() => {
-    getAllProfiles()
-  },[])
-  if (loading) {
-    return <Page>
-      Loading&hellip;
-    </Page>
-  } else {
-    return <Page>
-      {cards}
+      <Notices />
+      <h1>Loading&hellip;</h1>
+      <Loading />
     </Page>
   }
+  return <Page>
+    <Notices />
+    <UserAvatar src={profile.gravatar} alt="User avatar for user, via Gravatar" />
+    <h1>{profile.username}</h1>
+    {profile.description && <div>{profile.description}</div>}
+    {profile.profileOwner === false && <div>Report</div>}
+    <ResponsiveContainer width={1000} height={500}>
+      <AreaChart data={EXAMPLE_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+            <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+          </linearGradient>
+        </defs>
+        <Area type="monotone" stroke="#8884d8" dataKey="words" fillOpacity={1} fill="url(#colorUv)" />
+        <CartesianGrid stroke="#ccc" strokeDasharray="3 10" />
+        <XAxis type='number' allowDecimals={false} dataKey='day' tickCount={LENGTH} domain={[1, LENGTH]} label='Day' />
+        <YAxis domain={[0, GOAL]} tickCount={GOAL/10000+1} allowDecimals={false} label='Words' />
+        <Tooltip />
+        <ReferenceLine label="Par" stroke="green" strokeDasharray="3 3" segment={[{ x: 1, y: 0 }, { x: LENGTH, y: GOAL}]} />
+      </AreaChart>
+    </ResponsiveContainer>
+  </Page>
 }
