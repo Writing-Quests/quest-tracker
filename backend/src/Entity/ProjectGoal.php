@@ -178,4 +178,24 @@ class ProjectGoal
 
         return $this;
     }
+
+    #[ApiProperty]
+    public function getCurrentValue(): string
+    {
+        $sum = '0.00';
+        foreach($this->progress as $p) {
+            $sum = bcadd($sum, $p, 2);
+        }
+        return $sum;
+    }
+
+    #[ApiProperty]
+    public function getGoalProgressPercent(): string
+    {
+        return bcmul(
+            bcdiv($this->getCurrentValue(), $this->goal, 4),
+            '100',
+            2
+        );
+    }
 }
