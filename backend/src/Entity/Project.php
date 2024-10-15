@@ -7,6 +7,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
 use App\Repository\ProjectRepository;
@@ -21,7 +22,19 @@ use Doctrine\ORM\Mapping as ORM;
 #[ApiResource(
     operations: [
         new Get(),
-        new GetCollection(),
+        new GetCollection(
+            uriTemplate: '/users/{id}/projects',
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: User::class,
+                    fromProperty: 'username',
+                    toProperty: 'user',
+                    securityObjectName: 'uriUser',
+                    security: "uriUser == user or is_granted('ROLE_ADMIN')", // TODO: Expand this to allow public listing of public projects
+                )
+            ],
+            security: "true", // Security is on the Link level for now
+        ),
         new Post(
             security: "is_granted('ROLE_USER')",
         ),

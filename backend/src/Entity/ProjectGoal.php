@@ -2,13 +2,33 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Link;
+
 use App\Repository\ProjectGoalRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProjectGoalRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(
+            uriTemplate: '/projects/{id}/goals',
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: Project::class,
+                    toProperty: 'project',
+                    security: "project.isPublic() or is_granted('ROLE_ADMIN') or (project.getUser() === user)",
+                )
+            ],
+            security: "true", // Security is on the Link level
+        ),
+    ],
+    security: "object.getProject().isPublic() or is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
+)]
 class ProjectGoal
 {
     #[ORM\Id]
@@ -30,9 +50,11 @@ class ProjectGoal
     private ?string $goal = '0.00';
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ApiProperty(writable: false)]
     private ?\DateTimeInterface $created_at = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ApiProperty(writable: false)]
     private ?\DateTimeInterface $edited_at = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]

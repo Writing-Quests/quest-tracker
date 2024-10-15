@@ -21,3 +21,4 @@ api_platform:
     use_symfony_listeners: true
     enable_swagger_ui: false
     name_converter: 'Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter'
+    enable_link_security: true

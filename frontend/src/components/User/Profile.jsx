@@ -1,4 +1,5 @@
 import { useContext, useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import styled from 'styled-components'
 import context from '../../services/context'
@@ -8,6 +9,7 @@ import api from '../../services/api'
 import { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
+import { ErrorContainer } from '../Containers'
 
 const { LoggedInUserContext } = context
 
@@ -35,7 +37,42 @@ const EXAMPLE_DATA = [
 const GOAL = 50000
 const LENGTH = 30
 
-export default function Profile () {
+function ProjectsList({username}) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState()
+  const [data, setData] = useState()
+  useEffect(() => {
+    if(!username) {
+      setError("Need username to load projects")
+      return
+    }
+    (async () => {
+      setLoading(true)
+      try {
+        const resp = await api.get(`users/${username}/projects`)
+        setData(resp.data['hydra:member'])
+      } catch(e) {
+        setError(e)
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [username])
+  if(loading || !data) { return <span>Loading&hellip;</span> }
+  if(error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
+  return <>
+    <ul>
+      {data.map(p =>
+        <li key={p.id}><Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link></li>
+      )}
+    </ul>
+  </>
+}
+ProjectsList.propTypes = {
+  username: PropTypes.string.isRequired,
+}
+
+export default function Profile() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState('')
   const [loading, setLoading] = useState(false)
@@ -89,11 +126,7 @@ export default function Profile () {
       </AreaChart>
     </ResponsiveContainer>
     <h2>Projects</h2>
-    <ul>
-      {profile?.project_data?.map(p =>
-        <li key={p.id}><Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link></li>
-      )}
-    </ul>
+    <ProjectsList username={profile.username} />
     <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
   </Page>
 }
