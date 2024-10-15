@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Link;
@@ -14,7 +15,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ProjectGoalRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(),
+        new Get(
+            uriTemplate: '/goals/{id}',
+        ),
         new GetCollection(
             uriTemplate: '/projects/{id}/goals',
             uriVariables: [
@@ -190,8 +193,12 @@ class ProjectGoal
     }
 
     #[ApiProperty]
-    public function getGoalProgressPercent(): string
+    public function getGoalProgressPercent(): ?string
     {
+        // Prevent division by 0 errors
+        if((int) $this->goal <= 0) {
+            return null;
+        }
         return bcmul(
             bcdiv($this->getCurrentValue(), $this->goal, 4),
             '100',
