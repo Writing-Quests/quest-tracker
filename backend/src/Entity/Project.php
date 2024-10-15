@@ -10,6 +10,8 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
 use App\Repository\ProjectRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -56,6 +58,17 @@ class Project
 
     #[ORM\Column(nullable: false, options: ["default" => false])]
     private ?bool $public = false;
+
+    /**
+     * @var Collection<int, ProjectGoal>
+     */
+    #[ORM\OneToMany(targetEntity: ProjectGoal::class, mappedBy: 'project', orphanRemoval: true)]
+    private Collection $projectGoals;
+
+    public function __construct()
+    {
+        $this->projectGoals = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -130,6 +143,36 @@ class Project
     public function setPublic(bool $public): static
     {
         $this->public = $public;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProjectGoal>
+     */
+    public function getProjectGoals(): Collection
+    {
+        return $this->projectGoals;
+    }
+
+    public function addProjectGoal(ProjectGoal $projectGoal): static
+    {
+        if (!$this->projectGoals->contains($projectGoal)) {
+            $this->projectGoals->add($projectGoal);
+            $projectGoal->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProjectGoal(ProjectGoal $projectGoal): static
+    {
+        if ($this->projectGoals->removeElement($projectGoal)) {
+            // set the owning side to null (unless already changed)
+            if ($projectGoal->getProject() === $this) {
+                $projectGoal->setProject(null);
+            }
+        }
 
         return $this;
     }
