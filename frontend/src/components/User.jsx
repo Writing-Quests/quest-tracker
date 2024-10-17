@@ -31,7 +31,7 @@ export function UserVerifyEmail () {
         if(!email || !token) {
           throw new Error("Invalid verification link")
         }
-        resp = await api.get('user/verify', {params:
+        resp = await api.get('user/$verify', {params:
           {e: email, t: token, type: 'verify-email'}
         })
         if (resp.data.verified === true) {
@@ -83,7 +83,7 @@ function ResetForm({username, email}) {
     if(password !== confirmPassword) { return }
     setLoading(true)
     try {
-      const res = await api.post('password/submit', {username, email, password})
+      const res = await api.post('password/$submit', {username, email, password})
       if(res?.data?.passwordChanged) {
         navigate('/login', {state: {notices: [{type: 'success', text: 'Your password has been updated. Login to continue.'}]}})
       } else {
@@ -136,7 +136,7 @@ export function UserResetPasswordFinish() {
   async function checkTokenData() {
     setLoading(true)
     try {
-      const resp = await api('user/verify', {params: {e: email, t: token, type: 'reset-password'}})
+      const resp = await api('user/$verify', {params: {e: email, t: token, type: 'reset-password'}})
       if (!resp.data.verified) {
         setTokenValid(false)
         setTokenError(mapFailureArray(resp.data))

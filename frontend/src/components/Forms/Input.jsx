@@ -16,6 +16,20 @@ const StyledTextInput = styled.input`
   }
 `
 
+const StyledTextarea = styled.textarea`
+  width: 100%;
+  font-size: 16px;
+  padding: 0;
+  position: relative;
+  background: transparent;
+  border: none;
+  margin-top: 6px;
+  margin-bottom: 2px;
+  &:focus {
+    outline: none;
+  }
+`
+
 const Label = styled.label`
   border: 1px solid #C0C0C0;
   border-radius: 3px;
@@ -146,6 +160,18 @@ const LinkButton = styled.button`
   }
 `
 
+function TextareaInput({elStyle, label, ...props}) {
+  return <Label style={elStyle} disabled={props.disabled}>
+    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+    <StyledTextarea {...props}></StyledTextarea>
+  </Label>
+}
+TextareaInput.propTypes = {
+  elStyle: PropTypes.object,
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
+}
+
 function TextInput({elStyle, label, ...props}) {
   return <Label style={elStyle} disabled={props.disabled} readOnly={props.readOnly}>
     <span style={{position: 'relative', top: '-4px'}}>{label}</span>
@@ -185,6 +211,8 @@ export default function Input({grouped, firstInGroup, lastInGroup, ...props}) {
   switch (props.type) {
     case 'submit':
       return <ButtonInput elStyle={elStyle} {...props} />
+    case 'textarea':
+      return <TextareaInput  elStyle={elStyle} {...props} />
     case 'text':
     case 'password':
     case 'email':

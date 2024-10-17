@@ -4,6 +4,9 @@ namespace App\Controller;
 
 use App\Entity\LoginToken;
 use App\Entity\User;
+use App\State\MailManager;
+use Symfony\Component\Mime\Email;
+use Symfony\Component\Mailer\MailerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,7 +17,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class VerificationController extends AbstractController
 {
-  #[Route('/api/user/verify/', name: 'verify_email', methods: ['GET'])]
+  #[Route('/api/user/$verify/', name: 'verify_email', methods: ['GET'])]
   public function verify (Request $request, EntityManagerInterface $entityManager): JsonResponse {
     try {
       $params = $request->query;
@@ -41,9 +44,10 @@ class VerificationController extends AbstractController
       }
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
+    } finally {
+      $entityManager->flush();
+      return $this->json($resp);
     }
-    $entityManager->flush();
-    return $this->json($resp);
   }
   
   private function finish_email_verify ($entityManager,$tokenEntry,$user,$email,$token) {
@@ -66,9 +70,10 @@ class VerificationController extends AbstractController
       $tokenMatches = $tokenEntry->verifySecret($token);
       if ($tokenMatches && !$isExpired) { 
         $this_resp['verified'] = true;
+        $unverifiedEmail = $user->getUnverifiedEmail();
         $user->setEmailVerifiedAt($verifyTime);
-        $user->setUnverifiedEmail(null);
-        // TODO: ask group: do we consider a verified email an "edited at"? or is that just for user edits?
+        $user->setEmail($unverifiedEmail); // the unverified email is always the most recent, whether on create or change
+        $user->setUnverifiedEmail(null); // once verified, this should be null
         $entityManager->persist($user);
         $entityManager->remove($tokenEntry);
       } else {
