@@ -2,7 +2,10 @@
 
 namespace App\Entity;
 
+use DateTime;
+
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\ApiResource;
@@ -13,6 +16,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProjectGoalRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [
         new Get(
@@ -28,6 +32,14 @@ use Doctrine\ORM\Mapping as ORM;
                 )
             ],
             security: "true", // Security is on the Link level
+        ),
+        new Patch(
+            uriTemplate: '/goals/{id}',
+            security: "is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
+        ),
+        new Post(
+            uriTemplate: '/goals',
+            security: "is_granted('ROLE_USER')",
         ),
     ],
     security: "object.getProject().isPublic() or is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
@@ -67,7 +79,7 @@ class ProjectGoal
     private ?\DateTimeInterface $end_date = null;
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY)]
-    private array $progress = [];
+    private array $progress = [0];
 
     public function getId(): ?int
     {
@@ -204,5 +216,19 @@ class ProjectGoal
             '100',
             2
         );
+    }
+
+    #[ORM\PrePersist]
+    public function prePersist(): void
+    {
+        // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
+        $this->setCreatedAt(new DateTime());
+        $this->setEditedAt(new DateTime());
+    }
+
+    #[ORM\PreUpdate]
+    public function preUpdate(): void
+    {
+        $this->setEditedAt(new DateTime());
     }
 }
