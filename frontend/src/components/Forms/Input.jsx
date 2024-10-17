@@ -117,6 +117,28 @@ const OutlineButton = styled.button`
   }
 `
 
+const NormalButton = styled.button`
+  padding: 15px 20px;
+  margin-top: 6px;
+  background-color: transparent;
+  color: #333;
+  border: none;
+  background-color: #e5e5e5;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  &[disabled]{
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+  &:hover {
+    background-color: #d5d5d5;
+  }
+`
+
 const LinkButton = styled.button`
   width: 100%;
   padding: 15px 0;
@@ -214,8 +236,10 @@ export function Button({type, ...props}) {
     case 'cta':
       return <CTAButton {...props} />
     case 'link':
-    default:
       return <LinkButton {...props} />
+    default:
+    case 'normal':
+      return <NormalButton {...props} />
   }
 }
 Button.propTypes = {

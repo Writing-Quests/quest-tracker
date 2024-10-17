@@ -361,6 +361,7 @@ class UserController extends AbstractController
   }
 }
 
+// TODO: This is duplicating logic from the Users ApiResource
 class UserProfile {
   public function publicCard($requestedUser) {
     $profile = [];

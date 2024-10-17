@@ -3,7 +3,8 @@ import {
   UserVerifyEmail,
   UserResetPasswordFinish
 } from './components/User'
-import { UserProfile,SpecificProfile,AllPublicProfiles } from './components/User/Profile'
+import EditProject from './components/EditProject'
+import { UserProfile,AllPublicProfiles } from './components/User/Profile'
 import Login from './components/Login'
 import Settings from './components/Settings'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -28,7 +29,7 @@ export function App() {
   async function getLoggedInUser() {
     setLoading(true)
     try {
-      const resp = await api('users/$me')
+      const resp = await api('me')
       if(resp.data?.anonymousUser || !resp.data?.username) {
         setLoggedIn(false)
       } else {
@@ -55,9 +56,9 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<UserProfile />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/profile/:username" element={<SpecificProfile />} />
-            <Route path="/profiles/public" element={<AllPublicProfiles />} />
+            <Route path="/profile/:username?" element={<UserProfile />} />
+            <Route path="/project/new" element={<EditProject />} />
+            <Route path="/project/:projectId" element={<EditProject />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="*" element={<Navigate to='/' replace />} />
             <Route path="/settings" element={<Settings />} />
@@ -76,8 +77,8 @@ export function App() {
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/resetform" element={<UserResetPasswordFinish />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/profile/:username?" element={<SpecificProfile />} />
-            <Route path="/profiles/public" element={<AllPublicProfiles />} />
+            <Route path="/profile/:username?" element={<UserProfile />} />
+            <Route path="*" element={<Navigate to='/' replace />} />
           </Routes>
         </BrowserRouter>
       </GetLoggedInUserContext.Provider>

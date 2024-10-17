@@ -1,11 +1,12 @@
 /* eslint-disable react/prop-types */
 import { useContext, useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import styled from 'styled-components'
 import context from '../../services/context'
 import Page from '../Page'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import api from '../../services/api'
+import { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
 
@@ -59,55 +60,29 @@ const LENGTH = 30
 
 /*
 export default function Profile () {
-  async function getProfileInformation(username) {
-    if (username !== '') {
-      let resp
+  const navigate = useNavigate()
+  const [profile, setProfile] = useState('')
+  const [loading, setLoading] = useState(false)
+  const user = useContext(LoggedInUserContext)
+  const { username } = useParams()
+  useEffect(() => {
+    let lookupUser
+    if(username?.length) { lookupUser = username }
+    else { lookupUser = user.username }
+    if(!lookupUser?.length) { return }
+    (async () => {
+      setLoading(true)
       try {
-        resp = await api.get('profile/get', { params: { 'username': username }})
+        const resp = await api.get(`users/${lookupUser}`)
+        setProfile(resp.data)
       } catch (e) {
         console.error('Error getting profile')
         console.error(e)
       } finally {
         setLoading(false)
       }
-    }
-  }
-}
-*/
-
-function ProfileLeadInfo (props) {
-  const profile = props.profile
-  const url = profile.link
-  const username = props.username
-  return <>
-    {profile.gravatar && <UserAvatar src={profile.gravatar} alt="User avatar for user, via Gravatar" /> }
-    <div>
-      <h1 style={{margin: '0'}}>{username}</h1>
-      {profile.link && <a href={url} target="_blank">{url}</a>}
-    </div>
-    {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0 10px'}}>{profile.description}</div>}
-    {!profile.profileOwner && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
-  </>
-}
-
-export function UserProfile () {
-  async function getProfileInformation (username) {
-    try {
-      const resp = await api.get('profile/$get', { params: { 'username': username }})
-      setProfile(resp.data)
-    } catch (err) {
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-  const [profile, setProfile] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error,setError] = useState(null)
-  const user = useContext(LoggedInUserContext)
-  useEffect(() => {
-    getProfileInformation(user.username)
-  },[user])
+    })()
+  }, [user, username])
   if(loading) {
     return <Page>
       <Notices />
@@ -115,60 +90,12 @@ export function UserProfile () {
       <Loading />
     </Page>
   }
-  if (error !== null) {
-    let msg = 'An unknown error occured.'
-    return <Page>
-      <ErrorContainer>{msg}</ErrorContainer>
-      <p>See <Link to="/profiles/public">all public users</Link>.</p>
-    </Page>
-  } else {
-    return <Page>
-      <ProfileDataContainer>
-        <ProfileLeadInfo profile={profile} username={user.username} />
-      </ProfileDataContainer>
-    </Page>
-  }
-}
-
-export function SpecificProfile () {
-  async function getProfileInformation (username) {
-    try {
-      const resp = await api.get('profile/$get', { params: { 'username': username }})
-      setProfile(resp.data)
-    } catch (err) {
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-  const [profile,setProfile] = useState('')
-  const [loading,setLoading] = useState(true)
-  const [error,setError] = useState(null)
-  const {username} = useParams();
-  useEffect(() => {
-    getProfileInformation(username)
-  },[])
-  if(loading) {
-    return <Page>
-      <Notices />
-      <h1>Loading&hellip;</h1>
-      <Loading />
-    </Page>
-  }
-  if (error !== null) {
-    let msg = 'An unknown error occured.'
-    if (error.status === 404) {
-      msg = `No profile found for username: ${username}.`
-    }
-    return <Page>
-      <ErrorContainer>{msg}</ErrorContainer>
-      <p>See <Link to="/profiles/public">all public users</Link>.</p>
-    </Page>
-  } else {
-    return <Page>
-      <ProfileDataContainer>
-        <ProfileLeadInfo profile={profile} username={username} />
-      </ProfileDataContainer>
+  return <Page>
+    <Notices />
+    <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" />
+    <h1>{profile.username}</h1>
+    {profile.description && <div>{profile.description}</div>}
+    {profile.username !== user.username && <div>Report</div>}
     <ResponsiveContainer width={1000} height={500}>
       <AreaChart data={EXAMPLE_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
         <defs>
@@ -185,6 +112,13 @@ export function SpecificProfile () {
         <ReferenceLine label="Par" stroke="green" strokeDasharray="3 3" segment={[{ x: 1, y: 0 }, { x: LENGTH, y: GOAL}]} />
       </AreaChart>
     </ResponsiveContainer>
+    <h2>Projects</h2>
+    <ul>
+      {profile?.project_data?.map(p =>
+        <li key={p.id}><Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link></li>
+      )}
+    </ul>
+    <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
   </Page>
   }
 }

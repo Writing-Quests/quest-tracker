@@ -3,8 +3,10 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -14,21 +16,21 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Ignore;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 use App\State\UserMeProvider;
 use App\State\NotLoggedInRepresentation;
-//use App\Filter\UserMeFilter;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
 #[ApiResource(
     operations: [
+        new Get(),
         new Get(
-            uriTemplate: '/users/$me',
+            uriTemplate: '/me',
             provider: UserMeProvider::class,
             output: NotLoggedInRepresentation::class,
             security: "true",
         ),
-        new Get(),
     ],
     security: "is_granted('ROLE_ADMIN') or object == user",
 )]
@@ -65,10 +67,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255,nullable: true)]
     private ?string $unverified_email = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
+    #[ApiProperty(writable: false)]
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(nullable: true)]
+    #[ApiProperty(writable: false)]
     private ?\DateTimeImmutable $edited_at = null;
 
     #[ORM\Column(nullable: true)]
@@ -77,7 +81,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $last_login_at = null;
 
-    #[ORM\Column(type: Types::STRING, nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     private $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -96,9 +100,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Ignore]
     private Collection $loginTokens;
 
+    /**
+     * @var Collection<int, Project>
+     */
+    #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user', fetch: 'EAGER')]
+    private Collection $projects;
+
     public function __construct()
     {
         $this->loginTokens = new ArrayCollection();
+        $this->projects = new ArrayCollection();
+    }
+
+    #[ApiResource (writable: false)]
+    public function getGravatarUrl(): ?string
+    {
+        if($this->email) {
+            return 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $this->email))) . '?d=404&s=100&r=pg';
+        }
     }
 
     public function getId(): ?int
@@ -327,5 +346,47 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Project>
+     */
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    public function getProjects(): ?Collection
+    {
+        return $this->projects;
+    }
+
+    #[ApiProperty(readableLink: false, writableLink: false)]
+    public function getProjectData(): ?Collection
+    {
+        return $this->projects;
+    }
+
+    public function addProject(Project $project): static
+    {
+        if (!$this->projects->contains($project)) {
+            $this->projects->add($project);
+            $project->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProject(Project $project): static
+    {
+        if ($this->projects->removeElement($project)) {
+            // set the owning side to null (unless already changed)
+            if ($project->getUser() === $this) {
+                $project->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+    #[ORM\PreUpdate]
+    public function preUpdate(): void
+    {
+        $this->edited_at = new DateTime();
     }
 }
