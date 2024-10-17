@@ -83,7 +83,7 @@ function ResetForm({username, email}) {
     if(password !== confirmPassword) { return }
     setLoading(true)
     try {
-      const res = await api.post('password/submit', {username, email, password})
+      const res = await api.post('password/$submit', {username, email, password})
       if(res?.data?.passwordChanged) {
         navigate('/login', {state: {notices: [{type: 'success', text: 'Your password has been updated. Login to continue.'}]}})
       } else {

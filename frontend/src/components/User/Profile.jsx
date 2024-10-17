@@ -58,7 +58,7 @@ const EXAMPLE_DATA = [
 const GOAL = 50000
 const LENGTH = 30
 
-/*
+
 export default function Profile () {
   const navigate = useNavigate()
   const [profile, setProfile] = useState('')
@@ -92,7 +92,7 @@ export default function Profile () {
   }
   return <Page>
     <Notices />
-    <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" />
+    {profile.gravatar && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" />}
     <h1>{profile.username}</h1>
     {profile.description && <div>{profile.description}</div>}
     {profile.username !== user.username && <div>Report</div>}
@@ -120,11 +120,9 @@ export default function Profile () {
     </ul>
     <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
   </Page>
-  }
 }
 
-
-export function AllPublicProfiles () {
+function AllPublicProfiles () {
   const ProfileCard = styled.div`
     clear: both;
     width: 75%;

@@ -4,7 +4,7 @@ import {
   UserResetPasswordFinish
 } from './components/User'
 import EditProject from './components/EditProject'
-import { UserProfile,AllPublicProfiles } from './components/User/Profile'
+import Profile from './components/User/Profile'
 import Login from './components/Login'
 import Settings from './components/Settings'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -55,8 +55,8 @@ export function App() {
       <LoggedInUserContext.Provider value={data}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<UserProfile />} />
-            <Route path="/profile/:username?" element={<UserProfile />} />
+            <Route path="/" element={<Profile />} />
+            <Route path="/profile/:username?" element={<Profile />} />
             <Route path="/project/new" element={<EditProject />} />
             <Route path="/project/:projectId" element={<EditProject />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
@@ -77,7 +77,7 @@ export function App() {
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/resetform" element={<UserResetPasswordFinish />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/profile/:username?" element={<UserProfile />} />
+            <Route path="/profile/:username?" element={<Profile />} />
             <Route path="*" element={<Navigate to='/' replace />} />
           </Routes>
         </BrowserRouter>
