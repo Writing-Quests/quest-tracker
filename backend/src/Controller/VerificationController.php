@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\LoginToken;
 use App\Entity\User;
 use App\State\MailManager;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Mailer\MailerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -43,42 +44,6 @@ class VerificationController extends AbstractController
       }
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
-    }
-    $entityManager->flush();
-    return $this->json($resp);
-  }
-
-  #[Route('/api/user/$resend', name: 'resend_verification', methods: ['POST'])]
-  public function resendVerification (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse {
-    try {
-      $resp = ['errors'=>[]];
-      $verifiedEmail = $request->getPayload()->get('email');
-      $unverifiedEmail = $request->getPayload()->get('unverifiedEmail');
-      $username = $request->getPayload()->get('username');
-      $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload' => $unverifiedEmail, 'type' => 'verify-email']);
-      $currentTime = new \DateTimeImmutable();
-      $isExpired = $currentTime > $tokenEntry->getExpiresAt();
-      if ($isExpired) { // make a new token, update the current entry, and send the email
-        $token = bin2hex(random_bytes(32));
-        ($tokenEntry)
-          ->setSecret($token)
-          ->setCreatedAt($currentTime)
-          ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
-          ->setType('verify-email')
-          ->setPayload($unverifiedEmail);
-        $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$token;
-        $entityManager->persist($tokenEntry);
-      } else {
-        $token = $tokenEntry->getSecret();
-        $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$token;
-      }
-      $resp['token'] = $token;
-      $verificationMsg = (new MailManager)->createNewVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL);
-      $resp['mailer'] = $mailer->send($verificationMsg);
-      $resp['sent'] = true;
-    } catch (\Exception $err) {
-      $resp['sent'] = false;
-      array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
     } finally {
       $entityManager->flush();
       return $this->json($resp);
@@ -105,8 +70,10 @@ class VerificationController extends AbstractController
       $tokenMatches = $tokenEntry->verifySecret($token);
       if ($tokenMatches && !$isExpired) { 
         $this_resp['verified'] = true;
+        $unverifiedEmail = $user->getUnverifiedEmail();
         $user->setEmailVerifiedAt($verifyTime);
-        $user->setUnverifiedEmail(null);
+        $user->setEmail($unverifiedEmail); // the unverified email is always the most recent, whether on create or change
+        $user->setUnverifiedEmail(null); // once verified, this should be null
         $entityManager->persist($user);
         $entityManager->remove($tokenEntry);
       } else {

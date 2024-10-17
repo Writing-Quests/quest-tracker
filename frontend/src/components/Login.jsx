@@ -73,7 +73,7 @@ function RegisterForm({onSuccess}) {
       if (username === '') { throw new Error("Username is required.") }
       if (email === '') { throw new Error("Email is required.") }
       if (error) { setError(null) }
-      const resp = await api.post('user/create/', data)
+      const resp = await api.post('user/$create/', data)
       if (!resp.data.created) {
         throw new Error(`Account not created: ${resp.data.errors[0].text}`)
       } else {

@@ -62,12 +62,13 @@ class UserController extends AbstractController
             ->setTimezone($userTimezone)
             ->setPassword($hashedPassword);
           $token = bin2hex(random_bytes(32));
+          $expiresAt = new \DateTimeImmutable('now +24 hours');
           $verifyEmailToken = new LoginToken();
           ($verifyEmailToken)
             ->setUser($newUser)
             ->setSecret($token)
             ->setCreatedAt($createdAt)
-            ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
+            ->setExpiresAt($expiresAt)
             ->setType('verify-email')
             ->setPayload($email);
           $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$email.'&t='.$token;
@@ -76,8 +77,8 @@ class UserController extends AbstractController
           $entityManager->persist($newUser);
           $entityManager->flush();
           $created = true;
-          // TODO: set up the SMTP stuff for novelquests; using one of my mailers for testing right now.
-          $newUserMsg = (new MailManager)->createFirstVerification($username, $email, $verifyEmailURL);
+          // TODO: set up the SMTP stuff for novelquests
+          $newUserMsg = (new MailManager)->sendEmailVerification($username, $email, $verifyEmailURL, $expiresAt, true);
           $mailer->send($newUserMsg);
           $resp['sentVerificationEmail'] = true;
         } catch (\Exception $err) {
@@ -174,12 +175,12 @@ class UserController extends AbstractController
   {
     try {
       // https://docs.gravatar.com/api/avatars/images/
-      $requested_username = $request->query->get('username');
-      $requested_user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$requested_username]);
-      if (!$requested_user) { // no user found by that username
+      $requestedUsername = $request->query->get('username');
+      $requestedUser = $entityManager->getRepository(User::class)->findOneBy(['username'=>$requestedUsername]);
+      if (!$requestedUser) { // no user found by that username
         throw $this->createNotFoundException('User not found');
       }
-      $resp = (new UserProfile())->getProfileInfo($requested_user,$user);
+      $resp = (new UserProfile())->getProfileInfo($requestedUser,$user);
       if (!$resp) { // we return null if it's a private profile and it's not your private profile; buddies later
         throw $this->createNotFoundException('User not found');
       }
@@ -216,7 +217,6 @@ class UserController extends AbstractController
           break;
 
           case 'emailChange':
-            // TODO: check for an existing, non-expired token, in case they hit "save changes" twice or something.
             $email = $POST['unverifiedEmail'];
             $emailInUse = $entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
             if (!$emailInUse) {
@@ -224,16 +224,17 @@ class UserController extends AbstractController
               $user->setUnverifiedEmail($email);
               $token = bin2hex(random_bytes(32));
               $verifyEmailToken = new LoginToken();
+              $expiresAt = new \DateTimeImmutable('now +24 hours');
               ($verifyEmailToken)
                 ->setUser($user)
                 ->setSecret($token)
                 ->setCreatedAt(new \DateTimeImmutable())
-                ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
+                ->setExpiresAt($expiresAt)
                 ->setType('verify-email')
                 ->setPayload($email);
               $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$email.'&t='.$token;
               $entityManager->persist($verifyEmailToken);
-              $newVerificationMsg = (new MailManager)->createNewVerification($POST['username'], $email, $oldEmail, $verifyEmailURL);
+              $newVerificationMsg = (new MailManager)->changedEmailVerification($POST['username'], $email, $oldEmail, $verifyEmailURL, $expiresAt);
               $mailer->send($newVerificationMsg);
             } else {
               $resp['revertEmail'] = $user->getUnverifiedEmail();
@@ -242,7 +243,12 @@ class UserController extends AbstractController
           break;
 
           case 'passwordChange':
-            // TODO: a whole change password rigamaole.
+            $newPasswordHash = $passwordHasher->hashPassword(
+              $user,
+              $POST['password']
+            );
+            $user->setPassword($newPasswordHash);
+            $resp['sendLogout'] = true;
           break;
         }
         $entityManager->persist($user);
@@ -267,10 +273,72 @@ class UserController extends AbstractController
     return $this->json($profiles);
   }
 
+  #[Route('/api/user/$resend', name: 'resend_verification', methods: ['POST'])]
+  public function resendVerification (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse {
+    $resp = ['errors'=>[]];
+    $verifyEmailURL = null;
+    try {
+      $verifiedEmail = $request->getPayload()->get('email');
+      $unverifiedEmail = $request->getPayload()->get('unverifiedEmail');
+      $username = $request->getPayload()->get('username');
+      $resp['userInfo'] = ['vEmail'=>$verifiedEmail, 'uEmail'=>$unverifiedEmail, 'username'=>$username];
+      $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload' => $unverifiedEmail, 'type' => 'verify-email']);
+      $currentTime = new \DateTimeImmutable();
+      $resp['time'] = $currentTime;
+      if (!$tokenEntry) { // there is no existing verification token; create a new one
+        $resp['tokenStatus'] = 'null';
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = new \DateTimeImmutable('now +24 hours');
+        $tokenEntry = new LoginToken;
+        ($tokenEntry)
+          ->setUser($entityManager->getRepository(User::class)->findOneBy(['username'=>$username]))
+          ->setSecret($token)
+          ->setCreatedAt($currentTime)
+          ->setExpiresAt($expiresAt)
+          ->setType('verify-email')
+          ->setPayload($unverifiedEmail);
+          $entityManager->persist($tokenEntry);
+          $entityManager->flush();
+       } else if ($currentTime > $tokenEntry->getExpiresAt()) { // a token exists but is expired; create a new one on existing row
+        $resp['tokenStatus'] = 'expired';
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = new \DateTimeImmutable('now +24 hours');
+        ($tokenEntry)
+          ->setUser($entityManager->getRepository(User::class)->findOneBy(['username'=>$username]))
+          ->setSecret($token)
+          ->setCreatedAt($currentTime)
+          ->setExpiresAt($expiresAt)
+          ->setType('verify-email')
+          ->setPayload($unverifiedEmail);
+          $entityManager->persist($tokenEntry);
+          $entityManager->flush();
+       } else {
+        $resp['tokenStatus'] = 'exists';
+        $token = $tokenEntry->getSecret();
+        $expiresAt = $tokenEntry->getExpiresAt();
+      }
+      $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$token;
+      if ($verifiedEmail != $unverifiedEmail) {
+        $resp['newEmail'] = true;
+        $verificationMsg = (new MailManager)->changedEmailVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL, $expiresAt);
+      } else {
+        $resp['newEmail'] = false;
+        $verificationMsg = (new MailManager)->sendEmailVerification($username, $unverifiedEmail, $verifyEmailURL, $expiresAt);
+      }
+      $mailer->send($verificationMsg);
+      $resp['sent'] = true;
+    } catch (\Exception $err) {
+      $resp['sent'] = false;
+      array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
+    } finally {
+      return $this->json($resp);
+    }
+  }
+
   #[Route('api/user/$revert', name: 'revert_email', methods: ['POST'])]
   public function revertVerifiedEmail(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse
   {
-    // TODO: email user when their email is reverted to the old verified address?
+    // TODO: maybe: email user when their email is reverted to the old verified address?
     try{
       $resp = ['errors'=>[]];
       $POST = $request->getPayload()->all();
@@ -294,27 +362,27 @@ class UserController extends AbstractController
 }
 
 class UserProfile {
-  public function publicCard($requested_user) {
+  public function publicCard($requestedUser) {
     $profile = [];
-    $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $requested_user->getEmail() ) ) ) . '?d=404&s=75&r=pg';
+    $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $requestedUser->getEmail() ) ) ) . '?d=404&s=75&r=pg';
     $profile = [
-      'username'=>$requested_user->getUsername(),
-      'description'=>$requested_user->getDescription(),
+      'username'=>$requestedUser->getUsername(),
+      'description'=>$requestedUser->getDescription(),
       'gravatar'=>$this->checkGravarExists($gravatar_url),
-      'memberSince'=>$requested_user->getCreatedAt()
+      'memberSince'=>$requestedUser->getCreatedAt()
     ];
     return $profile;
   }
 
-  public function getProfileInfo($requested_user,$loggedInUser) {
+  public function getProfileInfo($requestedUser,$loggedInUser) {
     $profile = [];
-    $profilePublic = $requested_user->isPublic();
+    $profilePublic = $requestedUser->isPublic();
     if ($loggedInUser != null) {
-      $profileOwner = ($loggedInUser->getUserIdentifier() == $requested_user->getUserIdentifier());
+      $profileOwner = ($loggedInUser->getUserIdentifier() == $requestedUser->getUserIdentifier());
     } else {
       $profileOwner = false;
     }
-    $profilePublic = $requested_user->isPublic();
+    $profilePublic = $requestedUser->isPublic();
     if ((!$profileOwner || $loggedInUser == null) && !$profilePublic) { 
       // two conditionals; 
       //  if you're not the profile owner and the profile is not public
@@ -322,20 +390,21 @@ class UserProfile {
       return null;
     }
     // TODO: this will need to return project data as well in the future
-    $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $requested_user->getEmail() ) ) ) . '?d=404&s=100&r=pg';
+    $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $requestedUser->getEmail() ) ) ) . '?d=404&s=100&r=pg';
     $profile = [
-      'username'=>$requested_user->getUsername(),
-      'link'=>$requested_user->getLink(),
-      'description'=>$requested_user->getDescription(),
+      'username'=>$requestedUser->getUsername(),
+      'link'=>$requestedUser->getLink(),
+      'description'=>$requestedUser->getDescription(),
       'gravatar'=>$this->checkGravarExists($gravatar_url),
       'profileOwner'=>$profileOwner,
       'public'=>$profilePublic,
-      'memberSince'=>$requested_user->getCreatedAt()
+      'memberSince'=>$requestedUser->getCreatedAt()
     ];
     if ($profileOwner) {
-      $profile['email'] = $requested_user->getEmail();
-      $profile['unverifiedEmail'] = $requested_user->getUnverifiedEmail();
-      $profile['emailVerified'] = ($requested_user->getUnverifiedEmail() == null); // unverifiedmail is set to null when email is verified
+      $profile['email'] = $requestedUser->getEmail();
+      $profile['unverifiedEmail'] = $requestedUser->getUnverifiedEmail();
+      $profile['emailVerified'] = ($requestedUser->getUnverifiedEmail() == null); // unverifiedmail is set to null when email is verified
+      $profile['unverifiedAccount'] = ($requestedUser->getEmailVerifiedAt() == null); // even if the account currently has an unverified email, this wouldn't be null if they have verified an initial email address
     }
     $profile['status'] = 200;
     return $profile;

@@ -2,6 +2,8 @@ import { useContext,useState,useEffect } from 'react'
 import styled from 'styled-components'
 import context from '../services/context'
 import Page from './Page'
+import Notices from './Notices'
+import Loading from './Loading'
 import api from '../services/api'
 import Input from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
@@ -18,7 +20,7 @@ const ErrorContainer = styled.div`
 `
 
 const VerificationContainer = styled.div`
-  display: ${(props) => (props.hidden === 'true' && 'none') || 'block'};
+  display: ${(props) => (props.hidden == 'true' && 'none') || 'block'};
   background-color: #F4F1ED;
   color: #D7722C;
   width: 100%;
@@ -30,7 +32,7 @@ const VerificationContainer = styled.div`
 `
 
 const SectionOptions = styled.div`
-  display: flex;
+  display: ${(props) => (props.available == 'false' && 'none') || 'flex'};
   width: ${(props) => (props.size === 'small' && '40%') || '100%'};
   background-color: transparent;
   margin: ${(props) => (props.size === 'small' && '5px 0') || '10px 0'};
@@ -86,7 +88,6 @@ const NotALink = styled.span`
 `
 
 export default function Settings () {
-  // TODO: 
   // TODO: if they have _never_ verified an email, disable privacy toggle
   async function getProfileInformation (username) {
     try {
@@ -111,57 +112,72 @@ export default function Settings () {
   }
   function checkPassword() {
     setPasswordMatch(password1 === password2)
+    if (passwordMatch === false) {
+      setFormError('Passwords do not match')
+    } else {
+      setFormError(null)
+    }
   }
   // eslint-disable-next-line react/prop-types
-  function VerificationNotice ({unverified,verified}) {
+  function VerificationNotice ({unverified,verified,hidden}) {
     if (profile.emailVerified === false) {
       let revertOption = (unverified !== verified)
-      return <VerificationContainer>
+      return <VerificationContainer hidden={hidden.toString()}>
             <p>Email address pending verification.<br /><NotALink onClick={resendVerification}>Resend Verification to {unverified}</NotALink> {revertOption && <>&bull; <NotALink onClick={revertToVerified}>Revert to {verified}</NotALink></>}</p>
         </VerificationContainer>
     }
   }
   async function updateProfileInformation (e) {
     e && e.preventDefault()
-    clearAll()
-    setLoading(true)
-    if (password1 !== null) {
-      console.log('passwordChange!')
-      if (passwordMatch) {
+    try {
+      clearAll()
+      setLoading(true)
+      checkPassword()
+      if (password1 !== null && passwordMatch == true) {
         profile.passwordChange = true
         profile.password = password1
+      } else if (password1 !== null && passwordMatch == false) {
+        setFormError('Passwords do not match; no password change submitted')
+        setPassword1('')
+        setPassword2('')
+      }
+      if (profile.unverifiedEmail !== null && profile.email !== profile.unverifiedEmail) {
+        profile.emailChange = true
+      }
+      const resp = await api.post('profile/$edit',{...profile})
+      console.log(resp)
+      if (resp.data.errors.length > 0) {
+        setFormError(resp.data.errors[0].text)
+        if (resp.data.revertEmail) {
+          // the email address wasn't changed
+          profile.unverifiedEmail = resp.data.revertEmail
+        }
       } else {
-        return false
+        if (resp.data.sendLogout === true) {
+          // TODO: some sort of "password changed, plz log in with new password" notice
+          await api.post('auth/logout')
+          window.location = '/'
+        } else {
+          setNotice('Profile updated successfully!')
+        }
       }
+    } catch (err) {
+      setFormError('Unable to update profile.')
+    } finally {
+      setLoading(false)
     }
-    if (profile.unverifiedEmail !== null && profile.email !== profile.unverifiedEmail) {
-      profile.emailChange = true
-    }
-    const resp = await api.post('profile/$edit',{...profile})
-    console.log(resp)
-    if (resp.data.errors.length > 0) {
-      setUpdateError(resp.data.errors[0].text)
-      if (resp.data.revertEmail) {
-        // the email address wasn't changed
-        profile.unverifiedEmail = resp.data.revertEmail
-      }
-    } else {
-      setNotice('Profile updated successfully!')
-    }
-    setLoading(false)
   }
   async function resendVerification () {
     clearAll()
     try {
       setLoading(true)
       const resp = await api.post('user/$resend',{...profile})
-      console.log(resp)
       if (resp.data.sent === true) {
         setNotice('Sent new verification email to ' + profile.unverifiedEmail + '.')
         setVerificationHidden(true)
       }
     } catch (err) {
-      setUpdateError(JSON.stringify(err))
+      setFormError('An error has occurred; unable to send email')
     } finally {
       setLoading(false)
     }
@@ -179,14 +195,14 @@ export default function Settings () {
         setError(resp.data.errors[0].text)
       }
     } catch (err) {
-      setUpdateError(JSON.stringify(err))
+      setFormError('An error has occurred; unable to revert email')
     } finally {
       setLoading(false)
     }
   }
   const clearAll = () => {
     setError(null)
-    setUpdateError(null)
+    setFormError(null)
     setNotice(null)
   }
   const [profile,setProfile] = useState({})
@@ -197,7 +213,7 @@ export default function Settings () {
   const [passwordMatch,setPasswordMatch] = useState()
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState(null)
-  const [updateError,setUpdateError] = useState(null)
+  const [formError,setFormError] = useState(null)
   const [notice,setNotice] = useState(null)
   const [verificationHidden, setVerificationHidden] = useState(false)
   const user = useContext(LoggedInUserContext)
@@ -205,7 +221,13 @@ export default function Settings () {
   useEffect(() => {
     getProfileInformation(user.username)
   },[user])
-  if (error !== null) {
+  if(loading) {
+    return <Page>
+      <Notices />
+      <h1>Loading&hellip;</h1>
+      <Loading />
+    </Page>
+  } else if (error !== null) {
     let msg = 'An unknown error occured.'
     if (error.status === 404) { 
       msg = `No profile found for username: ${user.username}.`
@@ -216,8 +238,7 @@ export default function Settings () {
   } else {
     return <Page>
       <h1>Settings</h1>
-      {passwordMatch === false && <ErrorContainer>Passwords do not match.</ErrorContainer>}
-      {updateError !== null && <ErrorContainer>{updateError}</ErrorContainer>}
+      {formError !== null && <ErrorContainer>{formError}</ErrorContainer>}
       {notice && <p>{notice}</p>}
       <SectionOptions>
         <OptionButton selected={(section === 'profile')} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Profile</OptionButton>
@@ -230,7 +251,8 @@ export default function Settings () {
             <Input type='textarea' rows='7' label='Description' defaultValue={profile.description} onChange={(e)=>{holdProfileChanges(e,'description')}} {...formProps} />
           </InputGroup>
           <Label>Privacy</Label>
-          <SectionOptions size='small'>
+          {profile.unverifiedAccount && <VerificationContainer>Your account and projects are private. You can choose to make them public after you verifiy your email address.</VerificationContainer>}
+          <SectionOptions size='small' available={(profile.unverifiedAccount == false).toString()}>
               <OptionButton size='small' selected={(publicProfile === true)} value='true' onClick={(e) => {holdProfileChanges(e,'public')}}>Public</OptionButton>
               <OptionButton size='small' selected={(publicProfile === false)} value='false' onClick={(e) => {holdProfileChanges(e, 'public')}}>Private</OptionButton>
           </SectionOptions>
@@ -241,7 +263,7 @@ export default function Settings () {
             <Input label='Username' disabled={true} type='text' value={profile.username} />
             <Input label='Email Address' type='email' defaultValue={profile.unverifiedEmail ? profile.unverifiedEmail : profile.email} onChange={(e) => {holdProfileChanges(e,'unverifiedEmail')}}{...formProps} />
           </InputGroup>
-          <VerificationNotice unverified={profile.unverifiedEmail} verified={profile.email} hidden={verificationHidden}/>
+          <VerificationNotice unverified={profile.unverifiedEmail} verified={profile.email} hidden={(verificationHidden === true)}/>
           <InputGroup>
             <Input label='New Password' type='password' onChange={(e) => {setPassword1(e.target.value)}} {...formProps} />
             <Input label='Confirm Password' type='password' onChange={(e) => {setPassword2(e.target.value)}} onBlur={checkPassword} {...formProps} />

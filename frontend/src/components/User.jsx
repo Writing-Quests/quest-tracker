@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
 import api from '../services/api'
 import context from '../services/context'
 import Input, { Button } from './Forms/Input'
@@ -32,7 +31,7 @@ export function UserVerifyEmail () {
         if(!email || !token) {
           throw new Error("Invalid verification link")
         }
-        resp = await api.get('user/verify', {params:
+        resp = await api.get('user/$verify', {params:
           {e: email, t: token, type: 'verify-email'}
         })
         if (resp.data.verified === true) {
@@ -137,7 +136,7 @@ export function UserResetPasswordFinish() {
   async function checkTokenData() {
     setLoading(true)
     try {
-      const resp = await api('user/verify', {params: {e: email, t: token, type: 'reset-password'}})
+      const resp = await api('user/$verify', {params: {e: email, t: token, type: 'reset-password'}})
       if (!resp.data.verified) {
         setTokenValid(false)
         setTokenError(mapFailureArray(resp.data))
