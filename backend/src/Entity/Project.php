@@ -7,9 +7,12 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
 use App\Repository\ProjectRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -19,7 +22,19 @@ use Doctrine\ORM\Mapping as ORM;
 #[ApiResource(
     operations: [
         new Get(),
-        new GetCollection(),
+        new GetCollection(
+            uriTemplate: '/users/{id}/projects',
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: User::class,
+                    fromProperty: 'username',
+                    toProperty: 'user',
+                    securityObjectName: 'uriUser',
+                    security: "uriUser == user or is_granted('ROLE_ADMIN')", // TODO: Expand this to allow public listing of public projects
+                )
+            ],
+            security: "true", // Security is on the Link level for now
+        ),
         new Post(
             security: "is_granted('ROLE_USER')",
         ),
@@ -56,6 +71,17 @@ class Project
 
     #[ORM\Column(nullable: false, options: ["default" => false])]
     private ?bool $public = false;
+
+    /**
+     * @var Collection<int, ProjectGoal>
+     */
+    #[ORM\OneToMany(targetEntity: ProjectGoal::class, mappedBy: 'project', orphanRemoval: true)]
+    private Collection $projectGoals;
+
+    public function __construct()
+    {
+        $this->projectGoals = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -130,6 +156,36 @@ class Project
     public function setPublic(bool $public): static
     {
         $this->public = $public;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProjectGoal>
+     */
+    public function getProjectGoals(): Collection
+    {
+        return $this->projectGoals;
+    }
+
+    public function addProjectGoal(ProjectGoal $projectGoal): static
+    {
+        if (!$this->projectGoals->contains($projectGoal)) {
+            $this->projectGoals->add($projectGoal);
+            $projectGoal->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProjectGoal(ProjectGoal $projectGoal): static
+    {
+        if ($this->projectGoals->removeElement($projectGoal)) {
+            // set the owning side to null (unless already changed)
+            if ($projectGoal->getProject() === $this) {
+                $projectGoal->setProject(null);
+            }
+        }
 
         return $this;
     }

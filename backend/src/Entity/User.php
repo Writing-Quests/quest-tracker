@@ -357,12 +357,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->projects;
     }
 
-    #[ApiProperty(readableLink: false, writableLink: false)]
-    public function getProjectData(): ?Collection
-    {
-        return $this->projects;
-    }
-
     public function addProject(Project $project): static
     {
         if (!$this->projects->contains($project)) {
