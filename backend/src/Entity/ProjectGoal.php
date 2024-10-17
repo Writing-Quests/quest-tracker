@@ -12,8 +12,11 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Link;
 
 use App\Repository\ProjectGoalRepository;
+use App\Controller\ProjectGoalProgress;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Context;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 
 #[ORM\Entity(repositoryClass: ProjectGoalRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -36,6 +39,13 @@ use Doctrine\ORM\Mapping as ORM;
         new Patch(
             uriTemplate: '/goals/{id}',
             security: "is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
+        ),
+        new Patch(
+            uriTemplate: '/goals/{id}/progress',
+            inputFormats: ['json' => ['application/json']],
+            security: "is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
+            controller: ProjectGoalProgress::class,
+            deserialize: false,
         ),
         new Post(
             uriTemplate: '/goals',
@@ -79,7 +89,7 @@ class ProjectGoal
     private ?\DateTimeInterface $end_date = null;
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY)]
-    private array $progress = [0];
+    private array $progress = ['0'];
 
     public function getId(): ?int
     {
@@ -158,6 +168,7 @@ class ProjectGoal
         return $this;
     }
 
+    #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
     public function getStartDate(): ?\DateTimeInterface
     {
         return $this->start_date;
@@ -170,6 +181,7 @@ class ProjectGoal
         return $this;
     }
 
+    #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
     public function getEndDate(): ?\DateTimeInterface
     {
         return $this->end_date;
@@ -189,6 +201,19 @@ class ProjectGoal
 
     public function setProgress(array $progress): static
     {
+        $min = min(array_keys($progress));
+        $max = max(array_keys($progress));
+
+        // Fill in missing keys with null
+        for ($i = $min; $i <= $max; $i++) {
+            if (!array_key_exists($i, $progress)) {
+                $progress[$i] = null;
+            }
+        }
+
+        // Sort array by key to ensure correct order
+        ksort($progress);
+
         $this->progress = $progress;
 
         return $this;
