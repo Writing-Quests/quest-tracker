@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import api from '../services/api'
 import Input, { Button } from './Forms/Input'
 import { ErrorContainer, SuccessContainer } from './Containers'
+import ProgressChart from './ProgressChart'
 
 function EditProgressInner({goal, refetchGoal}) {
   const [action, setAction] = useState('add')
@@ -36,7 +37,6 @@ function EditProgressInner({goal, refetchGoal}) {
   return <div>
     {error && <ErrorContainer>{JSON.stringify(error)}</ErrorContainer>}
     {success && <SuccessContainer>Saved!</SuccessContainer>}
-    {JSON.stringify(goal.progress)}
     <select value={action} onChange={e => setAction(e.target.value)} {...inputProps}>
       <option value='add'>Add</option>
       <option value='replace'>Replace</option>
@@ -44,6 +44,7 @@ function EditProgressInner({goal, refetchGoal}) {
     <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} />
     <Input type='number' label={goal.units} value={value} onChange={e => setValue(e.target.value)} min='0' {...inputProps} />
     <Button onClick={handleSave} {...inputProps}>Save</Button>
+    {(parseFloat(goal.current_value) > 0) && <ProgressChart goal={goal} />}
   </div>
 }
 EditProgressInner.propTypes = {
@@ -73,7 +74,7 @@ export default function EditProgress({project}) {
   return <>
     {loading && <div>Loading&hellip;</div>}
     {(error && !data) && <div>ERROR: {JSON.stringify(error)}</div>}
-    {(data[0].start_date && data[0].end_date) &&
+    {(data?.[0].start_date && data?.[0].end_date) &&
       <EditProgressInner goal={data[0]} refetchGoal={fetchGoals} />
     }
   </>
