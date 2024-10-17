@@ -34,15 +34,6 @@ const ReportLink = styled.div`
   line-height: 1rem;
   cursor: pointer;
 `
-
-const ErrorContainer = styled.div`
-  width: 100%;
-  background-color: #FFDCD3;
-  margin: 10px 0;
-  border: 1px solid #EA846A;
-  border-radius: 3px;
-  padding: 10px;
-`
 function ProjectsList({username}) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
