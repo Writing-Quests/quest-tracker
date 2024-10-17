@@ -9,6 +9,7 @@ import api from '../../services/api'
 import { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
+import EditProgress from '../EditProgress'
 import { ErrorContainer } from '../Containers'
 
 const { LoggedInUserContext } = context
@@ -63,7 +64,10 @@ function ProjectsList({username}) {
   return <>
     <ul>
       {data.map(p =>
-        <li key={p.id}><Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link></li>
+        <li key={p.id}>
+          <Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link>
+          {Boolean(p.project_goals?.length) && <EditProgress project={p} />}
+        </li>
       )}
     </ul>
   </>
@@ -126,7 +130,7 @@ export default function Profile() {
       </AreaChart>
     </ResponsiveContainer>
     <h2>Projects</h2>
-    <ProjectsList username={profile.username} />
+    {Boolean(profile.username) && <ProjectsList username={profile.username} />}
     <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
   </Page>
 }
