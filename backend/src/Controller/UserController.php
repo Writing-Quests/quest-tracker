@@ -71,7 +71,8 @@ class UserController extends AbstractController
             ->setExpiresAt($expiresAt)
             ->setType('verify-email')
             ->setPayload($email);
-          $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$email.'&t='.$token;
+          // TODO: Have this autodetect or grab from consts
+          $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$email.'&t='.$token;
           $resp['url'] = $verifyEmailURL;
           $entityManager->persist($verifyEmailToken);
           $entityManager->persist($newUser);
@@ -123,7 +124,8 @@ class UserController extends AbstractController
           ->setExpiresAt(new \DateTimeImmutable('now +24 hours'))
           ->setType('reset-password')
           ->setPayload($email);
-        $resetURL = 'http://frontend.quest-tracker.lndo.site/resetform?e='.$email.'&t='.$token;
+        // TODO: Have this autodetect or grab from consts
+        $resetURL = 'http://questy.writingquests.org/resetform?e='.$email.'&t='.$token;
         $entityManager->persist($resetPasswordToken);
         $resetPasswordMsg = (new MailManager)->createPasswordReset($email, $resetURL);
         $mailer->send($resetPasswordMsg);
@@ -232,7 +234,8 @@ class UserController extends AbstractController
                 ->setExpiresAt($expiresAt)
                 ->setType('verify-email')
                 ->setPayload($email);
-              $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$email.'&t='.$token;
+              // TODO: Have this auto-detect or grab from consts
+              $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$email.'&t='.$token;
               $entityManager->persist($verifyEmailToken);
               $newVerificationMsg = (new MailManager)->changedEmailVerification($POST['username'], $email, $oldEmail, $verifyEmailURL, $expiresAt);
               $mailer->send($newVerificationMsg);
@@ -317,7 +320,8 @@ class UserController extends AbstractController
         $token = $tokenEntry->getSecret();
         $expiresAt = $tokenEntry->getExpiresAt();
       }
-      $verifyEmailURL = 'http://frontend.quest-tracker.lndo.site/verify?e='.$unverifiedEmail.'&t='.$token;
+      // TODO: Have this autodetect or grab from consts
+      $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$unverifiedEmail.'&t='.$token;
       if ($verifiedEmail != $unverifiedEmail) {
         $resp['newEmail'] = true;
         $verificationMsg = (new MailManager)->changedEmailVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL, $expiresAt);
