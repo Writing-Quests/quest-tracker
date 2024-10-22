@@ -1,3 +1,2 @@
 FallbackResource /index.php
-Options FollowSymlinks
 Options -Indexes
