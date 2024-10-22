@@ -21,3 +21,20 @@ Symfony isn't connected to the Vite dev server. You can build the frontend webap
 
 **How do I access emails?**    
 For development, a "Mail Catcher" SMTP server runs with Docker/Lando and is automatically configured in Symfony. It will catch all emails and output them at http://localhost:1080. You can configure your own SMTP server in your `.env.local` file.
+
+# Deploy Instructions
+
+## Locally:
+1. Change to the `deploy` branch (`git checkout deploy`)
+1. Merge `main` into `deploy` (`git merge main`)
+1. If there were any changes in the frontend app:
+  1. Change `frontend/src/CONSTS.js` to be the prod values (this is a temporary step until we build a real consts sytem)
+  1. Run `lando npm run build` to build the frontend prod app
+  1. Force add the built files to git (`git add -f backend/public/app`) and then commit (`git commit`). These are normally part of the gitignore, so *never merge deploy into main!*
+1. Push the `deploy` branch (`git push`)
+
+## On the server:
+1. Pull the latest changes in the git repo *(note: this is NOT in the webroot!)*
+1. If backend consts have changed, update `backend/.env.local`
+1. If there are any database changes, migrate the db (`php bin/console doctrine:migrations:migrate`)
+1. Clear the Symfony cache (`php bin/console cache:clear`)
