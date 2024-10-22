@@ -28,9 +28,9 @@ For development, a "Mail Catcher" SMTP server runs with Docker/Lando and is auto
 1. Change to the `deploy` branch (`git checkout deploy`)
 1. Merge `main` into `deploy` (`git merge main`)
 1. If there were any changes in the frontend app:
-  1. Change `frontend/src/CONSTS.js` to be the prod values (this is a temporary step until we build a real consts sytem)
-  1. Run `lando npm run build` to build the frontend prod app
-  1. Force add the built files to git (`git add -f backend/public/app`) and then commit (`git commit`). These are normally part of the gitignore, so *never merge deploy into main!*
+    1. Change `frontend/src/CONSTS.js` to be the prod values (this is a temporary step until we build a real consts sytem)
+    1. Run `lando npm run build` to build the frontend prod app
+    1. Force add the built files to git (`git add -f backend/public/app`) and then commit (`git commit`). These are normally part of the gitignore, so *never merge deploy into main!*
 1. Push the `deploy` branch (`git push`)
 
 ## On the server:
