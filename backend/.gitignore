@@ -1,5 +1,6 @@
 # Frontend build directory
 /public/app/
+composer.phar
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
