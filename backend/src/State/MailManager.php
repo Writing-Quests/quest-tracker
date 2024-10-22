@@ -8,7 +8,7 @@ class MailManager {
   protected string $settingsURL;
   function __construct()
   {
-    $this->from = 'Wriring Quests <no-reply@writingquests.org>';
+    $this->from = 'Writing Quests <no-reply@writingquests.org>';
     $this->settingsURL = '/settings';
     return $this;
   }
