@@ -56,28 +56,29 @@ export default function EditProgress({project}) {
   const [data, setData] = useState()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState()
-  const fetchGoals = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const resp = await api.get(`/projects/${project.id}/goals`)
-      setData(resp.data?.['hydra:member'] || [])
-    } catch (e) {
-      setError(e)
-    } finally {
-      setLoading(false)
-    }
-  }, [project.id])
-  useEffect(() => {
-    fetchGoals()
-  }, [project, fetchGoals])
-  return <>
-    {loading && <div>Loading&hellip;</div>}
-    {(error && !data) && <div>ERROR: {JSON.stringify(error)}</div>}
-    {(data?.[0].start_date && data?.[0].end_date) &&
-      <EditProgressInner goal={data[0]} refetchGoal={fetchGoals} />
-    }
-  </>
+  return null
+  //const fetchgoals = usecallback(async () => {
+    //setloading(true)
+    //setError(null)
+    //try {
+      //const resp = await api.get(`/projects/${project.id}/goals`)
+      //setData(resp.data?.['hydra:member'] || [])
+    //} catch (e) {
+      //setError(e)
+    //} finally {
+      //setLoading(false)
+    //}
+  //}, [project.id])
+  //useEffect(() => {
+    //fetchGoals()
+  //}, [project, fetchGoals])
+  //return <>
+    //{loading && <div>Loading&hellip;</div>}
+    //{(error && !data) && <div>ERROR: {JSON.stringify(error)}</div>}
+    //{(data?.[0].start_date && data?.[0].end_date) &&
+      //<EditProgressInner goal={data[0]} refetchGoal={fetchGoals} />
+    //}
+  //</>
 }
 EditProgress.propTypes = {
   project: PropTypes.object.isRequired,

@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
-import { useContext, useState, useEffect, useMemo } from 'react'
+import { useContext, useState, useEffect, useMemo, createContext } from 'react'
 import PropTypes from 'prop-types'
+import dayjs from 'dayjs'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import styled from 'styled-components'
 import context from '../../services/context'
@@ -10,7 +11,7 @@ import { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
 import EditProgress from '../EditProgress'
-import { ErrorContainer, ContentContainer, ContentBlock } from '../Containers'
+import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer } from '../Containers'
 
 const { LoggedInUserContext } = context
 
@@ -35,6 +36,7 @@ const ReportLink = styled.div`
   cursor: pointer;
 `
 function ProjectsList({username}) {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
   const [data, setData] = useState()
@@ -55,30 +57,101 @@ function ProjectsList({username}) {
       }
     })()
   }, [username])
-  if(loading || !data) { return <span>Loading&hellip;</span> }
+  const { activeProjects, pastProjects, futureProjects } = useMemo(() => {
+    if(!data) { return {} }
+    const activeProjects = []
+    const pastProjects = []
+    const futureProjects = []
+    for (const d of data) {
+      const hasActiveGoal = (d.goals || []).some(goal => {
+        //if(d.id === 11) { debugger }
+        if(!goal.end_date || !goal.start_date) { return false }
+        if(
+          dayjs(goal.end_date).isAfter(dayjs().subtract(2, 'day'))
+          &&
+          dayjs(goal.start_date).isBefore(dayjs().add(2, 'day'))
+        ) {
+          return true
+        }
+      })
+      if(hasActiveGoal) {
+        activeProjects.push(d)
+        continue
+      }
+      const hasPastGoal = (d.goals || []).some(goal => {
+        if(!goal.end_date) { return false }
+        if(dayjs(goal.end_date).isBefore(dayjs())) { return true }
+      })
+      if(hasPastGoal) {
+        pastProjects.push(d)
+      } else {
+        futureProjects.push(d)
+      }
+    }
+    return { activeProjects, pastProjects, futureProjects }
+  }, [data])
+  if(loading || !data) { return <Loading /> }
   if(error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
   return <>
-    <ul>
-      {data.map(p =>
-        <li key={p.id}>
-          <Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link>
-          {Boolean(p.project_goals?.length) && <EditProgress project={p} />}
-        </li>
-      )}
-    </ul>
+    {activeProjects.length && <AnimatedContainer>
+      <h1>Active</h1>
+      <ul>
+        {activeProjects.map(p =>
+          <li key={p.id}>
+            <Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link>
+            {Boolean(p.goals?.length) && <EditProgress project={p} />}
+          </li>
+        )}
+      </ul>
+    </AnimatedContainer>}
+    <ContentBlock>
+      <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
+    </ContentBlock>
+    {futureProjects.length && <AnimatedContainer color='#5B504E'>
+      <h2>Upcoming Projects</h2>
+      <ul>
+        {futureProjects.map(p =>
+          <li key={p.id}>
+            <strong>{p.title ? p.title : <em>untitled project</em>}</strong>
+            &nbsp;
+            {p.goals?.[0] && <>
+              {p.goals[0].goal} {p.goals[0].units} from {dayjs(p.goals[0].start_date).format('MMM D, YYYY')} to {dayjs(p.goals[0].end_date).format('MMM D, YYYY')}
+            </>}
+            &nbsp;
+            <Link to={`/project/${p.id}`}>Edit</Link>
+          </li>
+        )}
+      </ul>
+    </AnimatedContainer>}
+    {pastProjects.length && <ContentBlock>
+      <h2>Past Projects</h2>
+      <p><em>Viewing details for upcoming and past projects is coming soon! Contact us in the meantime if you&rsquo;d like your data.</em></p>
+      <ul>
+        {pastProjects.map(p =>
+          <li key={p.id}>
+            <strong>{p.title ? p.title : <em>untitled project</em>}</strong> ({p.goals?.[0]?.goal_progress_percent >= 100 ? 'Completed! 🎉' : ((p.goals?.[0]?.goal_progress_percent || '0') + '%')})
+            &nbsp;
+            <Link to={`/project/${p.id}`}>Edit</Link>
+          </li>
+        )}
+      </ul>
+      <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
+    </ContentBlock>}
   </>
 }
 ProjectsList.propTypes = {
   username: PropTypes.string.isRequired,
 }
 
+const ProfileContext = createContext()
+
 export default function Profile() {
-  const navigate = useNavigate()
   const [profile, setProfile] = useState()
   const [loading, setLoading] = useState(false)
   const [profileNotAvailable, setProfileNotAvailable] = useState(false)
   const user = useContext(LoggedInUserContext)
   const { username } = useParams()
+  const navigate = useNavigate()
   const url = useMemo(() => {
     if(!profile?.link?.length) { return }
     let l = profile.link
@@ -125,25 +198,37 @@ export default function Profile() {
       <ErrorContainer>Profile not found.</ErrorContainer>
     </Page>
   }
-  return <Page>
-    <ContentContainer>
-      <ContentBlock>
-        <Notices />
-        <ProfileDataContainer>
-          {profile.gravatar_url && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" /> }
-          <div>
-            <h1 style={{margin: 0, fontSize: '2.5rem'}}>{profile.username}</h1>
-            {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
-          </div>
-          {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
-          {(profile.username !== user.username) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
-        </ProfileDataContainer>
-        <h2>Projects</h2>
-        {Boolean(profile.username) && <ProjectsList username={profile.username} />}
-        <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
-      </ContentBlock>
-    </ContentContainer>
-  </Page>
+  const isMyProfile = profile.username === user.username
+  return <ProfileContext.Provider value={{isMyProfile}}>
+    <Page>
+      <ContentContainer>
+        <ContentBlock>
+          <Notices />
+          <ProfileDataContainer>
+            {profile.gravatar_url && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" /> }
+            <div>
+              <h1 style={{margin: 0, fontSize: '2.5rem'}}>{profile.username}</h1>
+              {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
+            </div>
+            {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
+            {!isMyProfile && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
+          </ProfileDataContainer>
+        </ContentBlock>
+        {(Boolean(profile.username) && Boolean(profile.projects?.length)) ?
+          <ProjectsList username={profile.username} />
+          :
+          (isMyProfile ?
+            <>
+              <p>No projects yet!</p>
+              <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
+            </>
+            :
+            'No projects to display. Encourage them to start one!'
+          )
+        }
+      </ContentContainer>
+    </Page>
+  </ProfileContext.Provider>
 }
 
 // note: this returns a list of public profiles; not in use as of this comment

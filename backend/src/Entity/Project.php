@@ -10,6 +10,8 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
+use Symfony\Component\Serializer\Annotation\Ignore;
+
 use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -163,7 +165,14 @@ class Project
     /**
      * @return Collection<int, ProjectGoal>
      */
+    #[Ignore]
     public function getProjectGoals(): Collection
+    {
+        return $this->projectGoals;
+    }
+
+    // For some reason this works to embed the goals into the API response
+    public function getGoals(): Collection
     {
         return $this->projectGoals;
     }
