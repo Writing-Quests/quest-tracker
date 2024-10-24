@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState, useEffect, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import styled from 'styled-components'
@@ -79,6 +79,23 @@ export default function Profile() {
   const [profileNotAvailable, setProfileNotAvailable] = useState(false)
   const user = useContext(LoggedInUserContext)
   const { username } = useParams()
+  const url = useMemo(() => {
+    if(!profile?.link?.length) { return }
+    let l = profile.link
+    if(l.slice(0,4) !== 'http') {
+      l = 'https://' + l
+    }
+    try {
+      const u = new URL(l)
+      if(!(u.protocol === 'http:' || u.protocol === 'https:')) {
+        throw new Error('Invalid URL')
+      }
+      return u
+    } catch(e) {
+      console.error(e)
+      return
+    }
+  }, [profile])
   useEffect(() => {
     let lookupUser
     if(username?.length) { lookupUser = username }
@@ -114,7 +131,7 @@ export default function Profile() {
       {profile.gravatar_url && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" /> }
       <div>
         <h1 style={{margin: '0'}}>{profile.username}</h1>
-        {Boolean(profile.link) && <a href={profile.link} target="_blank">{profile.link}</a>}
+        {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
       </div>
       {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
       {(profile.username !== user.username) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
