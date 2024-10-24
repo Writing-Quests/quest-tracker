@@ -101,7 +101,6 @@ export default function Profile() {
   if(loading) {
     return <Page>
       <Notices />
-      <h1>Loading&hellip;</h1>
       <Loading />
     </Page>
   } else if (profileNotAvailable) {

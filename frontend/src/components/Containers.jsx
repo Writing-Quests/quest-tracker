@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import PropTypes from 'prop-types'
 import wave from '../assets/wave.svg'
 
 export const AnimatedContainer = styled.div`
@@ -37,14 +38,33 @@ export const CenteredContainer = styled.div`
   flex-direction: column;
 `
 
-export const ErrorContainer = styled.div`
+export const ErrorContainerDiv = styled.div`
   width: 100%;
   background-color: #FFDCD3;
   margin: 10px 0;
   border: 1px solid #EA846A;
   border-radius: 3px;
   padding: 10px;
+  text-overflow: ellipsis;
+  max-height: 200px;
+  max-width: 100%;
 `
+
+export function ErrorContainer({error, children}) {
+  if(!error) {
+    if(!children) {
+      return <ErrorContainerDiv>Unknown error</ErrorContainerDiv>
+    } else {
+      return <ErrorContainerDiv>{children}</ErrorContainerDiv>
+    }
+  } else {
+    return <ErrorContainerDiv><strong>{error.name ? error.name : 'Error'}:</strong> {error.message ? error.message : JSON.stringify(error)}</ErrorContainerDiv>
+  }
+}
+ErrorContainer.propTypes = {
+  error: PropTypes.object,
+  children: PropTypes.node,
+}
 
 export const SuccessContainer = styled.div`
   width: 100%;

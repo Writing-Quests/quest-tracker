@@ -182,18 +182,25 @@ TextInput.propTypes = {
   elStyle: PropTypes.object,
   label: PropTypes.string,
   disabled: PropTypes.bool,
+  readOnly: PropTypes.bool,
 }
 
 // eslint-disable-next-line no-unused-vars
 function ButtonInput({elStyle, label: _,...props}) {
-  return <CTAButton as="input" style={elStyle} {...props} />
+  let value = props.value
+  if(props.isLoading) {
+    value = 'Loading…'
+  }
+  return <CTAButton as="input" style={elStyle} {...props} value={value} />
 }
 ButtonInput.propTypes = {
   elStyle: PropTypes.object,
   label: PropTypes.string,
+  value: PropTypes.string,
+  isLoading: PropTypes.bool,
 }
 
-export default function Input({grouped, firstInGroup, lastInGroup, ...props}) {
+export default function Input({grouped, firstInGroup, lastInGroup, isLoading, disabled, ...props}) {
   const elStyle = {}
   if(grouped) {
     if(firstInGroup) {
@@ -208,16 +215,17 @@ export default function Input({grouped, firstInGroup, lastInGroup, ...props}) {
       elStyle.borderBottom = 'none'
     }
   }
+  const sharedProps = { disabled: disabled || isLoading }
   switch (props.type) {
     case 'submit':
-      return <ButtonInput elStyle={elStyle} {...props} />
+      return <ButtonInput elStyle={elStyle} isLoading={isLoading} {...props} {...sharedProps} />
     case 'textarea':
-      return <TextareaInput  elStyle={elStyle} {...props} />
+      return <TextareaInput  elStyle={elStyle} {...props} {...sharedProps} />
     case 'text':
     case 'password':
     case 'email':
     default:
-      return <TextInput elStyle={elStyle} {...props} />
+      return <TextInput elStyle={elStyle} {...props} {...sharedProps} />
   }
 }
 
@@ -227,6 +235,8 @@ Input.propTypes = {
   firstInGroup: PropTypes.bool,
   lastInGroup: PropTypes.bool,
   type: PropTypes.string.isRequired,
+  isLoading: PropTypes.bool,
+  disabled: PropTypes.bool,
 }
 
 export function Button({type, ...props}) {

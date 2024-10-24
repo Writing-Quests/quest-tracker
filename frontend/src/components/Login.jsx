@@ -127,7 +127,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
 
-  const formProps = {disabled: loading}
+  const formProps = {isLoading: loading}
 
   function handleSubmit(e) {
     e.preventDefault();
