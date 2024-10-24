@@ -33,17 +33,19 @@ function EditProgressInner({goal, refetchGoal}) {
     }
   }
 
-  const inputProps = { disabled: loading }
+  const inputProps = { isLoading: loading }
   return <div>
     {error && <ErrorContainer>{JSON.stringify(error)}</ErrorContainer>}
     {success && <SuccessContainer>Saved!</SuccessContainer>}
+    <p style={{fontSize: '1.2em'}}><strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}</p>
+    <p>{Number(goal.goal_progress_percent).toLocaleString()}% done {goal.goal_progress_percent >= 100 && <strong><em>Completed! 🎉</em></strong>}</p>
     <select value={action} onChange={e => setAction(e.target.value)} {...inputProps}>
       <option value='add'>Add</option>
       <option value='replace'>Replace</option>
     </select>
     <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} />
     <Input type='number' label={goal.units} value={value} onChange={e => setValue(e.target.value)} min='0' {...inputProps} />
-    <Button onClick={handleSave} {...inputProps}>Save</Button>
+    <Button onClick={handleSave} {...inputProps}>{loading ? 'Saving...' : 'Save'}</Button>
     {(parseFloat(goal.current_value) > 0) && <ProgressChart goal={goal} />}
   </div>
 }
@@ -52,7 +54,7 @@ EditProgressInner.propTypes = {
   refetchGoal: PropTypes.func.isRequired,
 }
 
-export default function EditProgress({project}) {
+export default function Progress({project}) {
   const [data, setData] = useState()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState()
@@ -79,6 +81,6 @@ export default function EditProgress({project}) {
     }
   </>
 }
-EditProgress.propTypes = {
+Progress.propTypes = {
   project: PropTypes.object.isRequired,
 }

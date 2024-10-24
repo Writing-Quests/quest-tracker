@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react'
+import styled from 'styled-components'
 import PropTypes from 'prop-types'
-import { useLocation } from 'react-router-dom'
 import api from '../services/api'
 import Context from '../services/context'
 import useTitle from '../services/useTitle'
@@ -8,10 +8,23 @@ import Input, { Button } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
 import Page from './Page'
 import { getUserTZName } from '../timezones.js'
-import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer } from './Containers'
+import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer, ContentBlock } from './Containers'
 import Notices from './Notices'
 
 const { GetLoggedInUserContext } = Context
+
+const BackLink = styled.a`
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.02rem;
+  opacity: 0.9;
+  &:hover, &:focus {
+    text-decoration: underline;
+    opacity: 1;
+  }
+`
 
 function PasswordResetForm() {
   const [email, setEmail] = useState('')
@@ -114,7 +127,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
 
-  const formProps = {disabled: loading}
+  const formProps = {isLoading: loading}
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -150,7 +163,6 @@ function LoginForm() {
 export default function Login({form: initialForm}) {
   const [form, setForm] = useState(initialForm || 'login')
   const [madeNewAccount, setMadeNewAccount] = useState(false)
-  const location = useLocation()
 
   function handleChangeForm(newForm) {
     setForm(newForm)
@@ -171,7 +183,8 @@ export default function Login({form: initialForm}) {
 
   return <Page>
     <AnimatedContainer>
-      <CenteredContainer>
+      <ContentBlock maxWidth='500px'>
+        <BackLink href='https://www.writingquests.org'>&larr; Writing Quests home</BackLink>
         <Notices />
         <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Welcome!</h1>
         {(form === 'login') ?
@@ -199,7 +212,7 @@ export default function Login({form: initialForm}) {
             <Button type='link' onClick={() => handleChangeForm('login')}>&larr; Log in</Button>
           </>
           : <div>Page not found</div>}
-      </CenteredContainer>
+      </ContentBlock>
     </AnimatedContainer>
   </Page>
 }

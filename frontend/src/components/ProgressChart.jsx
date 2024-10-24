@@ -1,7 +1,13 @@
 import { useMemo } from 'react'
+import styled from 'styled-components'
 import PropTypes from 'prop-types'
 import dayjs from 'dayjs'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
+
+const ChartContainer = styled.div`
+  background-color: white;
+  border-radius: 8px;
+`
 
 export default function ProgressChart({goal}) {
   const data = useMemo(() => {
@@ -20,8 +26,8 @@ export default function ProgressChart({goal}) {
     const endDateObj = dayjs(goal.end_date)
     return endDateObj.diff(startDateObj, 'd') + 1
   }, [goal])
-  return <>
-    <ResponsiveContainer width={800} height={500}>
+  return <ChartContainer>
+    <ResponsiveContainer width='100%' height={500}>
       <AreaChart data={data} margin={{ top: 20, right: 30, left: 50, bottom: 50 }}>
         <defs>
           <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
@@ -37,7 +43,7 @@ export default function ProgressChart({goal}) {
         <ReferenceLine label="Par" stroke="green" strokeDasharray="3 3" segment={[{ x: 1, y: 0 }, { x: duration, y: parseFloat(goal.goal)}]} />
       </AreaChart>
     </ResponsiveContainer>
-  </>
+  </ChartContainer>
 }
 ProgressChart.propTypes = {
   goal: PropTypes.object.isRequired,

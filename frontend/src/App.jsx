@@ -11,6 +11,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import api from './services/api'
 import Context from './services/context'
 import useTitle from './services/useTitle'
+import Loading from './components/Loading'
+import { ErrorContainer } from './components/Containers'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
 
@@ -44,10 +46,12 @@ export function App() {
     }
   }
   if(loading) {
-    return <div>Loading&hellip;</div>
+    return <Loading fullPage={true} />
   }
   if(error) {
-    return <div>Error: {JSON.stringify(error)}</div>
+    return <div style={{marginTop: 50}}>
+      <ErrorContainer error={error} />
+    </div>
   }
 
   if(loggedIn) {

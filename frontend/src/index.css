@@ -29,3 +29,15 @@ hr {
   border-top: 0.5px solid white;
   margin: 30px auto;
 }
+
+a {
+  color: #638FF0;
+  font-weight: 500;
+  &:hover {
+    text-decoration: underline;
+    color: #5780D9;
+  }
+}
+input {
+  font-family: "Poppins", sans-serif;
+}
