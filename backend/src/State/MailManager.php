@@ -8,8 +8,8 @@ class MailManager {
   protected string $settingsURL;
   function __construct()
   {
-    $this->from = 'Novel Quest <noreply@novelquest.org>';
-    $this->settingsURL = 'http://frontend.quest-tracker.lndo.site/settings';
+    $this->from = 'Writing Quests <no-reply@writingquests.org>';
+    $this->settingsURL = '/settings';
     return $this;
   }
   // TODO: look up the twig integration for email for formatting - https://symfony.com/doc/current/mailer.html#mailer-twig 
