@@ -32,7 +32,7 @@ use App\State\NotLoggedInRepresentation;
             security: "true",
         ),
     ],
-    security: "is_granted('ROLE_ADMIN') or object == user",
+    security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user",
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -116,7 +116,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getGravatarUrl(): ?string
     {
         if($this->email) {
-            return 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $this->email))) . '?d=404&s=100&r=pg';
+          $url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $this->email))) . '?d=404&s=100&r=pg';
+          $headers = @get_headers($url);
+          if(!$headers || $headers[0] == 'HTTP/1.1 404 Not Found') {
+            return null;
+          } else {
+            return $url;
+          }
         }
     }
 
@@ -381,6 +387,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\PreUpdate]
     public function preUpdate(): void
     {
-        $this->edited_at = new DateTime();
+        $this->edited_at = new \DateTime();
     }
 }

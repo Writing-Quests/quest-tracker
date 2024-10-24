@@ -170,31 +170,6 @@ class UserController extends AbstractController
     return $this->json($resp);
   }
 
-  #[Route('api/profile/$get', name: 'view_profile', methods: ['GET'])]
-  public function getUserProfile (#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse 
-  {
-    try {
-      // https://docs.gravatar.com/api/avatars/images/
-      $requestedUsername = $request->query->get('username');
-      $requestedUser = $entityManager->getRepository(User::class)->findOneBy(['username'=>$requestedUsername]);
-      if (!$requestedUser) { // no user found by that username
-        throw $this->createNotFoundException('User not found');
-      }
-      $resp = (new UserProfile())->getProfileInfo($requestedUser,$user);
-      if (!$resp) { // we return null if it's a private profile and it's not your private profile; buddies later
-        throw $this->createNotFoundException('User not found');
-      }
-      $status = 200;
-    } catch (\Exception $err) {
-      $resp = [
-        'errors'=>[['id'=>'phpError','text'=>$err->getMessage()]]
-      ];
-      $status = 404;
-    } finally {
-      return $this->json($resp,$status);
-    }
-  }
-
   #[Route('api/profile/$edit', name: 'edit_profile', methods: ['POST'])]
   public function updateUserProfile(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
   {
@@ -217,7 +192,7 @@ class UserController extends AbstractController
           break;
 
           case 'emailChange':
-            $email = $POST['unverifiedEmail'];
+            $email = $POST['unverified_email'];
             $emailInUse = $entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
             if (!$emailInUse) {
               $oldEmail = $POST['email'];
@@ -262,24 +237,13 @@ class UserController extends AbstractController
     return $this->json($resp);
   }
 
-  #[Route('api/profile/$public', name: 'all_public_profiles', methods: ['GET'])]
-  public function showAllPublicProfiles(#[CurrentUser] ?User $user, Request $request, EntityManagerInterface $entityManager): JsonResponse
-  {
-    $publicUsers = $entityManager->getRepository(User::class)->findBy(['public'=>1]);
-    $profiles = [];
-    foreach ($publicUsers as $user) {
-      array_push($profiles, (new UserProfile)->publicCard($user));
-    }
-    return $this->json($profiles);
-  }
-
   #[Route('/api/user/$resend', name: 'resend_verification', methods: ['POST'])]
   public function resendVerification (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse {
     $resp = ['errors'=>[]];
     $verifyEmailURL = null;
     try {
       $verifiedEmail = $request->getPayload()->get('email');
-      $unverifiedEmail = $request->getPayload()->get('unverifiedEmail');
+      $unverifiedEmail = $request->getPayload()->get('unverified_email');
       $username = $request->getPayload()->get('username');
       $resp['userInfo'] = ['vEmail'=>$verifiedEmail, 'uEmail'=>$unverifiedEmail, 'username'=>$username];
       $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload' => $unverifiedEmail, 'type' => 'verify-email']);
@@ -343,7 +307,7 @@ class UserController extends AbstractController
       $resp = ['errors'=>[]];
       $POST = $request->getPayload()->all();
       $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
-      $pendingToken = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload'=>$POST['unverifiedEmail'], 'type'=>'verify-email']);
+      $pendingToken = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload'=>$POST['unverified_email'], 'type'=>'verify-email']);
       $resp['token'] = $pendingToken->getSecret();
       if ($pendingToken) {
         $entityManager->remove($pendingToken);
@@ -352,92 +316,10 @@ class UserController extends AbstractController
       $entityManager->persist($user);
       $entityManager->flush();
       $resp['changed'] = true;
-      $resp['profile'] = (new UserProfile)->getOwnProfile($user);
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'phpErr', 'text'=>$err->getMessage()]);
     } finally {
       return $this->json($resp);
-    }
-  }
-}
-
-// TODO: This is duplicating logic from the Users ApiResource
-class UserProfile {
-  public function publicCard($requestedUser) {
-    $profile = [];
-    $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $requestedUser->getEmail() ) ) ) . '?d=404&s=75&r=pg';
-    $profile = [
-      'username'=>$requestedUser->getUsername(),
-      'description'=>$requestedUser->getDescription(),
-      'gravatar'=>$this->checkGravarExists($gravatar_url),
-      'memberSince'=>$requestedUser->getCreatedAt()
-    ];
-    return $profile;
-  }
-
-  public function getProfileInfo($requestedUser,$loggedInUser) {
-    $profile = [];
-    $profilePublic = $requestedUser->isPublic();
-    if ($loggedInUser != null) {
-      $profileOwner = ($loggedInUser->getUserIdentifier() == $requestedUser->getUserIdentifier());
-    } else {
-      $profileOwner = false;
-    }
-    $profilePublic = $requestedUser->isPublic();
-    if ((!$profileOwner || $loggedInUser == null) && !$profilePublic) { 
-      // two conditionals; 
-      //  if you're not the profile owner and the profile is not public
-      //  if you're not logged in and the profile is not public
-      return null;
-    }
-    // TODO: this will need to return project data as well in the future
-    $gravatar_url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $requestedUser->getEmail() ) ) ) . '?d=404&s=100&r=pg';
-    $profile = [
-      'username'=>$requestedUser->getUsername(),
-      'link'=>$requestedUser->getLink(),
-      'description'=>$requestedUser->getDescription(),
-      'gravatar'=>$this->checkGravarExists($gravatar_url),
-      'profileOwner'=>$profileOwner,
-      'public'=>$profilePublic,
-      'memberSince'=>$requestedUser->getCreatedAt()
-    ];
-    if ($profileOwner) {
-      $profile['email'] = $requestedUser->getEmail();
-      $profile['unverifiedEmail'] = $requestedUser->getUnverifiedEmail();
-      $profile['emailVerified'] = ($requestedUser->getUnverifiedEmail() == null); // unverifiedmail is set to null when email is verified
-      $profile['unverifiedAccount'] = ($requestedUser->getEmailVerifiedAt() == null); // even if the account currently has an unverified email, this wouldn't be null if they have verified an initial email address
-    }
-    $profile['status'] = 200;
-    return $profile;
-  }
-
-  public function getOwnProfile($loggedInUser) {
-    $profile = [];
-    $profilePublic = $loggedInUser->isPublic();
-    $profileOwner = true;
-    $profile = [
-      'username'=>$loggedInUser->getUsername(),
-      'link'=>$loggedInUser->getLink(),
-      'description'=>$loggedInUser->getDescription(),
-      'profileOwner'=>$profileOwner,
-      'public'=>$profilePublic,
-      'memberSince'=>$loggedInUser->getCreatedAt(),
-      'email'=>$loggedInUser->getEmail(),
-      'unverifiedEmail'=>$loggedInUser->getUnverifiedEmail(),
-      'emailVerified'=>($loggedInUser->getUnverifiedEmail() == null)
-    ];
-    $profile['status'] = 200;
-    return $profile;
-  }
-
-  private function checkGravarExists ($url) {
-    $avatar = $url;
-    $headers = @get_headers($avatar);
-    if(!$headers || $headers[0] == 'HTTP/1.1 404 Not Found') {
-      return null;
-    }
-    else {
-      return $url;
     }
   }
 }
