@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react'
+import styled from 'styled-components'
 import PropTypes from 'prop-types'
-import { useLocation } from 'react-router-dom'
 import api from '../services/api'
 import Context from '../services/context'
 import useTitle from '../services/useTitle'
@@ -12,6 +12,19 @@ import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer 
 import Notices from './Notices'
 
 const { GetLoggedInUserContext } = Context
+
+const BackLink = styled.a`
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.02rem;
+  opacity: 0.9;
+  &:hover, &:focus {
+    text-decoration: underline;
+    opacity: 1;
+  }
+`
 
 function PasswordResetForm() {
   const [email, setEmail] = useState('')
@@ -150,7 +163,6 @@ function LoginForm() {
 export default function Login({form: initialForm}) {
   const [form, setForm] = useState(initialForm || 'login')
   const [madeNewAccount, setMadeNewAccount] = useState(false)
-  const location = useLocation()
 
   function handleChangeForm(newForm) {
     setForm(newForm)
@@ -172,6 +184,7 @@ export default function Login({form: initialForm}) {
   return <Page>
     <AnimatedContainer>
       <CenteredContainer>
+        <BackLink href='https://www.writingquests.org'>&larr; Writing Quests home</BackLink>
         <Notices />
         <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Welcome!</h1>
         {(form === 'login') ?

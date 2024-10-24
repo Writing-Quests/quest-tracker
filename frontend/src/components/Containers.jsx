@@ -2,7 +2,6 @@ import styled from 'styled-components'
 import wave from '../assets/wave.svg'
 
 export const AnimatedContainer = styled.div`
-  min-height: calc(100vh - 250px);
   margin-top: 20px;
   background-color: var(--color-primary);
   position: relative;
