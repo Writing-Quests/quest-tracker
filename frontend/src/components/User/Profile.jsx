@@ -127,7 +127,7 @@ export default function Profile() {
   }
   return <Page>
     <ContentContainer>
-      <ContentBlock style={{maxWidth: 700}}>
+      <ContentBlock>
         <Notices />
         <ProfileDataContainer>
           {profile.gravatar_url && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" /> }

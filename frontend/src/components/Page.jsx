@@ -59,8 +59,8 @@ function UserControls() {
   }
   const user = useContext(LoggedInUserContext)
   return <UserControlsLinks>
-    <a href='/profile'><strong>{user.username}</strong></a>&nbsp;•&nbsp;
-    <a href='/settings'>Settings</a>&nbsp;•&nbsp;
+    <Link to='/profile'><strong>{user.username}</strong></Link>&nbsp;•&nbsp;
+    <Link to='/settings'>Settings</Link>&nbsp;•&nbsp;
     <a href='#' onClick={handleLogout}>Logout</a>
   </UserControlsLinks>
 }

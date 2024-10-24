@@ -250,7 +250,7 @@ export default function Settings () {
   } else {
     return <Page>
       <ContentContainer>
-        <ContentBlock style={{maxWidth: 700}}>
+        <ContentBlock>
           <h1>Settings</h1>
           {formError !== null && <ErrorContainer>{formError}</ErrorContainer>}
           {notice && <SuccessContainer>{notice}</SuccessContainer>}

@@ -172,8 +172,8 @@ TextareaInput.propTypes = {
   disabled: PropTypes.bool,
 }
 
-function TextInput({elStyle, label, ...props}) {
-  return <Label style={elStyle} disabled={props.disabled} readOnly={props.readOnly}>
+function TextInput({elStyle, label, style, ...props}) {
+  return <Label style={{...elStyle, ...style}} disabled={props.disabled} readOnly={props.readOnly}>
     <span style={{position: 'relative', top: '-4px'}}>{label}</span>
     <StyledTextInput {...props} />
   </Label>
@@ -183,6 +183,7 @@ TextInput.propTypes = {
   label: PropTypes.string,
   disabled: PropTypes.bool,
   readOnly: PropTypes.bool,
+  style: PropTypes.object,
 }
 
 // eslint-disable-next-line no-unused-vars

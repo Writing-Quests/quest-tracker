@@ -5,9 +5,10 @@ import dayjs from 'dayjs'
 import api from '../services/api'
 import Page from './Page'
 import Input, { Button } from './Forms/Input'
-import { ErrorContainer } from './Containers'
+import Loading from './Loading'
+import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer, SuccessContainer } from './Containers'
 
-function EditProjectInner({project, goals=[], onSave}) {
+function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
   const [title, setTitle] = useState('')
   const [type, setType] = useState('writing')
   const [units, setUnits] = useState('words')
@@ -47,40 +48,52 @@ function EditProjectInner({project, goals=[], onSave}) {
     const endDateObj = dayjs(endDate)
     duration = endDateObj.diff(startDateObj, 'd') + 1
   }
-  const inputProps = {
-    disabled: loading
-  }
+  const inputProps = { disabled: loading }
   return <Page>
-    <h1>{project ? 'Edit' : 'New'} Project</h1>
-    {error && <ErrorContainer>Error: {JSON.stringify(error)}</ErrorContainer>}
-    <Input type='text' label='Title' placeholder='Your project title' value={title} onChange={e => setTitle(e.target.value)} {...inputProps} />
-    <h2>Goals</h2>
-    <label>
-      Type
-      <select value={type} onChange={e => setType(e.target.value)} {...inputProps}>
-        <option value="writing">Writing</option>
-        <option value="editing">Editing</option>
-      </select>
-    </label>
-    <br />
-    <label>
-      Units
-      <select value={units} onChange={e => setUnits(e.target.value)} {...inputProps}>
-        <option value="words">Words</option>
-        <option value="hours">Hours</option>
-      </select>
-    </label>
-    <Input type='number' min='0' max='1000000' value={goal} label='Goal' onChange={e => setGoal(e.target.value)} {...inputProps} />
-    <Input type='date' label='Start date' value={startDate} onChange={e => setStartDate(e.target.value)} {...inputProps} />
-    <Input type='date' label='End date' value={endDate} onChange={e => setEndDate(e.target.value)} {...inputProps} />
-    {duration && <div><strong>{duration} day{duration > 0 && 's'}</strong></div>}
-    <Button onClick={handleSubmit} {...inputProps}>Save</Button>
+    <ContentContainer>
+      <ContentBlock>
+        <h1>{project ? 'Edit' : 'New'} Project</h1>
+        {justSaved && <SuccessContainer>Saved project!</SuccessContainer>}
+        {error && <ErrorContainer>Error: {JSON.stringify(error)}</ErrorContainer>}
+        {saving && <Loading inline={true} text='Saving' />}
+        <Input type='text' label='Title' placeholder='Your project title' value={title} onChange={e => setTitle(e.target.value)} {...inputProps} />
+      </ContentBlock>
+      <AnimatedContainer color='#c46415'>
+        <ContentBlock>
+          <h2>Goals</h2>
+          <label>
+            Type
+            <select value={type} onChange={e => setType(e.target.value)} {...inputProps}>
+              <option value="writing">Writing</option>
+              <option value="editing">Editing</option>
+            </select>
+          </label>
+          <br />
+          <label>
+            Units
+            <select value={units} onChange={e => setUnits(e.target.value)} {...inputProps}>
+              <option value="words">Words</option>
+              <option value="hours">Hours</option>
+            </select>
+          </label>
+          <Input type='number' min='0' max='1000000' value={goal} label='Goal' onChange={e => setGoal(e.target.value)} {...inputProps} />
+          <Input type='date' label='Start date' value={startDate} onChange={e => setStartDate(e.target.value)} {...inputProps} />
+          <Input type='date' label='End date' value={endDate} onChange={e => setEndDate(e.target.value)} {...inputProps} />
+          {duration && <div><strong>{duration} day{duration > 0 && 's'}</strong></div>}
+        </ContentBlock>
+      </AnimatedContainer>
+      <ContentBlock>
+        <Button type='cta' onClick={handleSubmit} {...inputProps}>Save</Button>
+      </ContentBlock>
+    </ContentContainer>
   </Page>
 }
 EditProjectInner.propTypes = {
   project: PropTypes.object,
   goals: PropTypes.array,
   onSave: PropTypes.func.isRequired,
+  justSaved: PropTypes.bool,
+  saving: PropTypes.bool,
 }
 
 export default function EditProject() {
@@ -88,6 +101,8 @@ export default function EditProject() {
   const [goals, setGoals] = useState()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState()
+  const [justSaved, setJustSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
   const { projectId } = useParams()
   useEffect(() => {
     (async () => {
@@ -109,6 +124,8 @@ export default function EditProject() {
   }, [projectId])
   async function handleSave(projectPatch, goalPatch) {
     // Save project
+    setJustSaved(false)
+    setSaving(true)
     let newProject = project
     if(!project) {
       const resp = await api.post('projects', projectPatch)
@@ -129,14 +146,16 @@ export default function EditProject() {
       })
       setGoals([resp.data])
     }
+    setSaving(false)
+    setJustSaved(true)
   }
   if(loading) {
-    return <div>Loading&hellip;</div>
+    return <Loading fullPage={true} />
   }
   if(error) {
     return <Page>
       <ErrorContainer>Error loading project: {JSON.stringify(error)}</ErrorContainer>
     </Page>
   }
-  return <EditProjectInner project={project} goals={goals} onSave={handleSave} />
+  return <EditProjectInner project={project} goals={goals} onSave={handleSave} justSaved={justSaved} saving={saving} />
 }

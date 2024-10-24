@@ -46,9 +46,7 @@ export function App() {
     }
   }
   if(loading) {
-    return <div style={{height: '100%', display: 'flex'}}>
-      <Loading />
-    </div>
+    return <Loading fullPage={true} />
   }
   if(error) {
     return <div style={{marginTop: 50}}>

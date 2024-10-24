@@ -8,7 +8,7 @@ import Input, { Button } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
 import Page from './Page'
 import { getUserTZName } from '../timezones.js'
-import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer } from './Containers'
+import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer, ContentBlock } from './Containers'
 import Notices from './Notices'
 
 const { GetLoggedInUserContext } = Context
@@ -183,7 +183,7 @@ export default function Login({form: initialForm}) {
 
   return <Page>
     <AnimatedContainer>
-      <CenteredContainer>
+      <ContentBlock maxWidth='500px'>
         <BackLink href='https://www.writingquests.org'>&larr; Writing Quests home</BackLink>
         <Notices />
         <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Welcome!</h1>
@@ -212,7 +212,7 @@ export default function Login({form: initialForm}) {
             <Button type='link' onClick={() => handleChangeForm('login')}>&larr; Log in</Button>
           </>
           : <div>Page not found</div>}
-      </CenteredContainer>
+      </ContentBlock>
     </AnimatedContainer>
   </Page>
 }

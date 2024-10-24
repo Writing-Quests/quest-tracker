@@ -1,16 +1,25 @@
+import { useMemo } from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
 import wave from '../assets/wave.svg'
+import waveRaw from '../assets/wave.svg?raw'
 
-export const AnimatedContainer = styled.div`
+
+const AnimatedContainerDiv = styled.div`
   margin-top: 40px;
-  background-color: var(--color-primary);
+  test: ${props => props.url};
+  background-color: ${props => props.color ? props.color : 'var(--color-primary)'};
   position: relative;
   padding-bottom: 30px;
+  margin-bottom: 30px;
+  display: grid;
+  grid-template-rows: auto;
+  justify-items: center;
+  color: white;
   &::before {
     content: '';
     display: block;
-    background-image: url("${wave}");
+    background-image: url("${props => props.url ? props.url : wave}");
     background-position: '0 0';
     background-repeat: repeat-x;
     width: 100vw;
@@ -20,7 +29,7 @@ export const AnimatedContainer = styled.div`
   }
   &::after {
     content: '';
-    background-image: url("${wave}");
+    background-image: url("${props => props.url ? props.url : wave}");
     display: block;
     background-repeat: repeat-x;
     width: 100vw;
@@ -30,6 +39,26 @@ export const AnimatedContainer = styled.div`
     bottom: -20px;
   }
 `
+
+export function AnimatedContainer({color, children, ...props}) {
+  const url = useMemo(() => {
+    if(!color) { return }
+    const d = new DOMParser().parseFromString(waveRaw, 'text/xml')
+    d.getElementsByTagName('path')[0].style.fill = color
+    return ('data:image/svg+xml;base64,' + btoa(new XMLSerializer().serializeToString(d.documentElement)))
+  }, [color])
+  if(color) {
+    return <AnimatedContainerDiv url={url} color={color} {...props}>
+      {children}
+    </AnimatedContainerDiv>
+  } else {
+    return <AnimatedContainerDiv {...props}>{children}</AnimatedContainerDiv>
+  }
+}
+AnimatedContainer.propTypes = {
+  color: PropTypes.string,
+  children: PropTypes.node,
+}
 
 export const CenteredContainer = styled.div`
   margin: auto;
@@ -98,12 +127,13 @@ export const ContentContainer = styled.div`
   border-bottom: 1px solid #EBEBEB;
   width: 100vw;
   padding: 10px 0 10px 0;
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-rows: auto;
+  justify-items: center;
 `
 
 export const ContentBlock = styled.div`
-  margin: 0 20px 0 20px;
-  max-width: 1500px;
-  flex: 1;
+  padding: 0 20px;
+  max-width: ${props => props.maxWidth ? props.maxWidth : '700px'};
+  width: 100%;
 `
