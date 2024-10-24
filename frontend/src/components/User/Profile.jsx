@@ -15,6 +15,9 @@ import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer } fro
 
 const { LoggedInUserContext } = context
 
+const ProfileContext = createContext()
+
+
 const UserAvatar = styled.img`
   margin: 0 10px 10px 0;
   border: 2px solid #AF402D;
@@ -40,6 +43,7 @@ function ProjectsList({username}) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
   const [data, setData] = useState()
+  const {isMyProfile} = useContext(ProfileContext)
   useEffect(() => {
     if(!username) {
       setError("Need username to load projects")
@@ -94,6 +98,7 @@ function ProjectsList({username}) {
   if(error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
   return <>
     {activeProjects.length && <AnimatedContainer>
+      <ContentBlock>
       {activeProjects.map((p, i) => <>
         <div key={p.id}>
           <h2>{p.title ? p.title : <em>untitled project</em>}
@@ -103,10 +108,11 @@ function ProjectsList({username}) {
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
       </>)}
+      </ContentBlock>
     </AnimatedContainer>}
-    <ContentBlock>
+    {isMyProfile && <ContentBlock>
       <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
-    </ContentBlock>
+    </ContentBlock>}
     {futureProjects.length && <AnimatedContainer color='#5B504E'>
       <h2>Upcoming Projects</h2>
       <ul>
@@ -135,15 +141,13 @@ function ProjectsList({username}) {
           </li>
         )}
       </ul>
-      <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
+      {isMyProfile && <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>}
     </ContentBlock>}
   </>
 }
 ProjectsList.propTypes = {
   username: PropTypes.string.isRequired,
 }
-
-const ProfileContext = createContext()
 
 export default function Profile() {
   const [profile, setProfile] = useState()

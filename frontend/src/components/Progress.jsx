@@ -38,7 +38,7 @@ function EditProgressInner({goal, refetchGoal}) {
     {error && <ErrorContainer>{JSON.stringify(error)}</ErrorContainer>}
     {success && <SuccessContainer>Saved!</SuccessContainer>}
     <p style={{fontSize: '1.2em'}}><strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}</p>
-    <p>{Number(goal.goal_progress_percent).toLocaleString()}% done {goal.goal_progress_percent >= 100 && 'Completed! 🎉'}</p>
+    <p>{Number(goal.goal_progress_percent).toLocaleString()}% done {goal.goal_progress_percent >= 100 && <strong><em>Completed! 🎉</em></strong>}</p>
     <select value={action} onChange={e => setAction(e.target.value)} {...inputProps}>
       <option value='add'>Add</option>
       <option value='replace'>Replace</option>
