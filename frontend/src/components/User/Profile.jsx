@@ -15,7 +15,7 @@ import { ErrorContainer } from '../Containers'
 const { LoggedInUserContext } = context
 
 const UserAvatar = styled.img`
-  margin: 10px;
+  margin: 0 10px 10px 0;
   border: 2px solid #AF402D;
   border-radius: 0 0 15px 0;
   padding: 0;
@@ -76,6 +76,7 @@ export default function Profile() {
   const navigate = useNavigate()
   const [profile, setProfile] = useState('')
   const [loading, setLoading] = useState(false)
+  const [profileNotAvailable, setProfileNotAvailable] = useState(false)
   const user = useContext(LoggedInUserContext)
   const { username } = useParams()
   useEffect(() => {
@@ -90,6 +91,7 @@ export default function Profile() {
         setProfile(resp.data)
       } catch (e) {
         console.error('Error getting profile')
+        setProfileNotAvailable(true)
         console.error(e)
       } finally {
         setLoading(false)
@@ -102,19 +104,30 @@ export default function Profile() {
       <h1>Loading&hellip;</h1>
       <Loading />
     </Page>
+  } else if (profileNotAvailable) {
+    return <Page>
+      <ErrorContainer>Profile not found.</ErrorContainer>
+    </Page>
   }
   return <Page>
     <Notices />
-    {profile.gravatar && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" />}
-    <h1>{profile.username}</h1>
-    {profile.description && <div>{profile.description}</div>}
-    {profile.username !== user.username && <div>Report</div>}
+    <ProfileDataContainer>
+      {profile.gravatar_url && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" /> }
+      <div>
+        <h1 style={{margin: '0'}}>{profile.username}</h1>
+        {profile.link && <a href={(profile.link).toString()} target="_blank">{profile.link}</a>}
+      </div>
+      {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
+      {(profile.username !== user.username) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
+    </ProfileDataContainer>
     <h2>Projects</h2>
     {Boolean(profile.username) && <ProjectsList username={profile.username} />}
     <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
   </Page>
 }
 
+// note: this returns a list of public profiles; not in use as of this comment
+// eslint-disable-next-line no-unused-vars
 function AllPublicProfiles () {
   const ProfileCard = styled.div`
     clear: both;

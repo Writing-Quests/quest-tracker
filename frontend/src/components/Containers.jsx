@@ -55,3 +55,20 @@ export const SuccessContainer = styled.div`
   border-radius: 3px;
   padding: 10px;
 `
+export const NeutralContainer = styled.div`
+  width: 100%;
+  margin: 10px 0;
+  border: 1px solid #838686;
+  border-radius: 3px;
+  padding: 10px;
+`
+
+export const WarningContainer = styled.div`
+  background-color: #F4F1ED;
+  color: #D7722C;
+  width: 100%;
+  margin: 10px 0;
+  border: 1px solid #D7722C;
+  border-radius: 3px;
+  padding: 5px;
+`
