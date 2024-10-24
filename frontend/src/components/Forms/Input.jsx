@@ -30,6 +30,17 @@ const StyledTextarea = styled.textarea`
   }
 `
 
+const StyledSelect = styled.select`
+  border: none;
+  background: transparent;
+  display: block;
+  width: 100%;
+  font-size: 16px;
+  &[readonly] {
+    cursor: not-allowed;
+  }
+`
+
 const Label = styled.label`
   border: 1px solid #C0C0C0;
   border-radius: 3px;
@@ -201,6 +212,23 @@ ButtonInput.propTypes = {
   isLoading: PropTypes.bool,
 }
 
+function SelectInput({elStyle, label, style, children, ...props}) {
+  return <Label style={{...elStyle, ...style}} disabled={props.disabled} readOnly={props.readOnly}>
+    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+    <StyledSelect {...props}>
+      {children}
+    </StyledSelect>
+  </Label>
+}
+SelectInput.propTypes = {
+  elStyle: PropTypes.object,
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
+  readOnly: PropTypes.bool,
+  style: PropTypes.object,
+  children: PropTypes.node,
+}
+
 export default function Input({grouped, firstInGroup, lastInGroup, isLoading, disabled, ...props}) {
   const elStyle = {}
   if(grouped) {
@@ -218,6 +246,8 @@ export default function Input({grouped, firstInGroup, lastInGroup, isLoading, di
   }
   const sharedProps = { disabled: disabled || isLoading }
   switch (props.type) {
+    case 'select':
+      return <SelectInput elStyle={elStyle} {...props} {...sharedProps} />
     case 'submit':
       return <ButtonInput elStyle={elStyle} isLoading={isLoading} {...props} {...sharedProps} />
     case 'textarea':
