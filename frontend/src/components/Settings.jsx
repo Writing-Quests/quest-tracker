@@ -264,6 +264,7 @@ export default function Settings () {
                 <Input label='Link' type='text' placeholder='https://www.writingquests.org/' defaultValue={profile.link} onChange={(e)=>{holdProfileChanges(e,'link')}} {...formProps} />
                 <Input type='textarea' rows='7' label='Description' defaultValue={profile.description} onChange={(e)=>{holdProfileChanges(e,'description')}} {...formProps} />
               </InputGroup>
+              <p style={{fontSize: '0.9rem'}}><strong>Change your avatar</strong> on <a href='https://gravatar.com/profile/' target='_blank' rel='noopener notarget'>Gravatar.com</a> with your email address {profile.email}.</p>
               <Label>Privacy</Label>
               {unverifiedAccount && <VerificationContainer>Your account and projects are private. You can choose to make them public after you verifiy your email address.</VerificationContainer>}
               <SectionOptions size='small' hidden={unverifiedAccount}>
