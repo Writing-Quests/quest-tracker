@@ -10,7 +10,7 @@ import api from '../../services/api'
 import { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
-import EditProgress from '../EditProgress'
+import Progress from '../Progress'
 import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer } from '../Containers'
 
 const { LoggedInUserContext } = context
@@ -94,15 +94,15 @@ function ProjectsList({username}) {
   if(error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
   return <>
     {activeProjects.length && <AnimatedContainer>
-      <h1>Active</h1>
-      <ul>
-        {activeProjects.map(p =>
-          <li key={p.id}>
-            <Link to={`/project/${p.id}`}>{p.title ? p.title : <em>untitled</em>}</Link>
-            {Boolean(p.goals?.length) && <EditProgress project={p} />}
-          </li>
-        )}
-      </ul>
+      {activeProjects.map((p, i) => <>
+        <div key={p.id}>
+          <h2>{p.title ? p.title : <em>untitled project</em>}
+            &nbsp;<small><Link to={`/project/${p.id}`}>Edit</Link></small>
+          </h2>
+          {Boolean(p.goals?.length) && <Progress project={p} />}
+        </div>
+        {(activeProjects.length - 1) !== i && <hr />}
+      </>)}
     </AnimatedContainer>}
     <ContentBlock>
       <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
