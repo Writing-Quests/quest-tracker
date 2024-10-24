@@ -1,18 +1,28 @@
 import { useContext } from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
+import { Link } from 'react-router-dom'
 import { CenteredContainer } from './Containers'
 import context from '../services/context'
 import api from '../services/api'
 
 const { LoggedInUserContext } = context
 
-const SiteTitle = styled.div`
+const InvisibleLink = styled(Link)`
+  display: block;
+  &, &:hover {
+    text-decoration: none;
+  }
+`
+
+const SiteTitle = styled(InvisibleLink)`
   font-family: 'Playfair Display', serif;
   font-size: 35px;
   font-weight: bold;
-  color: var(--color-primary);
   margin-left: 10px;
+  &, &:hover {
+    color: var(--color-primary);
+  }
 `
 
 const LogoContainer = styled.div`
@@ -59,9 +69,9 @@ export default function Page({children}) {
   const user = useContext(LoggedInUserContext)
   return <>
       <LogoContainer>
-        <img src='/logo.svg' style={{maxWidth: '75px'}} />
+        <InvisibleLink to='/'><img src='/logo.svg' style={{maxWidth: '75px'}} /></InvisibleLink>
         <div>
-          <SiteTitle>Writing Quests</SiteTitle>
+          <SiteTitle to='/'>Writing Quests</SiteTitle>
           {user && <UserControls />}
         </div>
       </LogoContainer>
