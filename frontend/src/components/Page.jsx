@@ -20,7 +20,7 @@ const LogoContainer = styled.div`
   display: flex;
   margin: auto;
   margin-top: 20px;
-  margin-bottom: 50px;
+  margin-bottom: 20px;
   justify-content: center;
   align-items: center;
 `

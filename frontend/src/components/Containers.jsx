@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import wave from '../assets/wave.svg'
 
 export const AnimatedContainer = styled.div`
-  margin-top: 20px;
+  margin-top: 40px;
   background-color: var(--color-primary);
   position: relative;
   padding-bottom: 30px;
@@ -38,7 +38,7 @@ export const CenteredContainer = styled.div`
   flex-direction: column;
 `
 
-export const ErrorContainerDiv = styled.div`
+const ErrorContainerDiv = styled.div`
   width: 100%;
   background-color: #FFDCD3;
   margin: 10px 0;
@@ -90,4 +90,20 @@ export const WarningContainer = styled.div`
   border: 1px solid #D7722C;
   border-radius: 3px;
   padding: 5px;
+`
+
+export const ContentContainer = styled.div`
+  background-color: #FAFAFA;
+  border-top: 1px solid #EBEBEB;
+  border-bottom: 1px solid #EBEBEB;
+  width: 100vw;
+  padding: 10px 0 10px 0;
+  display: flex;
+  justify-content: center;
+`
+
+export const ContentBlock = styled.div`
+  margin: 0 20px 0 20px;
+  max-width: 1500px;
+  flex: 1;
 `

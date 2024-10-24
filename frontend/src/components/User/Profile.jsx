@@ -10,7 +10,7 @@ import { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
 import EditProgress from '../EditProgress'
-import { ErrorContainer } from '../Containers'
+import { ErrorContainer, ContentContainer, ContentBlock } from '../Containers'
 
 const { LoggedInUserContext } = context
 
@@ -126,19 +126,23 @@ export default function Profile() {
     </Page>
   }
   return <Page>
-    <Notices />
-    <ProfileDataContainer>
-      {profile.gravatar_url && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" /> }
-      <div>
-        <h1 style={{margin: '0'}}>{profile.username}</h1>
-        {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
-      </div>
-      {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
-      {(profile.username !== user.username) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
-    </ProfileDataContainer>
-    <h2>Projects</h2>
-    {Boolean(profile.username) && <ProjectsList username={profile.username} />}
-    <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
+    <ContentContainer>
+      <ContentBlock style={{maxWidth: 700}}>
+        <Notices />
+        <ProfileDataContainer>
+          {profile.gravatar_url && <UserAvatar src={profile.gravatar_url} alt="User avatar for user, via Gravatar" /> }
+          <div>
+            <h1 style={{margin: 0, fontSize: '2.5rem'}}>{profile.username}</h1>
+            {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
+          </div>
+          {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
+          {(profile.username !== user.username) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
+        </ProfileDataContainer>
+        <h2>Projects</h2>
+        {Boolean(profile.username) && <ProjectsList username={profile.username} />}
+        <Button type='normal' onClick={() => navigate('/project/new')}>+ New Project</Button>
+      </ContentBlock>
+    </ContentContainer>
   </Page>
 }
 
