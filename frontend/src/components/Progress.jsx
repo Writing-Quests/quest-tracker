@@ -4,11 +4,13 @@ import api from '../services/api'
 import Input, { Button } from './Forms/Input'
 import { ErrorContainer, SuccessContainer } from './Containers'
 import ProgressChart from './ProgressChart'
+import { fireworks } from '../services/confetti'
 
 function EditProgressInner({goal, refetchGoal}) {
   const [action, setAction] = useState('add')
   const [date, setDate] = useState(goal.start_date)
   const [value, setValue] = useState(0)
+  const [fireworksRunning, setFireworksRunning] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
@@ -33,12 +35,18 @@ function EditProgressInner({goal, refetchGoal}) {
     }
   }
 
+  function handleFireworks() {
+    if(fireworksRunning) { return }
+    setFireworksRunning(true)
+    fireworks(() => setFireworksRunning(false))
+  }
+
   const inputProps = { isLoading: loading }
   return <div>
     {error && <ErrorContainer>{JSON.stringify(error)}</ErrorContainer>}
     {success && <SuccessContainer>Saved!</SuccessContainer>}
     <p style={{fontSize: '1.2em'}}><strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}</p>
-    <p>{Number(goal.goal_progress_percent).toLocaleString()}% done {goal.goal_progress_percent >= 100 && <strong><em>Completed! 🎉</em></strong>}</p>
+    <p>{Number(goal.goal_progress_percent).toLocaleString()}% done {goal.goal_progress_percent >= 100 && <strong onClick={handleFireworks}><em>Completed! 🎉</em></strong>}</p>
     <select value={action} onChange={e => setAction(e.target.value)} {...inputProps}>
       <option value='add'>Add</option>
       <option value='replace'>Replace</option>
