@@ -17,6 +17,35 @@ const axisLabelStyle = {
   fontSize: '0.9rem',
 }
 
+function getOrderOfMagnitude(num) {
+  return (num.toFixed(0).toString().length - 1)
+}
+
+function formatNumber(n = 0) {
+  return n.toLocaleString(undefined, {maximumFractionDigits: 1})
+}
+
+function yAxisTickFormatter(goal, value, index) {
+  if(index === 0) { return '' }
+  const orderOfMagnitude = getOrderOfMagnitude(value)
+  switch(orderOfMagnitude) {
+    case 0:
+    case 1:
+    case 2:
+      return formatNumber(value)
+    case 3:
+    case 4:
+    case 5:
+      return formatNumber(value/(1000)) + 'k'
+    case 6:
+    case 7:
+    case 8:
+      return formatNumber(value/(1000000)) + 'M'
+    default:
+      return formatNumber(value/(1000000000)) + 'B'
+  }
+}
+
 function XAxisTickLine({x, y, major}) {
   return <path d={`M ${x},${y-5.5} l 0,${major ? '5' : '2'} `} stroke='#333' strokeWidth={major ? '2' : '0.5'} />
 }
@@ -96,6 +125,15 @@ export default function ProgressChart({goal}) {
     const endDateObj = dayjs(goal.end_date)
     return endDateObj.diff(startDateObj, 'd') + 1
   }, [goal])
+  const topValue = Math.max(parseFloat(goal.goal), data[data.length-1].value)
+  const orderOfMagnitude = 10 ** getOrderOfMagnitude(topValue)
+  const yAxisLimit = Math.ceil(topValue / orderOfMagnitude) * orderOfMagnitude
+  let numYAxisTicks = Math.floor(yAxisLimit / orderOfMagnitude) // Floor should never actually be needed
+  if(numYAxisTicks <= 2) {
+    const tickWidth = orderOfMagnitude / 2
+    numYAxisTicks = Math.floor(yAxisLimit / tickWidth)
+  }
+  numYAxisTicks = numYAxisTicks + 1
   return <ChartContainer>
     <ResponsiveContainer width='100%' height={500} debounce={250}>
       <LineChart data={data} margin={{left: 30, bottom: 20, right: 30, top: 20}}>
@@ -120,11 +158,14 @@ export default function ProgressChart({goal}) {
           tick={<XAxisTick goal={goal} />}
         />
         <YAxis
-          domain={[0, parseFloat(goal.goal)]}
-          tickCount={parseFloat(goal.goal)/10000+1}
+          domain={[0, yAxisLimit]}
+          tickCount={numYAxisTicks}
           allowDecimals={false}
           label={{value: (goal.units || 'words').toUpperCase(), position: 'left', angle: -90, ...axisLabelStyle}}
+          tick={{fill: '#333'}}
+          tickFormatter={yAxisTickFormatter.bind(this, goal)}
           tickSize={4}
+          minTickGap={1}
         />
         <Tooltip
           cursor={false}
