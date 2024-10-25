@@ -4,22 +4,6 @@ import PropTypes from 'prop-types'
 import dayjs from 'dayjs'
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-window.addEventListener('keydown', function(event) {
-  if (event.defaultPrevented) {
-    return; // Should do nothing if the default action has been cancelled
-  }
-  let handled = false;
-  if (event.keyCode == 121) {
-    handled = true;
-    debugger;  // 121 is the keyCode of F10
-  }
-  if (handled) {
-    // Suppress "double action" if event handled
-    event.preventDefault();
-  }
-});
-
-
 const DAYS_PER_WEEK = 7
 
 const ChartContainer = styled.div`
