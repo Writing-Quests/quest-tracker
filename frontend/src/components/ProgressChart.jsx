@@ -200,7 +200,7 @@ export default function ProgressChart({goal}) {
   const orderOfMagnitude = 10 ** getOrderOfMagnitude(topValue)
   const yAxisLimit = Math.ceil(topValue / orderOfMagnitude) * orderOfMagnitude
   let numYAxisTicks = Math.floor(yAxisLimit / orderOfMagnitude) // Floor should never actually be needed
-  if(numYAxisTicks <= 2) {
+  if(numYAxisTicks <= 3) {
     const tickWidth = orderOfMagnitude / 2
     numYAxisTicks = Math.floor(yAxisLimit / tickWidth)
   }
