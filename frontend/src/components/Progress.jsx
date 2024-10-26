@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
 import dayjs from 'dayjs'
 import api from '../services/api'
@@ -34,10 +34,47 @@ function UpdateProgress({goal, refetchGoal}) {
   const [error, setError] = useState()
   const [success, setSuccess] = useState()
   const prevSuccess = usePrev(success)
+  const cumulativeProgress = useMemo(() => {
+    const ret = []
+    goal.progress.forEach((p, i) => {
+      if(i === 0) {
+        ret[i] = Number(p)
+      } else {
+        ret[i] = ret[i-1] + Number(p)
+      }
+    })
+    return ret
+  }, [goal.progress])
+  useEffect(() => {
+    if(dateSelect === 'today') {
+      setDate(dayjs().format('YYYY-MM-DD'))
+    } else if (dateSelect === 'yesterday') {
+      setDate(dayjs().subtract(1, 'day').format('YYYY-MM-DD'))
+    }
+  }, [dateSelect])
 
   const newSuccess = !prevSuccess && success
 
   const inputProps = { isLoading: loading }
+
+  const progressIndex = dayjs(date).diff(goal.start_date, 'd')
+  let lastEntryIndex = 0
+  // eslint-disable-next-line for-direction
+  for(let i = goal.progress.length - 1; i >= 0; i--) {
+    if(Number(goal.progress[i]) > 0) {
+      lastEntryIndex = i
+      break
+    }
+  }
+  const minOnDate = progressIndex ? cumulativeProgress[progressIndex-1] : 0
+  // TODO: We can implement a smart "set cumulative hours" mode later on that will have to rewrite later entries. Not worth it right now.
+  //let maxOnDate = null
+  //for(let i = progressIndex; i < cumulativeProgress.length; i++) {
+    //if(cumulativeProgress[i] !== cumulativeProgress[progressIndex]) {
+      //maxOnDate = cumulativeProgress[i]
+      //break
+    //}
+  //}
 
   async function handleSave(e) {
     e.preventDefault()
@@ -45,23 +82,21 @@ function UpdateProgress({goal, refetchGoal}) {
       setLoading(true)
       setError(null)
       setSuccess(null)
-      let d
-      switch(dateSelect) {
-        case 'today':
-          d = dayjs().format('YYYY-MM-DD')
-          break
-        case 'yesterday':
-          d = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
-          break
-        case 'other':
-        default:
-          d = date
-      }
-      await api.patch(`goals/${goal.id}/progress`, [ { date: d, action, value } ], {
-        headers: {
-          'Content-Type': 'application/json',
+      if(action === 'setTotal') {
+        if(lastEntryIndex > progressIndex) {
+          if(!window.confirm(`WARNING: This will also change your progress after ${dayjs(date).format('MMM D, YYYY')}. Are you sure?`)) {
+            return
+          }
         }
-      })
+        const newVal = progressIndex ? (value - cumulativeProgress[progressIndex - 1]) : value
+        await api.patch(`goals/${goal.id}/progress`, [ { date, action: 'replace', value: newVal } ], {
+          headers: { 'Content-Type': 'application/json', }
+        })
+      } else {
+        await api.patch(`goals/${goal.id}/progress`, [ { date, action, value } ], {
+          headers: { 'Content-Type': 'application/json', }
+        })
+      }
       refetchGoal()
       setSuccess(true)
     } catch (e) {
@@ -76,11 +111,16 @@ function UpdateProgress({goal, refetchGoal}) {
       <h3>Update Progress</h3>
       {error && <ErrorContainer error={error} />}
       {success && <SuccessContainer>Saved!</SuccessContainer>}
-      <Input type='number' label={capitalizeFirstLetter(goal.units)} value={value} onChange={e => setValue(e.target.value)} min='0' step={goal.units === 'hours' ? 0.1 : 1} {...inputProps} />
+      <Input type='number' label={capitalizeFirstLetter(goal.units)} value={value}
+        onChange={e => setValue(e.target.value)}
+        min={(action === 'setTotal') ? (minOnDate || 0) : 0}
+        //max={(action === 'setTotal') && maxOnDate}
+        step={goal.units === 'hours' ? 0.1 : 1}
+      {...inputProps} />
       <Input type='button-select' label='Mode' value={action} onChange={setAction} {...inputProps} options={[
-        { label: 'Add', value: 'add' },
-        { label: 'Replace', value: 'replace'},
-        { label: 'Set total', value: 'setTotal'},
+        { label: `Add ${goal.units}`, value: 'add' },
+        { label: `Set total ${goal.units} for day`, value: 'replace'},
+        { label: `Set cumulative ${goal.units}`, value: 'setTotal'},
       ]} />
       <Input type='button-select' label='As of' value={dateSelect} onChange={setDateSelect} {...inputProps} options={[
         { label: 'Today', value: 'today', disabled: !todayEnabled },

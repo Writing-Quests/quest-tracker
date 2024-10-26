@@ -173,19 +173,17 @@ export default function ProgressChart({goal}) {
     const ret = []
     // 1-indexed loop!
     for(let day = 1; day <= numDays; day++) {
-      let daily
-      let cumulative = 0
       const dailyGoal = day * goalPerDay
       const toPush = { day, dailyGoal }
       if(day <= goal.progress.length) {
-        daily = parseFloat(goal.progress[day-1]) || 0
+        toPush.daily = parseFloat(goal.progress[day-1]) || 0
         if(day > 1) {
           // Minus two due to get yesterday along with 0-indexing
-          cumulative = daily + ret[day-2].cumulative
+          toPush.cumulative = toPush.daily + ret[day-2].cumulative
+        } else {
+          toPush.cumulative = toPush.daily
         }
-        toPush.cumulative = cumulative
-        toPush.daily = daily
-        largestValue = Math.max(largestValue, cumulative, daily, dailyGoal)
+        largestValue = Math.max(largestValue, toPush.cumulative, toPush.daily, dailyGoal)
       }
       ret.push(toPush)
     }
