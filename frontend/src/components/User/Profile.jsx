@@ -19,10 +19,10 @@ const ProfileContext = createContext()
 
 const UserAvatar = styled.img`
   margin: 0 10px 10px 0;
-  border: 2px solid #AF402D;
-  border-radius: 0 0 15px 0;
   padding: 0;
   width: 100px;
+  border-radius: 10px;
+  border: none;
 `
 
 const ProfileDataContainer = styled.div`
