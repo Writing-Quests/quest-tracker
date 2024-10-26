@@ -74,13 +74,22 @@ function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
     duration = endDateObj.diff(startDateObj, 'd') + 1
   }
   const inputProps = { disabled: loading }
+  let endDateMin = startDateObj ? startDateObj.format('YYYY-MM-DD') : '2024-01-01'
+  let lastEntryDate
+  for(let i = goals[0].progress.length; i >= 0; i--) {
+    if(goals[0].progress[i] > 0) {
+      lastEntryDate = dayjs(goals[0].start_date).add(i, 'd').format('YYYY-MM-DD')
+      endDateMin = lastEntryDate
+      break
+    }
+  }
   return <Page>
     <ContentContainer>
       <FormContainer onSubmit={handleSubmit}>
         <ContentBlock>
           <h1>{project ? 'Edit' : 'New'} Project</h1>
           {justSaved && <SuccessContainer>Saved project!</SuccessContainer>}
-          {error && <ErrorContainer>Error: {JSON.stringify(error)}</ErrorContainer>}
+          {error && <ErrorContainer error={error} />}
           {saving && <Loading inline={true} text='Saving' />}
           <Input type='text' label='Title' placeholder='Your project title' value={title} onChange={e => setTitle(e.target.value)} {...inputProps} />
         </ContentBlock>
@@ -110,9 +119,10 @@ function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
                 {...inputProps}
               />
             </InputGroup>
+            {goals?.[0]?.current_value > 0 && <div><small>Start date can&rsquo;t be modified once project has begun.</small></div>}
             <InputGroup>
-              <Input type='date' label='Start date' value={startDate} onChange={e => setStartDate(e.target.value)} {...inputProps} required min='2024-01-01' max={endDateObj?.format('YYYY-MM-DD')} />
-              <Input type='date' label='End date' value={endDate} onChange={e => setEndDate(e.target.value)} {...inputProps} required min={startDateObj ? startDateObj.format('YYYY-MM-DD') : '2024-01-01'} />
+              <Input type='date' label='Start date' value={startDate} onChange={e => setStartDate(e.target.value)} {...inputProps} required min='2024-01-01' max={endDateObj?.format('YYYY-MM-DD')} disabled={goals?.[0]?.current_value > 0} />
+              <Input type='date' label='End date' value={endDate} onChange={e => setEndDate(e.target.value)} {...inputProps} required min={endDateMin} />
             </InputGroup>
             {(duration > 0) && <DurationInfo>That&rsquo;s <strong>{duration} day{duration > 1 && 's'}</strong>
               <br />
@@ -193,7 +203,7 @@ export default function EditProject() {
   }
   if(error) {
     return <Page>
-      <ErrorContainer>Error loading project: {JSON.stringify(error)}</ErrorContainer>
+      <ErrorContainer error={error} />
     </Page>
   }
   return <EditProjectInner project={project} goals={goals} onSave={handleSave} justSaved={justSaved} saving={saving} />

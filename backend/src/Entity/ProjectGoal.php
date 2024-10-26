@@ -30,6 +30,7 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
         new GetCollection(
             uriTemplate: '/projects/{id}/goals',
             uriVariables: [
+                // TODO: This breaks for projects without any goals. The UI currently enforces that every project has to have at least one goal, but this is something to be fixed in the future
                 'id' => new Link(
                     fromClass: Project::class,
                     toProperty: 'project',
