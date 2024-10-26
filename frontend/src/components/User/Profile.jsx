@@ -96,7 +96,7 @@ function ProjectsList({username}) {
   if(loading || !data) { return <Loading /> }
   if(error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
   return <>
-    {activeProjects.length && <AnimatedContainer>
+    {Boolean(activeProjects.length) && <AnimatedContainer>
       <ContentBlock>
       {activeProjects.map((p, i) => <>
         <div key={p.id}>
@@ -112,7 +112,7 @@ function ProjectsList({username}) {
     {isMyProfile && <ContentBlock>
       <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
     </ContentBlock>}
-    {futureProjects.length && <AnimatedContainer color='#5B504E'>
+    {Boolean(futureProjects.length) && <AnimatedContainer color='#5B504E'>
       <h2>Upcoming Projects</h2>
       <ul>
         {futureProjects.map(p =>
@@ -128,7 +128,7 @@ function ProjectsList({username}) {
         )}
       </ul>
     </AnimatedContainer>}
-    {pastProjects.length && <ContentBlock>
+    {Boolean(pastProjects.length) && <ContentBlock>
       <h2>Past Projects</h2>
       <p><em>Viewing details for upcoming and past projects is coming soon! Contact us in the meantime if you&rsquo;d like your data.</em></p>
       <ul>
