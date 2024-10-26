@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types'
 import dayjs from 'dayjs'
 import api from '../services/api'
+import usePrev from '../services/usePrev'
 import Input from './Forms/Input'
 import { ErrorContainer, SuccessContainer } from './Containers'
 import ProgressChart from './ProgressChart'
-import { fireworks } from '../services/confetti'
+import { fireworks, Confetti } from '../services/confetti'
 
 function capitalizeFirstLetter(str='') {
   return str.charAt(0).toUpperCase() + str.slice(1)
@@ -32,6 +33,9 @@ function UpdateProgress({goal, refetchGoal}) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
   const [success, setSuccess] = useState()
+  const prevSuccess = usePrev(success)
+
+  const newSuccess = !prevSuccess && success
 
   const inputProps = { isLoading: loading }
 
@@ -84,6 +88,7 @@ function UpdateProgress({goal, refetchGoal}) {
         { label: 'Another date', value: 'other'},
       ]} />
       {dateSelect === 'other' && <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} min={dayjs(goal.start_date).format('YYYY-MM-DD')} max={dayjs(goal.end_date).format('YYYY-MM-DD')} />}
+      {newSuccess && <Confetti />}
       <Input type='submit' {...inputProps} value='Save' />
     </form>
   </>
