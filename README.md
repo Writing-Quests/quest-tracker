@@ -36,5 +36,6 @@ For development, a "Mail Catcher" SMTP server runs with Docker/Lando and is auto
 ## On the server:
 1. Pull the latest changes in the git repo *(note: this is NOT in the webroot!)*
 1. If backend consts have changed, update `backend/.env.local`
+1. If there are any new backend packages, run a composer install (`php ~/bin/composer.phar install`)
 1. If there are any database changes, migrate the db (`php bin/console doctrine:migrations:migrate`)
 1. Clear the Symfony cache (`php bin/console cache:clear`)

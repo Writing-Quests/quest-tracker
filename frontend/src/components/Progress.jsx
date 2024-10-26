@@ -43,7 +43,6 @@ const ProgressForm = styled.form`
       border-radius: inherit;
     }
   }
-  }
   & input:not([type='submit']) {
     background-color: #464646;
     color: white;

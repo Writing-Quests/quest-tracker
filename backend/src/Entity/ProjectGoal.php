@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use DateTime;
 
+use Sqids\Sqids;
+
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
@@ -91,9 +93,10 @@ class ProjectGoal
     #[ORM\Column(type: Types::SIMPLE_ARRAY)]
     private array $progress = ['0'];
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
-        return $this->id;
+        $sqids = new Sqids(minLength: 8, alphabet: $_ENV['SQIDS_ALPHABET_PROJECT_GOALS']);
+        return $sqids->encode([$this->id]);
     }
 
     public function getProject(): ?Project
