@@ -74,9 +74,10 @@ const ErrorContainerDiv = styled.div`
   border: 1px solid #EA846A;
   border-radius: 3px;
   padding: 10px;
-  text-overflow: ellipsis;
   max-height: 200px;
   max-width: 100%;
+  color: #333;
+  overflow: hidden;
 `
 
 export function ErrorContainer({error, children}) {
@@ -87,7 +88,7 @@ export function ErrorContainer({error, children}) {
       return <ErrorContainerDiv>{children}</ErrorContainerDiv>
     }
   } else {
-    return <ErrorContainerDiv><strong>{error.name ? error.name : 'Error'}:</strong> {error.message ? error.message : JSON.stringify(error)}</ErrorContainerDiv>
+    return <ErrorContainerDiv><strong>{error.name ? `Error (${error.name})` : 'Error'}:</strong> {error.message ? error.message : JSON.stringify(error)}</ErrorContainerDiv>
   }
 }
 ErrorContainer.propTypes = {
@@ -102,6 +103,7 @@ export const SuccessContainer = styled.div`
   border: 1px solid #1c8c0e;
   border-radius: 3px;
   padding: 10px;
+  color: #333;
 `
 export const NeutralContainer = styled.div`
   width: 100%;
@@ -109,6 +111,7 @@ export const NeutralContainer = styled.div`
   border: 1px solid #838686;
   border-radius: 3px;
   padding: 10px;
+  color: #333;
 `
 
 export const WarningContainer = styled.div`
@@ -119,6 +122,7 @@ export const WarningContainer = styled.div`
   border: 1px solid #D7722C;
   border-radius: 3px;
   padding: 5px;
+  color: #333;
 `
 
 export const ContentContainer = styled.div`

@@ -17,7 +17,6 @@ const { LoggedInUserContext } = context
 
 const ProfileContext = createContext()
 
-
 const UserAvatar = styled.img`
   margin: 0 10px 10px 0;
   border: 2px solid #AF402D;
@@ -102,9 +101,9 @@ function ProjectsList({username}) {
       {activeProjects.map((p, i) => <>
         <div key={p.id}>
           <h2>{p.title ? p.title : <em>untitled project</em>}
-            &nbsp;<small><Link to={`/project/${p.id}`}>Edit</Link></small>
+            {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.id}`}>Edit</Link></small></>}
           </h2>
-          {Boolean(p.goals?.length) && <Progress project={p} />}
+          {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
       </>)}

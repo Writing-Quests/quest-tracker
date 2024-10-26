@@ -1,6 +1,42 @@
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 
+export const SectionOptions = styled.div`
+  display: ${(props) => (props.hidden == true && 'none') || 'flex'};
+  width: ${(props) => (props.size === 'small' && '40%') || '100%'};
+  background-color: transparent;
+  margin: ${(props) => (props.size === 'small' && '5px 0') || '10px 0'};
+  border: 1px solid #838686;
+  border-radius: 3px;
+  padding: 0;
+`
+
+export const OptionButton = styled.button`
+  width: 50%;
+  padding: ${(props) => (props.size === 'small' && '8px 0') || '15px 0'};
+  margin: ${props => props.selected ? '-4px -1px -4px -1px' : '0'};
+  z-index: ${props => props.selected ? '1' : '0'};
+  font-size: ${(props) => (props.size === 'small' && '0.75rem') || '1rem'};
+  background-color: ${(props) => (props.selected === true && '#333') || 'white'};
+  color: ${(props) => (props.selected === true && 'white') || '#333'};
+  border: none;
+  border-radius: 3px;
+  font-weight: ${(props) => (props.selected === true && 'bold') || 'normal'};
+  font-size: 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.1s, color 0.1s;
+  top: 0;
+  text-shadow: ${(props) => (props.selected === true && '-1px 1px 0 black') || 'none'};
+  &:last-child {
+    position: relative;
+    right: ${(props) => props.selected ? '-2px' : 0};
+  }
+  &:disabled {
+    text-decoration: line-through;
+  }
+`
+
 const StyledTextInput = styled.input`
   width: 100%;
   font-size: 16px;
@@ -229,6 +265,34 @@ SelectInput.propTypes = {
   children: PropTypes.node,
 }
 
+function ButtonSelectInput({elStyle, label, style, disabled, readOnly, options, value, onChange}) {
+  return <Label style={{...elStyle, ...style}} disabled={disabled} readOnly={readOnly}>
+    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+    <SectionOptions size='small' {...elStyle}>
+      {options.map(o =>
+        <OptionButton
+          size='small'
+          key={o.value}
+          selected={value===o.value}
+          onClick={e => {e.preventDefault(); onChange(o.value)}}
+          style={style}
+          disabled={o.disabled}
+        >{o.label}</OptionButton>
+      )}
+    </SectionOptions>
+  </Label>
+}
+ButtonSelectInput.propTypes = {
+  elStyle: PropTypes.object,
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
+  readOnly: PropTypes.bool,
+  style: PropTypes.object,
+  options: PropTypes.array.isRequired,
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+}
+
 export default function Input({grouped, firstInGroup, lastInGroup, isLoading, disabled, ...props}) {
   const elStyle = {}
   if(grouped) {
@@ -248,6 +312,8 @@ export default function Input({grouped, firstInGroup, lastInGroup, isLoading, di
   switch (props.type) {
     case 'select':
       return <SelectInput elStyle={elStyle} {...props} {...sharedProps} />
+    case 'button-select':
+      return <ButtonSelectInput elStyle={elStyle} {...props} {...sharedProps} />
     case 'submit':
       return <ButtonInput elStyle={elStyle} isLoading={isLoading} {...props} {...sharedProps} />
     case 'textarea':
