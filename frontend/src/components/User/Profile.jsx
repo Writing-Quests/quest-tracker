@@ -123,20 +123,20 @@ function ProjectsList({username}) {
               {p.goals[0].goal} {p.goals[0].units} from {dayjs(p.goals[0].start_date).format('MMM D, YYYY')} to {dayjs(p.goals[0].end_date).format('MMM D, YYYY')}
             </>}
             &nbsp;
-            <Link to={`/project/${p.id}`}>Edit</Link>
+            {isMyProfile && <Link to={`/project/${p.id}`}>Edit</Link>}
           </li>
         )}
       </ul>
     </AnimatedContainer>}
     {Boolean(pastProjects.length) && <ContentBlock>
       <h2>Past Projects</h2>
-      <p><em>Viewing details for upcoming and past projects is coming soon! Contact us in the meantime if you&rsquo;d like your data.</em></p>
+      {isMyProfile && <p><em>Viewing details for upcoming and past projects is coming soon! Contact us in the meantime if you&rsquo;d like your data.</em></p>}
       <ul>
         {pastProjects.map(p =>
           <li key={p.id}>
             <strong>{p.title ? p.title : <em>untitled project</em>}</strong> ({p.goals?.[0]?.goal_progress_percent >= 100 ? 'Completed! 🎉' : ((p.goals?.[0]?.goal_progress_percent || '0') + '%')})
             &nbsp;
-            <Link to={`/project/${p.id}`}>Edit</Link>
+            {isMyProfile && <Link to={`/project/${p.id}`}>Edit</Link>}
           </li>
         )}
       </ul>
@@ -201,7 +201,7 @@ export default function Profile() {
       <ErrorContainer>Profile not found.</ErrorContainer>
     </Page>
   }
-  const isMyProfile = profile.username === user.username
+  const isMyProfile = user && (profile?.username === user?.username)
   return <ProfileContext.Provider value={{isMyProfile}}>
     <Page>
       <ContentContainer>
@@ -214,7 +214,7 @@ export default function Profile() {
               {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
             </div>
             {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
-            {!isMyProfile && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
+            {(!isMyProfile && user) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
           </ProfileDataContainer>
         </ContentBlock>
         {(Boolean(profile.username) && Boolean(profile.projects?.length)) ?

@@ -36,7 +36,7 @@ use Doctrine\ORM\Mapping as ORM;
                     fromProperty: 'username',
                     toProperty: 'user',
                     securityObjectName: 'uriUser',
-                    security: "uriUser == user or is_granted('ROLE_ADMIN')", // TODO: Expand this to allow public listing of public projects
+                    security: "uriUser == user or is_granted('ROLE_ADMIN') or uriUser.isPublic()",
                 )
             ],
             security: "true", // Security is on the Link level for now
@@ -158,7 +158,9 @@ class Project
 
     public function isPublic(): ?bool
     {
-        return $this->public;
+        return $this->getUser()->isPublic();
+        // TODO: Actually implement permissions on projects
+        //return $this->public;
     }
 
     public function setPublic(bool $public): static
