@@ -105,10 +105,10 @@ function RegisterForm({onSuccess}) {
     {error && <ErrorContainer>{error.message}</ErrorContainer>}
     <form onSubmit={handleSubmit}>
       <InputGroup>
-        <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
+        <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} pattern="[a-zA-Z0-9_]+" minLength='5' maxLength='100' title='Only letters, numbers, or underscore' {...formProps} />
         <Input label='Email' type='email' value={email} onChange={e => setEmail(e.target.value)} {...formProps} />
-        <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
-        <Input label='Confirm Password' type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} {...formProps} />
+        <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} minLength={8} maxLength={100} {...formProps} />
+        <Input label='Confirm Password' type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} minLength={8} maxLength={100} {...formProps} />
       </InputGroup>
       <Input type='submit' value='Create Account' {...formProps} />
     </form>

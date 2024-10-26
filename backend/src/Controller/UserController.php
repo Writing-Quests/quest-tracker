@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use Exception;
+
 use App\Entity\User;
 use App\Entity\LoginToken;
 use App\State\MailManager;
@@ -16,12 +18,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserController extends AbstractController
 {
   #[Route('/api/user/$create/', name: 'register_user', methods: ['POST'])]
-  public function create_user (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
+  public function create_user (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer, ValidatorInterface $validator): JsonResponse
   {
       $resp = [
         'errors' => []
@@ -74,6 +76,10 @@ class UserController extends AbstractController
           // TODO: Have this autodetect or grab from consts
           $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$email.'&t='.$token;
           $resp['url'] = $verifyEmailURL;
+          $violations = $validator->validate($newUser);
+          if (0 !== count($violations)) {
+            throw new Exception($violations);
+          }
           $entityManager->persist($verifyEmailToken);
           $entityManager->persist($newUser);
           $entityManager->flush();
