@@ -7,7 +7,7 @@ import Page from './Page'
 import Notices from './Notices'
 import Loading from './Loading'
 import api from '../services/api'
-import Input from './Forms/Input'
+import Input, { SectionOptions, OptionButton } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
 
 const { LoggedInUserContext } = context
@@ -36,39 +36,6 @@ const VerificationContainer = styled.div`
   margin-left: auto;
   margin-right: auto;
   width: 99%;
-`
-
-const SectionOptions = styled.div`
-  display: ${(props) => (props.hidden == true && 'none') || 'flex'};
-  width: ${(props) => (props.size === 'small' && '40%') || '100%'};
-  background-color: transparent;
-  margin: ${(props) => (props.size === 'small' && '5px 0') || '10px 0'};
-  border: 1px solid #838686;
-  border-radius: 3px;
-  padding: 0;
-`
-
-const OptionButton = styled.button`
-  width: 50%;
-  padding: ${(props) => (props.size === 'small' && '8px 0') || '15px 0'};
-  margin: ${props => props.selected ? '-4px -1px -4px -1px' : '0'};
-  z-index: ${props => props.selected ? '1' : '0'};
-  font-size: ${(props) => (props.size === 'small' && '0.75rem') || '1rem'};
-  background-color: ${(props) => (props.selected === true && '#333') || 'white'};
-  color: ${(props) => (props.selected === true && 'white') || '#333'};
-  border: none;
-  border-radius: 3px;
-  font-weight: ${(props) => (props.selected === true && 'bold') || 'normal'};
-  font-size: 1rem;
-  cursor: pointer;
-  position: relative;
-  transition: background-color 0.1s, color 0.1s;
-  top: 0;
-  text-shadow: ${(props) => (props.selected === true && '-1px 1px 0 black') || 'none'};
-  &:last-child {
-    position: relative;
-    right: ${(props) => props.selected ? '-2px' : 0};
-  }
 `
 
 const ToggledSection = styled.div`

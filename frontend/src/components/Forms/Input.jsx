@@ -1,6 +1,44 @@
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 
+export const SectionOptions = styled.div`
+  display: ${(props) => (props.hidden == true && 'none') || 'flex'};
+  width: ${(props) => (props.size === 'small' && 'fit-content') || '100%'};
+  background-color: transparent;
+  margin: ${(props) => (props.size === 'small' && '5px 0') || '10px 0'};
+  border: 1px solid #838686;
+  border-radius: 3px;
+  padding: 0;
+`
+
+export const OptionButton = styled.button`
+  padding: ${(props) => (props.size === 'small' && '8px 16px') || '15px 30px'};
+  margin: ${props => props.selected ? '-4px -1px -4px -1px' : '0'};
+  z-index: ${props => props.selected ? '1' : '0'};
+  font-size: ${(props) => (props.size === 'small' && '0.75rem') || '1rem'};
+  background-color: ${(props) => (props.selected === true && '#333') || 'white'};
+  color: ${(props) => (props.selected === true && 'white') || '#333'};
+  border: none;
+  border-radius: 3px;
+  display: inline-block;
+  width: ${props => props.size === 'small' ? 'auto' : '100%'};
+  font-weight: ${(props) => (props.selected === true && 'bold') || 'normal'};
+  font-size: 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.1s, color 0.1s;
+  top: 0;
+  text-shadow: ${(props) => (props.selected === true && '-1px 1px 0 black') || 'none'};
+  flex-grow: ${props => props.size === 'small' ? '0' : '1'};
+  &:last-child {
+    position: relative;
+    right: ${(props) => props.selected ? '-2px' : 0};
+  }
+  &:disabled {
+    text-decoration: line-through;
+  }
+`
+
 const StyledTextInput = styled.input`
   width: 100%;
   font-size: 16px;
@@ -183,10 +221,10 @@ TextareaInput.propTypes = {
   disabled: PropTypes.bool,
 }
 
-function TextInput({elStyle, label, style, ...props}) {
+function TextInput({elStyle, label, style, inputStyle, ...props}) {
   return <Label style={{...elStyle, ...style}} disabled={props.disabled} readOnly={props.readOnly}>
     <span style={{position: 'relative', top: '-4px'}}>{label}</span>
-    <StyledTextInput {...props} />
+    <StyledTextInput style={inputStyle} {...props} />
   </Label>
 }
 TextInput.propTypes = {
@@ -195,21 +233,24 @@ TextInput.propTypes = {
   disabled: PropTypes.bool,
   readOnly: PropTypes.bool,
   style: PropTypes.object,
+  inputStyle: PropTypes.string,
 }
 
 // eslint-disable-next-line no-unused-vars
-function ButtonInput({elStyle, label: _,...props}) {
+function ButtonInput({elStyle, label: _, buttonType='normal', type, ...props}) {
   let value = props.value
   if(props.isLoading) {
     value = 'Loading…'
   }
-  return <CTAButton as="input" style={elStyle} {...props} value={value} />
+  return <Button type={buttonType} inputType={type} as="input" style={elStyle} {...props} value={value} />
 }
 ButtonInput.propTypes = {
   elStyle: PropTypes.object,
   label: PropTypes.string,
   value: PropTypes.string,
   isLoading: PropTypes.bool,
+  buttonType: PropTypes.string,
+  type: PropTypes.string,
 }
 
 function SelectInput({elStyle, label, style, children, ...props}) {
@@ -227,6 +268,34 @@ SelectInput.propTypes = {
   readOnly: PropTypes.bool,
   style: PropTypes.object,
   children: PropTypes.node,
+}
+
+function ButtonSelectInput({elStyle, label, style, disabled, readOnly, options, value, onChange}) {
+  return <Label style={{...elStyle, ...style}} disabled={disabled} readOnly={readOnly}>
+    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+    <SectionOptions size='small' {...elStyle}>
+      {options.map(o =>
+        <OptionButton
+          size='small'
+          key={o.value}
+          selected={value===o.value}
+          data-selected={value===o.value}
+          onClick={e => {e.preventDefault(); onChange(o.value)}}
+          disabled={o.disabled}
+        >{o.label}</OptionButton>
+      )}
+    </SectionOptions>
+  </Label>
+}
+ButtonSelectInput.propTypes = {
+  elStyle: PropTypes.object,
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
+  readOnly: PropTypes.bool,
+  style: PropTypes.object,
+  options: PropTypes.array.isRequired,
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
 }
 
 export default function Input({grouped, firstInGroup, lastInGroup, isLoading, disabled, ...props}) {
@@ -248,6 +317,8 @@ export default function Input({grouped, firstInGroup, lastInGroup, isLoading, di
   switch (props.type) {
     case 'select':
       return <SelectInput elStyle={elStyle} {...props} {...sharedProps} />
+    case 'button-select':
+      return <ButtonSelectInput elStyle={elStyle} {...props} {...sharedProps} />
     case 'submit':
       return <ButtonInput elStyle={elStyle} isLoading={isLoading} {...props} {...sharedProps} />
     case 'textarea':
@@ -270,19 +341,20 @@ Input.propTypes = {
   disabled: PropTypes.bool,
 }
 
-export function Button({type, ...props}) {
+export function Button({type, inputType, ...props}) {
   switch(type) {
     case 'outline':
-      return <OutlineButton {...props} />
+      return <OutlineButton type={inputType} {...props} />
     case 'cta':
-      return <CTAButton {...props} />
+      return <CTAButton type={inputType} {...props} />
     case 'link':
-      return <LinkButton {...props} />
+      return <LinkButton type={inputType} {...props} />
     default:
     case 'normal':
-      return <NormalButton {...props} />
+      return <NormalButton type={inputType} {...props} />
   }
 }
 Button.propTypes = {
   type: PropTypes.string,
+  inputType: PropTypes.string,
 }

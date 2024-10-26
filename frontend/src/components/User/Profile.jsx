@@ -17,7 +17,6 @@ const { LoggedInUserContext } = context
 
 const ProfileContext = createContext()
 
-
 const UserAvatar = styled.img`
   margin: 0 10px 10px 0;
   border: 2px solid #AF402D;
@@ -97,14 +96,14 @@ function ProjectsList({username}) {
   if(loading || !data) { return <Loading /> }
   if(error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
   return <>
-    {activeProjects.length && <AnimatedContainer>
+    {Boolean(activeProjects.length) && <AnimatedContainer>
       <ContentBlock>
       {activeProjects.map((p, i) => <>
         <div key={p.id}>
-          <h2>{p.title ? p.title : <em>untitled project</em>}
-            &nbsp;<small><Link to={`/project/${p.id}`}>Edit</Link></small>
+          <h2 style={{fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', marginBottom: 0}}>{p.title ? p.title : <em>untitled project</em>}
           </h2>
-          {Boolean(p.goals?.length) && <Progress project={p} />}
+          {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.id}`}>Edit</Link></small></>}
+          {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
       </>)}
@@ -113,7 +112,7 @@ function ProjectsList({username}) {
     {isMyProfile && <ContentBlock>
       <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
     </ContentBlock>}
-    {futureProjects.length && <AnimatedContainer color='#5B504E'>
+    {Boolean(futureProjects.length) && <AnimatedContainer color='#5B504E'>
       <h2>Upcoming Projects</h2>
       <ul>
         {futureProjects.map(p =>
@@ -129,7 +128,7 @@ function ProjectsList({username}) {
         )}
       </ul>
     </AnimatedContainer>}
-    {pastProjects.length && <ContentBlock>
+    {Boolean(pastProjects.length) && <ContentBlock>
       <h2>Past Projects</h2>
       <p><em>Viewing details for upcoming and past projects is coming soon! Contact us in the meantime if you&rsquo;d like your data.</em></p>
       <ul>
