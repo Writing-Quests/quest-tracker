@@ -1,12 +1,83 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
+import styled from 'styled-components'
 import dayjs from 'dayjs'
 import api from '../services/api'
 import usePrev from '../services/usePrev'
-import Input from './Forms/Input'
+import Input, { Button, SectionOptions } from './Forms/Input'
 import { ErrorContainer, SuccessContainer } from './Containers'
 import ProgressChart from './ProgressChart'
 import { fireworks, Confetti } from '../services/confetti'
+
+const ProgressForm = styled.form`
+  background: #333;
+  border-radius: 9px;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  border-bottom: 5px solid black;
+  & label {
+    display: grid;
+    grid-template-columns: 50px auto;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    color: white;
+    align-items: center;
+    font-weight: normal;
+    margin: 5px 0;
+    &:focus-within {
+      outline: none;
+      color: inherit;
+    }
+  }
+  & span {
+    top: 0 !important;
+  }
+  & ${SectionOptions} button {
+    background-color: #d8d8d8;
+    color: #333;
+    border-radius: 0;
+    &[data-selected=true] {
+      background-color: #757575;
+      color: white;
+      border-radius: inherit;
+    }
+  }
+  }
+  & input:not([type='submit']) {
+    background-color: #464646;
+    color: white;
+    font-family: "Playfair Display", serif;
+    font-size: 2rem;
+    font-weight: bold;
+    padding: 10px 10px 15px 10px;
+    border-radius: 10px;
+  }
+`
+
+const ButtonGroup = styled.div`
+  margin: 10px -10px -5px -10px;
+  border-bottom-left-radius: 9px;
+  border-bottom-right-radius: 9px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background-color: #999;
+  border-top: 1px solid #999;
+  grid-gap: 1px;
+  & > button, & > input {
+    margin: 0;
+    border-radius: 0;
+    background-color: #333;
+    color: white;
+    &:hover {
+      background-color: #111;
+    }
+    &:active {
+      background-color: black;
+    }
+  }
+`
 
 function capitalizeFirstLetter(str='') {
   return str.charAt(0).toUpperCase() + str.slice(1)
@@ -26,6 +97,7 @@ function UpdateProgress({goal, refetchGoal}) {
       defaultDateSelect = 'other'
     }
   }
+  const [show, setShow] = useState(false)
   const [action, setAction] = useState('add')
   const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [dateSelect, setDateSelect] = useState(defaultDateSelect)
@@ -33,6 +105,11 @@ function UpdateProgress({goal, refetchGoal}) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
   const [success, setSuccess] = useState()
+  useEffect(() => {
+    if(show === true) {
+      setSuccess(false)
+    }
+  }, [show])
   const prevSuccess = usePrev(success)
   const cumulativeProgress = useMemo(() => {
     const ret = []
@@ -99,6 +176,7 @@ function UpdateProgress({goal, refetchGoal}) {
       }
       refetchGoal()
       setSuccess(true)
+      setShow(false)
     } catch (e) {
       setError(e)
     } finally {
@@ -107,10 +185,11 @@ function UpdateProgress({goal, refetchGoal}) {
   }
 
   return <>
-    <form onSubmit={handleSave}>
-      <h3>Update Progress</h3>
-      {error && <ErrorContainer error={error} />}
-      {success && <SuccessContainer>Saved!</SuccessContainer>}
+    {error && <ErrorContainer error={error} />}
+    {success && <SuccessContainer>Saved!</SuccessContainer>}
+    {show ?
+    <ProgressForm onSubmit={handleSave}>
+      <h3 style={{textAlign: 'center', marginTop: '8px', marginBottom: '9px', fontSize: '1.1rem'}}>Update Progress</h3>
       <Input type='number' label={capitalizeFirstLetter(goal.units)} value={value}
         onChange={e => setValue(e.target.value)}
         min={(action === 'setTotal') ? (minOnDate || 0) : 0}
@@ -128,9 +207,14 @@ function UpdateProgress({goal, refetchGoal}) {
         { label: 'Another date', value: 'other'},
       ]} />
       {dateSelect === 'other' && <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} min={dayjs(goal.start_date).format('YYYY-MM-DD')} max={dayjs(goal.end_date).format('YYYY-MM-DD')} />}
-      {newSuccess && <Confetti />}
-      <Input type='submit' {...inputProps} value='Save' />
-    </form>
+      <ButtonGroup>
+        <Input type='submit' buttonType='normal' {...inputProps} value='Save' />
+        <Button onClick={e => {e.preventDefault; setShow(false)}} style={{color: '#f79274', fontWeight: 'normal'}}>Cancel</Button>
+      </ButtonGroup>
+    </ProgressForm>
+    :
+    <Button type='cta' onClick={() => setShow(true)}>✏️ Update progress</Button>}
+    {newSuccess && <Confetti />}
   </>
 }
 UpdateProgress.propTypes = {
@@ -148,8 +232,10 @@ function EditProgressInner({goal, refetchGoal, allowEditing}) {
   }
 
   return <div>
-    <p style={{fontSize: '1.2em'}}><strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}</p>
-    <p>{Number(goal.goal_progress_percent).toLocaleString()}% done {goal.goal_progress_percent >= 100 && <strong onClick={handleFireworks}><em>Completed! 🎉</em></strong>}</p>
+    <p style={{fontSize: '1.2em'}}>
+      <strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}
+      &nbsp;<small>({Number(goal.goal_progress_percent).toLocaleString()}% done{goal.goal_progress_percent >= 100 && <strong onClick={handleFireworks}><em>&nbsp;Completed! 🎉</em></strong>})</small>
+    </p>
     {allowEditing && <UpdateProgress refetchGoal={refetchGoal} goal={goal} />}
     {(parseFloat(goal.current_value) > 0) && <ProgressChart goal={goal} />}
   </div>

@@ -100,9 +100,9 @@ function ProjectsList({username}) {
       <ContentBlock>
       {activeProjects.map((p, i) => <>
         <div key={p.id}>
-          <h2>{p.title ? p.title : <em>untitled project</em>}
-            {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.id}`}>Edit</Link></small></>}
+          <h2 style={{fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', marginBottom: 0}}>{p.title ? p.title : <em>untitled project</em>}
           </h2>
+          {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.id}`}>Edit</Link></small></>}
           {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
