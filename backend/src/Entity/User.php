@@ -7,6 +7,7 @@ use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\OpenApi\Model;
 
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -29,7 +30,10 @@ use App\State\NotLoggedInRepresentation;
             uriTemplate: '/me',
             provider: UserMeProvider::class,
             output: NotLoggedInRepresentation::class,
-            security: "true",
+            openapi: new Model\Operation(
+                summary: 'Retrieves the current User',
+                description: 'Retrieves the currently-logged-in User resource. If not logged in, it will return `"anonymous_user": true`.',
+            ),
         ),
     ],
     security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user",

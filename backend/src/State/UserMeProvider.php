@@ -3,6 +3,7 @@
 namespace App\State;
 
 use App\Entity\User;
+use App\State\NotLoggedInRepresentation;
 use ApiPlatform\State\ProviderInterface;
 use ApiPlatform\Metadata\Operation;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -31,8 +32,4 @@ final class UserMeProvider implements ProviderInterface {
             return new NotLoggedInRepresentation();
         }
     }
-}
-
-final class NotLoggedInRepresentation {
-    public bool $anonymousUser = true;
 }
