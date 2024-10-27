@@ -80,7 +80,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255,nullable: true)]
     private ?string $unverified_email = null;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column]
     #[ApiProperty(writable: false)]
     private ?\DateTimeImmutable $created_at = null;
 
@@ -94,7 +94,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $last_login_at = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true, length: 65535)]
     private $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]

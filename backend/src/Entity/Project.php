@@ -62,18 +62,18 @@ class Project
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "NOW()"])]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "CURRENT_TIMESTAMP"])]
     #[ApiProperty(writable: false)]
     private ?\DateTimeInterface $created_at;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "NOW()"])]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "CURRENT_TIMESTAMP"])]
     #[ApiProperty(writable: false)]
     private ?\DateTimeInterface $edited_at = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $title = null;
 
-    #[ORM\Column(options: ["default" => "(JSON_OBJECT())"])]
+    #[ORM\Column(options: ["default" => "json_object()"], nullable: true)]
     private ?array $details = null;
 
     #[ORM\Column(nullable: false, options: ["default" => false])]
