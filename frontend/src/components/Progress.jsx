@@ -165,11 +165,11 @@ function UpdateProgress({goal, refetchGoal}) {
           }
         }
         const newVal = progressIndex ? (value - cumulativeProgress[progressIndex - 1]) : value
-        await api.patch(`goals/${goal.id}/progress`, [ { date, action: 'replace', value: newVal } ], {
+        await api.patch(`goals/${goal.code}/progress`, [ { date, action: 'replace', value: newVal } ], {
           headers: { 'Content-Type': 'application/json', }
         })
       } else {
-        await api.patch(`goals/${goal.id}/progress`, [ { date, action, value } ], {
+        await api.patch(`goals/${goal.code}/progress`, [ { date, action, value } ], {
           headers: { 'Content-Type': 'application/json', }
         })
       }
@@ -253,14 +253,14 @@ export default function Progress({project, allowEditing}) {
     setLoading(true)
     setError(null)
     try {
-      const resp = await api.get(`/projects/${project.id}/goals`)
+      const resp = await api.get(`/projects/${project.code}/goals`)
       setData(resp.data?.['hydra:member'] || [])
     } catch (e) {
       setError(e)
     } finally {
       setLoading(false)
     }
-  }, [project.id])
+  }, [project.code])
   useEffect(() => {
     fetchGoals()
   }, [project, fetchGoals])

@@ -4,8 +4,6 @@ namespace App\Entity;
 
 use DateTime;
 
-use Sqids\Sqids;
-
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
@@ -19,6 +17,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Context;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Uid\Ulid;
 
 #[ORM\Entity(repositoryClass: ProjectGoalRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -62,6 +61,7 @@ class ProjectGoal
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[ApiProperty(identifier: false, writable: false, readable: false)]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projectGoals')]
@@ -94,10 +94,13 @@ class ProjectGoal
     #[ORM\Column(type: Types::SIMPLE_ARRAY)]
     private array $progress = ['0'];
 
+    #[ORM\Column(type: 'ulid')]
+    #[ApiProperty(identifier: true, writable: false)]
+    private ?Ulid $code = null;
+
     public function getId(): ?string
     {
-        $sqids = new Sqids(minLength: 8, alphabet: $_ENV['SQIDS_ALPHABET_PROJECT_GOALS']);
-        return $sqids->encode([$this->id]);
+        return $this->id;
     }
 
     public function getProject(): ?Project
@@ -253,11 +256,24 @@ class ProjectGoal
         // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
         $this->setCreatedAt(new DateTime());
         $this->setEditedAt(new DateTime());
+        $this->setCode(new Ulid());
     }
 
     #[ORM\PreUpdate]
     public function preUpdate(): void
     {
         $this->setEditedAt(new DateTime());
+    }
+
+    public function getCode(): ?Ulid
+    {
+        return $this->code;
+    }
+
+    public function setCode(Ulid $code): static
+    {
+        $this->code = $code;
+
+        return $this;
     }
 }

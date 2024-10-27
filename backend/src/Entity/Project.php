@@ -2,8 +2,6 @@
 
 namespace App\Entity;
 
-use Sqids\Sqids;
-
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
@@ -21,6 +19,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Ulid;
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -55,7 +54,7 @@ class Project
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[ApiProperty(writable: false)]
+    #[ApiProperty(identifier: false, writable: false, readable: false)]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
@@ -85,6 +84,10 @@ class Project
     #[ORM\OneToMany(targetEntity: ProjectGoal::class, mappedBy: 'project', orphanRemoval: true)]
     private Collection $projectGoals;
 
+    #[ORM\Column(type: 'ulid')]
+    #[ApiProperty(identifier: true, writable: false)]
+    private ?Ulid $code = null;
+
     public function __construct()
     {
         $this->projectGoals = new ArrayCollection();
@@ -92,8 +95,7 @@ class Project
 
     public function getId(): ?string
     {
-        $sqids = new Sqids(minLength: 8, alphabet: $_ENV['SQIDS_ALPHABET_PROJECTS']);
-        return $sqids->encode([$this->id]);
+        return $this->id;
     }
 
     public function getUser(): ?User
@@ -203,6 +205,18 @@ class Project
                 $projectGoal->setProject(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCode(): ?Ulid
+    {
+        return $this->code;
+    }
+
+    public function setCode(Ulid $code): static
+    {
+        $this->code = $code;
 
         return $this;
     }

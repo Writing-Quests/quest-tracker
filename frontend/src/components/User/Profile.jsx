@@ -99,10 +99,10 @@ function ProjectsList({username}) {
     {Boolean(activeProjects.length) && <AnimatedContainer>
       <ContentBlock>
       {activeProjects.map((p, i) => <>
-        <div key={p.id}>
+        <div key={p.code}>
           <h2 style={{fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', marginBottom: 0}}>{p.title ? p.title : <em>untitled project</em>}
           </h2>
-          {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.id}`}>Edit</Link></small></>}
+          {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.code}`}>Edit</Link></small></>}
           {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
@@ -116,14 +116,14 @@ function ProjectsList({username}) {
       <h2>Upcoming Projects</h2>
       <ul>
         {futureProjects.map(p =>
-          <li key={p.id}>
+          <li key={p.code}>
             <strong>{p.title ? p.title : <em>untitled project</em>}</strong>
             &nbsp;
             {p.goals?.[0] && <>
               {p.goals[0].goal} {p.goals[0].units} from {dayjs(p.goals[0].start_date).format('MMM D, YYYY')} to {dayjs(p.goals[0].end_date).format('MMM D, YYYY')}
             </>}
             &nbsp;
-            {isMyProfile && <Link to={`/project/${p.id}`}>Edit</Link>}
+            {isMyProfile && <Link to={`/project/${p.code}`}>Edit</Link>}
           </li>
         )}
       </ul>
@@ -133,10 +133,10 @@ function ProjectsList({username}) {
       {isMyProfile && <p><em>Viewing details for upcoming and past projects is coming soon! Contact us in the meantime if you&rsquo;d like your data.</em></p>}
       <ul>
         {pastProjects.map(p =>
-          <li key={p.id}>
+          <li key={p.code}>
             <strong>{p.title ? p.title : <em>untitled project</em>}</strong> ({p.goals?.[0]?.goal_progress_percent >= 100 ? 'Completed! 🎉' : ((p.goals?.[0]?.goal_progress_percent || '0') + '%')})
             &nbsp;
-            {isMyProfile && <Link to={`/project/${p.id}`}>Edit</Link>}
+            {isMyProfile && <Link to={`/project/${p.code}`}>Edit</Link>}
           </li>
         )}
       </ul>

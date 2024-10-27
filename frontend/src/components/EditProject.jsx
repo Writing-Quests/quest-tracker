@@ -76,7 +76,7 @@ function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
   const inputProps = { disabled: loading }
   let endDateMin = startDateObj ? startDateObj.format('YYYY-MM-DD') : '2024-01-01'
   let lastEntryDate
-  for(let i = goals[0].progress.length; i >= 0; i--) {
+  for(let i = goals?.[0]?.progress.length; i >= 0; i--) {
     if(goals[0].progress[i] > 0) {
       lastEntryDate = dayjs(goals[0].start_date).add(i, 'd').format('YYYY-MM-DD')
       endDateMin = lastEntryDate
@@ -152,16 +152,16 @@ export default function EditProject() {
   const [error, setError] = useState()
   const [justSaved, setJustSaved] = useState(false)
   const [saving, setSaving] = useState(false)
-  const { projectId } = useParams()
+  const { projectCode } = useParams()
   useEffect(() => {
     (async () => {
       setLoading(true)
       setError(null)
       try {
-        if(projectId) {
-          const resp = await api.get(`/projects/${projectId}`)
+        if(projectCode) {
+          const resp = await api.get(`/projects/${projectCode}`)
           setProject(resp.data)
-          const resp2 = await api.get(`/projects/${projectId}/goals`)
+          const resp2 = await api.get(`/projects/${projectCode}/goals`)
           setGoals(resp2.data?.['hydra:member'] || [])
         }
       } catch (e) {
@@ -170,7 +170,7 @@ export default function EditProject() {
         setLoading(false)
       }
     })()
-  }, [projectId])
+  }, [projectCode])
   async function handleSave(projectPatch, goalPatch) {
     // Save project
     setJustSaved(false)
@@ -180,13 +180,13 @@ export default function EditProject() {
       const resp = await api.post('projects', projectPatch)
       setProject(resp.data)
       newProject = resp.data
-      window.history.pushState('register', 'Edit Project', `/project/${resp.data.id}`)
+      window.history.pushState('register', 'Edit Project', `/project/${resp.data.code}`)
     } else {
-      await api.patch(`projects/${project.id}`, projectPatch)
+      await api.patch(`projects/${project.code}`, projectPatch)
     }
     // Save goal (assume only one goal per project right now)
     if(goals?.length) {
-      const resp = await api.patch(`goals/${goals[0].id}`, goalPatch)
+      const resp = await api.patch(`goals/${goals[0].code}`, goalPatch)
       setGoals([resp.data])
     } else {
       const resp = await api.post(`goals`, {
