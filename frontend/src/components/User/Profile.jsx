@@ -70,7 +70,7 @@ function ProjectsList({username}) {
         //if(d.id === 11) { debugger }
         if(!goal.end_date || !goal.start_date) { return false }
         if(
-          dayjs(goal.end_date).isAfter(dayjs().subtract(2, 'day'))
+          dayjs(goal.end_date).isAfter(dayjs().subtract(7, 'day'))
           &&
           dayjs(goal.start_date).isBefore(dayjs().add(2, 'day'))
         ) {

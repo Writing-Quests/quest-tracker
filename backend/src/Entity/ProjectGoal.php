@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use DateTime;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
@@ -24,7 +25,7 @@ use Symfony\Component\Uid\Ulid;
 #[ApiResource(
     operations: [
         new Get(
-            uriTemplate: '/goals/{id}',
+            uriTemplate: '/goals/{code}',
         ),
         new GetCollection(
             uriTemplate: '/projects/{id}/goals',
@@ -39,11 +40,11 @@ use Symfony\Component\Uid\Ulid;
             security: "true", // Security is on the Link level
         ),
         new Patch(
-            uriTemplate: '/goals/{id}',
+            uriTemplate: '/goals/{code}',
             security: "is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
         ),
         new Patch(
-            uriTemplate: '/goals/{id}/progress',
+            uriTemplate: '/goals/{code}/progress',
             inputFormats: ['json' => ['application/json']],
             security: "is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
             controller: ProjectGoalProgress::class,
@@ -61,7 +62,7 @@ class ProjectGoal
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[ApiProperty(identifier: false, writable: false, readable: false)]
+    #[ApiProperty(identifier: false, readable: false)]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projectGoals')]

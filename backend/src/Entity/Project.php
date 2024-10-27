@@ -9,7 +9,6 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Link;
-use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
 use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Serializer\Annotation\SerializedName;
@@ -184,6 +183,7 @@ class Project
     // For some reason this works to embed the goals into the API response
     public function getGoals(): Collection
     {
+        //dd($this->projectGoals->getValues());
         return $this->projectGoals;
     }
 
