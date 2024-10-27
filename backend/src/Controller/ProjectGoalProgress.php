@@ -26,8 +26,9 @@ class ProjectGoalProgress extends AbstractController
     //      value: 1000,
     //  }
     // ]
-    public function __invoke(ProjectGoal $goal, Request $request): ProjectGoal
+    public function __invoke($data, Request $request): ProjectGoal
     {
+        $goal = $data;
         if(!$goal->getStartDate() || !$goal->getEndDate()) {
             throw new BadRequestHttpException('start_date and end_date need to be set on the goal in order to modify the progress');
         }

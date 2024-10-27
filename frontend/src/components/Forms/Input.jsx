@@ -320,7 +320,7 @@ export default function Input({grouped, firstInGroup, lastInGroup, isLoading, di
     case 'button-select':
       return <ButtonSelectInput elStyle={elStyle} {...props} {...sharedProps} />
     case 'submit':
-      return <ButtonInput elStyle={elStyle} isLoading={isLoading} {...props} {...sharedProps} />
+      return <ButtonInput elStyle={elStyle} isLoading={isLoading} buttonType={props.buttonType || 'cta'} {...props} {...sharedProps} />
     case 'textarea':
       return <TextareaInput  elStyle={elStyle} {...props} {...sharedProps} />
     case 'text':
@@ -339,6 +339,7 @@ Input.propTypes = {
   type: PropTypes.string.isRequired,
   isLoading: PropTypes.bool,
   disabled: PropTypes.bool,
+  buttonType: PropTypes.string,
 }
 
 export function Button({type, inputType, ...props}) {

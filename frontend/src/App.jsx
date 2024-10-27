@@ -62,10 +62,10 @@ export function App() {
             <Route path="/" element={<Profile />} />
             <Route path="/profile/:username?" element={<Profile />} />
             <Route path="/project/new" element={<EditProject />} />
-            <Route path="/project/:projectId" element={<EditProject />} />
+            <Route path="/project/:projectCode" element={<EditProject />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
-            <Route path="*" element={<Navigate to='/' replace />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to='/' replace />} />
           </Routes>
         </BrowserRouter>
       </LoggedInUserContext.Provider>

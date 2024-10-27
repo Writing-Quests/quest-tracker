@@ -1,13 +1,22 @@
+feedback:
+    path: /feedback
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController
+    defaults:
+        path: 'https://forms.gle/X2YkvP5bkWqgCK378'
+        permanent: false
+
 controllers:
     resource:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
 react:
     path: /{req}
     defaults: { _controller: 'App\Controller\StaticController::index' }
     requirements:
         req: ".*"
+
 app_logout:
     path: /api/logout
     methods: GET
