@@ -10,14 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "axios": "^1.7.7",
     "canvas-confetti": "^1.9.3",
     "dayjs": "^1.11.13",
     "install": "^0.13.0",
     "npm": "^10.8.3",
+    "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
+    "react-modal": "^3.16.1",
     "react-router-dom": "^6.26.2",
     "recharts": "^2.12.7",
     "styled-components": "^6.1.13"

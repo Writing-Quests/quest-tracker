@@ -8,6 +8,8 @@ import Input, { Button, SectionOptions } from './Forms/Input'
 import { ErrorContainer, SuccessContainer } from './Containers'
 import ProgressChart from './ProgressChart'
 import { fireworks, Confetti } from '../services/confetti'
+import Modal from 'react-modal'
+import Certificate from './Certificate'
 
 const ProgressForm = styled.form`
   background: #333;
@@ -221,8 +223,15 @@ UpdateProgress.propTypes = {
   goal: PropTypes.object.isRequired,
 }
 
-function EditProgressInner({goal, refetchGoal, allowEditing}) {
+function EditProgressInner({project, goal, refetchGoal, allowEditing}) {
   const [fireworksRunning, setFireworksRunning] = useState(false)
+  const [modalIsOpen, setModalIsOpen] = useState(true)
+  const prevProgressPercent = usePrev(goal.goal_progress_percent)
+  useEffect(() => {
+    if(prevProgressPercent?.length && prevProgressPercent < 100 && goal.goal_progress_percent >= 100) {
+      triggerCelebration()
+    }
+  }, [goal.goal_progress_percent, prevProgressPercent])
 
   function handleFireworks() {
     if(fireworksRunning) { return }
@@ -230,11 +239,45 @@ function EditProgressInner({goal, refetchGoal, allowEditing}) {
     fireworks(() => setFireworksRunning(false))
   }
 
+  function triggerCelebration() {
+    handleFireworks()
+    setModalIsOpen(true)
+  }
+
   return <div>
     <p style={{fontSize: '1.2em'}}>
       <strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}
       &nbsp;<small>({Number(goal.goal_progress_percent).toLocaleString()}% done{goal.goal_progress_percent >= 100 && <strong onClick={handleFireworks}><em>&nbsp;Completed! 🎉</em></strong>})</small>
+      {goal.goal_progress_percent >= 100 && <Button onClick={triggerCelebration}>Download your certificate</Button>}
     </p>
+    {goal.goal_progress_percent >= 100 && <Modal
+      isOpen={modalIsOpen}
+      onRequestClose={() => setModalIsOpen(false)}
+      contentLabel="Example Modal"
+      style={{content: {
+        width: '700px',
+        maxWidth: '90vw',
+        height: '500px',
+        left: '50%',
+        top: '50%',
+        transform: 'translateX(-50%) translateY(-50%)',
+      }, overlay: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        backdropFilter: 'blur(2px)',
+      }}}
+    >
+      <button onClick={() => setModalIsOpen(false)} style={{
+        backgroundColor: '#eee',
+        border: 'none',
+        borderRadius: '3px',
+        fontWeight: 'bold',
+        position: 'absolute',
+        padding: '10px',
+        cursor: 'pointer',
+      }}>x</button>
+      <div style={{fontSize: '2rem', fontWeight: 'bold', textAlign: 'center'}}>🥳 Congratulations! 🥳</div>
+      <Certificate project={project} />
+    </Modal>}
     {allowEditing && <UpdateProgress refetchGoal={refetchGoal} goal={goal} />}
     {(parseFloat(goal.current_value) > 0) && <ProgressChart goal={goal} />}
   </div>
@@ -243,6 +286,7 @@ EditProgressInner.propTypes = {
   goal: PropTypes.object.isRequired,
   refetchGoal: PropTypes.func.isRequired,
   allowEditing: PropTypes.bool,
+  project: PropTypes.object.isRequired,
 }
 
 export default function Progress({project, allowEditing}) {
@@ -268,7 +312,7 @@ export default function Progress({project, allowEditing}) {
     {loading && <div>Loading&hellip;</div>}
     {(error && !data) && <div>ERROR: {JSON.stringify(error)}</div>}
     {(data?.[0].start_date && data?.[0].end_date) &&
-      <EditProgressInner goal={data[0]} refetchGoal={fetchGoals} allowEditing={allowEditing} />
+      <EditProgressInner project={project} goal={data[0]} refetchGoal={fetchGoals} allowEditing={allowEditing} />
     }
   </>
 }
