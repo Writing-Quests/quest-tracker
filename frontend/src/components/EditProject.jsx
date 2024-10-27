@@ -121,7 +121,7 @@ function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
             </InputGroup>
             {goals?.[0]?.current_value > 0 && <div><small>Start date can&rsquo;t be modified once project has begun.</small></div>}
             <InputGroup>
-              <Input type='date' label='Start date' value={startDate} onChange={e => setStartDate(e.target.value)} {...inputProps} required min='2024-01-01' max={endDateObj?.format('YYYY-MM-DD')} disabled={goals?.[0]?.current_value > 0} />
+              <Input type='date' label='Start date' value={startDate} onChange={e => setStartDate(e.target.value)} {...inputProps} required min='2024-01-01' max={endDateObj?.format('YYYY-MM-DD')} disabled={(goals?.[0]?.current_value > 0) || loading} />
               <Input type='date' label='End date' value={endDate} onChange={e => setEndDate(e.target.value)} {...inputProps} required min={endDateMin} />
             </InputGroup>
             {(duration > 0) && <DurationInfo>That&rsquo;s <strong>{duration} day{duration > 1 && 's'}</strong>

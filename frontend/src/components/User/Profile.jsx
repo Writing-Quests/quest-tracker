@@ -120,7 +120,7 @@ function ProjectsList({username}) {
             <strong>{p.title ? p.title : <em>untitled project</em>}</strong>
             &nbsp;
             {p.goals?.[0] && <>
-              {p.goals[0].goal} {p.goals[0].units} from {dayjs(p.goals[0].start_date).format('MMM D, YYYY')} to {dayjs(p.goals[0].end_date).format('MMM D, YYYY')}
+              {Number(p.goals[0].goal).toLocaleString()} {p.goals[0].units} from {dayjs(p.goals[0].start_date).format('MMM D, YYYY')} to {dayjs(p.goals[0].end_date).format('MMM D, YYYY')}
             </>}
             &nbsp;
             {isMyProfile && <Link to={`/project/${p.code}`}>Edit</Link>}
