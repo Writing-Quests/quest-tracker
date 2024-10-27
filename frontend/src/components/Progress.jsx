@@ -166,7 +166,8 @@ function UpdateProgress({goal, refetchGoal}) {
             return
           }
         }
-        const newVal = progressIndex ? (value - cumulativeProgress[progressIndex - 1]) : value
+        const priorVal = cumulativeProgress[progressIndex - 1] || 0
+        const newVal = progressIndex ? (value - priorVal) : value
         await api.patch(`goals/${goal.code}/progress`, [ { date, action: 'replace', value: newVal } ], {
           headers: { 'Content-Type': 'application/json', }
         })
@@ -225,7 +226,7 @@ UpdateProgress.propTypes = {
 
 function EditProgressInner({project, goal, refetchGoal, allowEditing}) {
   const [fireworksRunning, setFireworksRunning] = useState(false)
-  const [modalIsOpen, setModalIsOpen] = useState(true)
+  const [modalIsOpen, setModalIsOpen] = useState(false)
   const prevProgressPercent = usePrev(goal.goal_progress_percent)
   useEffect(() => {
     if(prevProgressPercent?.length && prevProgressPercent < 100 && goal.goal_progress_percent >= 100) {
