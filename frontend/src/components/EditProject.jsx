@@ -76,7 +76,7 @@ function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
   const inputProps = { disabled: loading }
   let endDateMin = startDateObj ? startDateObj.format('YYYY-MM-DD') : '2024-01-01'
   let lastEntryDate
-  for(let i = goals[0].progress.length; i >= 0; i--) {
+  for(let i = goals?.[0]?.progress.length; i >= 0; i--) {
     if(goals[0].progress[i] > 0) {
       lastEntryDate = dayjs(goals[0].start_date).add(i, 'd').format('YYYY-MM-DD')
       endDateMin = lastEntryDate

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d77d79e9aa7ec958dcca532309a3e2c4",
+    "content-hash": "cbf8916f468a74d44d50f44a1ed17439",
     "packages": [
         {
             "name": "api-platform/core",
@@ -2087,61 +2087,6 @@
                 "source": "https://github.com/php-fig/log/tree/3.0.1"
             },
             "time": "2024-08-21T13:31:24+00:00"
-        },
-        {
-            "name": "sqids/sqids",
-            "version": "0.4.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sqids/sqids-php.git",
-                "reference": "ff3d1214c0c2119ae4b676cc00f3abb22f61da42"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sqids/sqids-php/zipball/ff3d1214c0c2119ae4b676cc00f3abb22f61da42",
-                "reference": "ff3d1214c0c2119ae4b676cc00f3abb22f61da42",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^10.3"
-            },
-            "suggest": {
-                "ext-bcmath": "Required to use BC Math arbitrary precision mathematics (*).",
-                "ext-gmp": "Required to use GNU multiple precision mathematics (*)."
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-main": "1.0-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Sqids\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "Generate short YouTube-looking IDs from numbers",
-            "homepage": "https://sqids.org/php",
-            "keywords": [
-                "decode",
-                "encode",
-                "generate",
-                "hashids",
-                "ids",
-                "sqids"
-            ],
-            "support": {
-                "issues": "https://github.com/sqids/sqids-php/issues",
-                "source": "https://github.com/sqids/sqids-php/tree/0.4.1"
-            },
-            "time": "2023-09-12T22:30:42+00:00"
         },
         {
             "name": "symfony/asset",

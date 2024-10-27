@@ -4,8 +4,6 @@ namespace App\Entity;
 
 use DateTime;
 
-use Sqids\Sqids;
-
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
@@ -19,6 +17,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Context;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Bridge\Doctrine\Types\UuidType;
 
 #[ORM\Entity(repositoryClass: ProjectGoalRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -60,9 +60,11 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 class ProjectGoal
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[ORM\Column(type: UuidType::NAME)]
+    #[ApiProperty(identifier: true)]
+    private ?Uuid $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projectGoals')]
     #[ORM\JoinColumn(nullable: false)]
@@ -94,10 +96,14 @@ class ProjectGoal
     #[ORM\Column(type: Types::SIMPLE_ARRAY)]
     private array $progress = ['0'];
 
-    public function getId(): ?string
+    public function __construct()
     {
-        $sqids = new Sqids(minLength: 8, alphabet: $_ENV['SQIDS_ALPHABET_PROJECT_GOALS']);
-        return $sqids->encode([$this->id]);
+        $this->id = $this->id ?? Uuid::v4();
+    }
+
+    public function getId(): ?Uuid
+    {
+        return $this->id;
     }
 
     public function getProject(): ?Project

@@ -7,15 +7,19 @@ use App\Repository\LoginTokenRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Bridge\Doctrine\Types\UuidType;
 
 #[ORM\Entity(repositoryClass: LoginTokenRepository::class)]
 #[ApiResource]
 class LoginToken
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[ORM\Column(type: UuidType::NAME)]
+    #[ApiProperty(identifier: true)]
+    private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $secret = null;
@@ -36,6 +40,11 @@ class LoginToken
     #[ORM\Column(type: Types::BLOB)]
     private $payload;
 
+    public function __construct()
+    {
+        $this->id = $this->id ?? Uuid::v4();
+    }
+
     private function getTokenHasher () {
       $factory = new PasswordHasherFactory([
         'common' => ['algorithm' => 'bcrypt']
@@ -44,7 +53,7 @@ class LoginToken
       return $factory->getPasswordHasher('common');
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }

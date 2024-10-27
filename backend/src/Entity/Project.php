@@ -2,8 +2,6 @@
 
 namespace App\Entity;
 
-use Sqids\Sqids;
-
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
@@ -15,6 +13,8 @@ use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 
 use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Bridge\Doctrine\Types\UuidType;
 
 use App\Repository\ProjectRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -53,10 +53,11 @@ use Doctrine\ORM\Mapping as ORM;
 class Project
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    #[ApiProperty(writable: false)]
-    private ?int $id = null;
+    #[ORM\GeneratedValue(strategy: "CUSTOM")]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[ORM\Column(type: UuidType::NAME)]
+    #[ApiProperty(identifier: true)]
+    private ?Uuid $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
     #[ORM\JoinColumn(nullable: false)]
@@ -88,12 +89,12 @@ class Project
     public function __construct()
     {
         $this->projectGoals = new ArrayCollection();
+        $this->id = $this->id ?? Uuid::v4();
     }
 
-    public function getId(): ?string
+    public function getId(): ?Uuid
     {
-        $sqids = new Sqids(minLength: 8, alphabet: $_ENV['SQIDS_ALPHABET_PROJECTS']);
-        return $sqids->encode([$this->id]);
+        return $this->id;
     }
 
     public function getUser(): ?User
