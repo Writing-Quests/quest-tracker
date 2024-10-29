@@ -30,7 +30,7 @@ use Doctrine\ORM\Mapping as ORM;
                     fromProperty: 'username',
                     toProperty: 'user',
                     securityObjectName: 'uriUser',
-                    security: "uriUser == user or is_granted('ROLE_ADMIN')", // TODO: Expand this to allow public listing of public projects
+                    security: "uriUser == user or uriUser.isPublic() or is_granted('ROLE_ADMIN')", // TODO: this shows projects if the uriUser is public; in future, should be is project is public
                 )
             ],
             security: "true", // Security is on the Link level for now
