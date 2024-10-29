@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use DateTime;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
@@ -17,17 +18,19 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Context;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Uid\Ulid;
 
 #[ORM\Entity(repositoryClass: ProjectGoalRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [
         new Get(
-            uriTemplate: '/goals/{id}',
+            uriTemplate: '/goals/{code}',
         ),
         new GetCollection(
             uriTemplate: '/projects/{id}/goals',
             uriVariables: [
+                // TODO: This breaks for projects without any goals. The UI currently enforces that every project has to have at least one goal, but this is something to be fixed in the future
                 'id' => new Link(
                     fromClass: Project::class,
                     toProperty: 'project',
@@ -37,11 +40,11 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
             security: "true", // Security is on the Link level
         ),
         new Patch(
-            uriTemplate: '/goals/{id}',
+            uriTemplate: '/goals/{code}',
             security: "is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
         ),
         new Patch(
-            uriTemplate: '/goals/{id}/progress',
+            uriTemplate: '/goals/{code}/progress',
             inputFormats: ['json' => ['application/json']],
             security: "is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
             controller: ProjectGoalProgress::class,
@@ -59,6 +62,7 @@ class ProjectGoal
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[ApiProperty(identifier: false, readable: false)]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'projectGoals')]
@@ -91,7 +95,11 @@ class ProjectGoal
     #[ORM\Column(type: Types::SIMPLE_ARRAY)]
     private array $progress = ['0'];
 
-    public function getId(): ?int
+    #[ORM\Column(type: 'ulid')]
+    #[ApiProperty(identifier: true, writable: false)]
+    private ?Ulid $code = null;
+
+    public function getId(): ?string
     {
         return $this->id;
     }
@@ -249,11 +257,24 @@ class ProjectGoal
         // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
         $this->setCreatedAt(new DateTime());
         $this->setEditedAt(new DateTime());
+        $this->setCode(new Ulid());
     }
 
     #[ORM\PreUpdate]
     public function preUpdate(): void
     {
         $this->setEditedAt(new DateTime());
+    }
+
+    public function getCode(): ?Ulid
+    {
+        return $this->code;
+    }
+
+    public function setCode(Ulid $code): static
+    {
+        $this->code = $code;
+
+        return $this;
     }
 }

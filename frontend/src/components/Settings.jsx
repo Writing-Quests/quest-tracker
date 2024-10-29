@@ -1,13 +1,13 @@
 import { useContext,useState,useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { WarningContainer } from './Containers'
+import { WarningContainer, ContentContainer, ContentBlock, SuccessContainer } from './Containers'
 import styled from 'styled-components'
 import context from '../services/context'
 import Page from './Page'
 import Notices from './Notices'
 import Loading from './Loading'
 import api from '../services/api'
-import Input from './Forms/Input'
+import Input, { SectionOptions, OptionButton } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
 
 const { LoggedInUserContext } = context
@@ -23,43 +23,19 @@ const ErrorContainer = styled.div`
 
 const VerificationContainer = styled.div`
   display: ${(props) => (props.hidden == true && 'none') || 'block'};
-  background-color: #F4F1ED;
+  background-color: #FFF9F4;
   color: #D7722C;
   width: 100%;
   margin: 10px 0;
   border: 1px solid #D7722C;
   border-radius: 3px;
   padding: 5px;
+  padding-bottom: 0;
   font-size: 0.75rem;
-`
-
-const SectionOptions = styled.div`
-  display: ${(props) => (props.hidden == true && 'none') || 'flex'};
-  width: ${(props) => (props.size === 'small' && '40%') || '100%'};
-  background-color: transparent;
-  margin: ${(props) => (props.size === 'small' && '5px 0') || '10px 0'};
-  border: 1px solid #838686;
-  border-radius: 3px;
-  padding: 0;
-`
-
-const OptionButton = styled.button`
-  width: 50%;
-  padding: ${(props) => (props.size === 'small' && '8px 0') || '15px 0'};
-  margin: 0;
-  font-size: ${(props) => (props.size === 'small' && '0.75rem') || '1rem'};
-  background-color: ${(props) => (props.selected === true && '#333') || 'white'};
-  color: ${(props) => (props.selected === true && 'white') || '#333'};
-  border: none;
-  border-radius: 3px;
-  font-weight: ${(props) => (props.selected === true && 'bold') || 'normal'};
-  font-size: 1rem;
-  border-bottom: ${(props) => (props.selected === true && '2px solid black') || 'none'};
-  cursor: pointer;
-  position: relative;
-  transition: all 0.15s;
-  top: 0;
-  text-shadow: ${(props) => (props.selected === true && '-1px 1px 0 black') || 'none'};
+  margin-top: -20px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 99%;
 `
 
 const ToggledSection = styled.div`
@@ -70,8 +46,8 @@ const ToggledSection = styled.div`
 `
 
 const Label = styled.label`
-  background-color: white;
   padding: 15px 5px;
+  padding-bottom: 3px;
   display: block;
   font-size: 0.8rem;
   font-weight: bold;
@@ -207,8 +183,8 @@ export default function Settings () {
     setFormError(null)
     setNotice(null)
   }
-  const [profile,setProfile] = useState('')
-  const [section,setSection] = useState('profile')
+  const [profile, setProfile] = useState()
+  const [section, setSection] = useState('profile')
   const [unverifiedAccount, setUnverifiedAccount] = useState(true);
   const [publicProfile,setPublicProfile] = useState(false)
   const [password1,setPassword1] = useState(null)
@@ -228,7 +204,6 @@ export default function Settings () {
   if(loading || profile.length == 0) {
     return <Page>
       <Notices />
-      <h1>Loading&hellip;</h1>
       <Loading />
     </Page>
   } else if (error !== null) {
@@ -237,45 +212,50 @@ export default function Settings () {
       msg = `No profile found for username: ${user.username}.`
     }
     return <Page>
-      <ErrorContainer>{msg}</ErrorContainer>
+      <ErrorContainer><strong>Error:</strong> {msg}</ErrorContainer>
     </Page>
   } else {
     return <Page>
-      <h1>Settings</h1>
-      {formError !== null && <ErrorContainer>{formError}</ErrorContainer>}
-      {notice && <p>{notice}</p>}
-      <SectionOptions>
-        <OptionButton selected={section === 'profile'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Profile</OptionButton>
-        <OptionButton selected={section === 'account'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Account</OptionButton>
-      </SectionOptions>
-      <form style={{position: 'relative'}} onSubmit={updateProfileInformation}>
-        <ToggledSection selected={(section === 'profile')}>
-          <InputGroup>
-            <Input label='Link' type='text' placeholder='https://www.writingquests.org/' defaultValue={profile.link} onChange={(e)=>{holdProfileChanges(e,'link')}} {...formProps} />
-            <Input type='textarea' rows='7' label='Description' defaultValue={profile.description} onChange={(e)=>{holdProfileChanges(e,'description')}} {...formProps} />
-          </InputGroup>
-          <Label>Privacy</Label>
-          {unverifiedAccount && <VerificationContainer>Your account and projects are private. You can choose to make them public after you verifiy your email address.</VerificationContainer>}
-          <SectionOptions size='small' hidden={unverifiedAccount}>
-              <OptionButton size='small' selected={(publicProfile === true)} value={true} onClick={(e) => {holdProfileChanges(e,'public')}}>Public</OptionButton>
-              <OptionButton size='small' selected={(publicProfile === false)} value={false} onClick={(e) => {holdProfileChanges(e, 'public')}}>Private</OptionButton>
+      <ContentContainer>
+        <ContentBlock>
+          <h1>Settings</h1>
+          {formError !== null && <ErrorContainer>{formError}</ErrorContainer>}
+          {notice && <SuccessContainer>{notice}</SuccessContainer>}
+          <SectionOptions>
+            <OptionButton selected={section === 'profile'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Profile</OptionButton>
+            <OptionButton selected={section === 'account'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Account</OptionButton>
           </SectionOptions>
-          {publicProfile && <WarningContainer><b>Your profile page and projects will be visible to the public.</b> This includes your username, bio, link, goals, progress, and other project information.</WarningContainer>}
-        </ToggledSection>
-        <ToggledSection selected={(section === 'account')}>
-          <InputGroup>
-            <Input label='Username' disabled={true} type='text' value={profile.username} />
-            <Input label='Email Address' type='email' defaultValue={profile.unverified_email ? profile.unverified_email : profile.email} onChange={(e) => {holdProfileChanges(e,'unverifiedEmail')}}{...formProps} />
-          </InputGroup>
-          <VerificationNotice unverified={profile.unverified_email} verified={profile.email} hidden={verificationHidden}/>
-          <InputGroup>
-            <Input label='New Password' type='password' onChange={(e) => {setPassword1(e.target.value)}} {...formProps} />
-            <Input label='Confirm Password' type='password' onChange={(e) => {setPassword2(e.target.value)}} onBlur={checkPassword} {...formProps} />
-          </InputGroup>
-        </ToggledSection>
+          <form style={{position: 'relative'}} onSubmit={updateProfileInformation}>
+            <ToggledSection selected={(section === 'profile')}>
+              <InputGroup>
+                <Input label='Link' type='text' placeholder='https://www.writingquests.org/' defaultValue={profile.link} onChange={(e)=>{holdProfileChanges(e,'link')}} {...formProps} />
+                <Input type='textarea' rows='7' label='Description' defaultValue={profile.description} onChange={(e)=>{holdProfileChanges(e,'description')}} {...formProps} />
+              </InputGroup>
+              <p style={{fontSize: '0.9rem'}}><strong>Change your avatar</strong> on <a href='https://gravatar.com/profile/' target='_blank' rel='noopener notarget'>Gravatar.com</a> with your email address {profile.email}.</p>
+              <Label>Privacy</Label>
+              {unverifiedAccount && <VerificationContainer>Your account and projects are private. You can choose to make them public after you verifiy your email address.</VerificationContainer>}
+              <SectionOptions size='small' hidden={unverifiedAccount}>
+                  <OptionButton size='small' selected={(publicProfile === true)} value={true} onClick={(e) => {holdProfileChanges(e,'public')}}>Public</OptionButton>
+                  <OptionButton size='small' selected={(publicProfile === false)} value={false} onClick={(e) => {holdProfileChanges(e, 'public')}}>Private</OptionButton>
+              </SectionOptions>
+              {publicProfile && <WarningContainer><b>Your profile page and projects will be visible to the public.</b> This includes your username, bio, link, goals, progress, and other project information.</WarningContainer>}
+            </ToggledSection>
+            <ToggledSection selected={(section === 'account')}>
+              <InputGroup>
+                <Input label='Username' disabled={true} type='text' value={profile.username} />
+                <Input label='Email Address' type='email' defaultValue={profile.unverified_email ? profile.unverified_email : profile.email} onChange={(e) => {holdProfileChanges(e,'unverified_email')}}{...formProps} style={{zIndex: '1', position: 'relative'}} />
+              </InputGroup>
+              <VerificationNotice unverified={profile.unverified_email} verified={profile.email} hidden={verificationHidden}/>
+              <InputGroup>
+                <Input label='New Password' type='password' onChange={(e) => {setPassword1(e.target.value)}} {...formProps} />
+                <Input label='Confirm Password' type='password' onChange={(e) => {setPassword2(e.target.value)}} onBlur={checkPassword} {...formProps} />
+              </InputGroup>
+            </ToggledSection>
 
-        <Input type='submit' value='Save Changes' />
-      </form>
+            <Input type='submit' value='Save Changes' />
+          </form>
+        </ContentBlock>
+      </ContentContainer>
     </Page>
   }
 }

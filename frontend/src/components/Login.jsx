@@ -8,7 +8,7 @@ import Input, { Button } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
 import Page from './Page'
 import { getUserTZName } from '../timezones.js'
-import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer } from './Containers'
+import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer, ContentBlock } from './Containers'
 import Notices from './Notices'
 
 const { GetLoggedInUserContext } = Context
@@ -105,10 +105,10 @@ function RegisterForm({onSuccess}) {
     {error && <ErrorContainer>{error.message}</ErrorContainer>}
     <form onSubmit={handleSubmit}>
       <InputGroup>
-        <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} {...formProps} />
+        <Input label='Username' type='text' value={username} onChange={e => setUsername(e.target.value)} pattern="[a-zA-Z0-9_]+" minLength='5' maxLength='100' title='Only letters, numbers, or underscore' {...formProps} />
         <Input label='Email' type='email' value={email} onChange={e => setEmail(e.target.value)} {...formProps} />
-        <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} {...formProps} />
-        <Input label='Confirm Password' type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} {...formProps} />
+        <Input label='Password' type='password' value={password} onChange={e => setPassword(e.target.value)} minLength={8} maxLength={100} {...formProps} />
+        <Input label='Confirm Password' type='password' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} minLength={8} maxLength={100} {...formProps} />
       </InputGroup>
       <Input type='submit' value='Create Account' {...formProps} />
     </form>
@@ -127,7 +127,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
 
-  const formProps = {disabled: loading}
+  const formProps = {isLoading: loading}
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -183,7 +183,7 @@ export default function Login({form: initialForm}) {
 
   return <Page>
     <AnimatedContainer>
-      <CenteredContainer>
+      <ContentBlock maxWidth='500px'>
         <BackLink href='https://www.writingquests.org'>&larr; Writing Quests home</BackLink>
         <Notices />
         <h1 style={{color: 'white', fontWeight: '900', fontSize: '2.5rem'}}>Welcome!</h1>
@@ -212,7 +212,7 @@ export default function Login({form: initialForm}) {
             <Button type='link' onClick={() => handleChangeForm('login')}>&larr; Log in</Button>
           </>
           : <div>Page not found</div>}
-      </CenteredContainer>
+      </ContentBlock>
     </AnimatedContainer>
   </Page>
 }

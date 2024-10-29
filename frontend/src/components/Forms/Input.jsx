@@ -1,6 +1,44 @@
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 
+export const SectionOptions = styled.div`
+  display: ${(props) => (props.hidden == true && 'none') || 'flex'};
+  width: ${(props) => (props.size === 'small' && 'fit-content') || '100%'};
+  background-color: transparent;
+  margin: ${(props) => (props.size === 'small' && '5px 0') || '10px 0'};
+  border: 1px solid #838686;
+  border-radius: 3px;
+  padding: 0;
+`
+
+export const OptionButton = styled.button`
+  padding: ${(props) => (props.size === 'small' && '8px 16px') || '15px 30px'};
+  margin: ${props => props.selected ? '-4px -1px -4px -1px' : '0'};
+  z-index: ${props => props.selected ? '1' : '0'};
+  font-size: ${(props) => (props.size === 'small' && '0.75rem') || '1rem'};
+  background-color: ${(props) => (props.selected === true && '#333') || 'white'};
+  color: ${(props) => (props.selected === true && 'white') || '#333'};
+  border: none;
+  border-radius: 3px;
+  display: inline-block;
+  width: ${props => props.size === 'small' ? 'auto' : '100%'};
+  font-weight: ${(props) => (props.selected === true && 'bold') || 'normal'};
+  font-size: 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.1s, color 0.1s;
+  top: 0;
+  text-shadow: ${(props) => (props.selected === true && '-1px 1px 0 black') || 'none'};
+  flex-grow: ${props => props.size === 'small' ? '0' : '1'};
+  &:last-child {
+    position: relative;
+    right: ${(props) => props.selected ? '-2px' : 0};
+  }
+  &:disabled {
+    text-decoration: line-through;
+  }
+`
+
 const StyledTextInput = styled.input`
   width: 100%;
   font-size: 16px;
@@ -39,6 +77,17 @@ const StyledTextarea = styled.textarea`
   margin-bottom: 2px;
   &:focus {
     outline: none;
+  }
+`
+
+const StyledSelect = styled.select`
+  border: none;
+  background: transparent;
+  display: block;
+  width: 100%;
+  font-size: 16px;
+  &[readonly] {
+    cursor: not-allowed;
   }
 `
 
@@ -201,28 +250,101 @@ SelectInput.propTypes = {
   disabled: PropTypes.bool,
 }
 
-function TextInput({elStyle, label, ...props}) {
-  return <Label style={elStyle} disabled={props.disabled} readOnly={props.readOnly}>
+function SelectInput({elStyle, label, options, ...props}) {
+  const selectOptions = options.map(opt => <option key={opt.value} value={opt.value}>{opt.text}</option>)
+  return <Label style={elStyle} disabled={props.disabled}>
     <span style={{position: 'relative', top: '-4px'}}>{label}</span>
-    <StyledTextInput {...props} />
+    <StyledSelect {...props}>
+      <option value="noneSelected"></option>
+      {selectOptions}
+    </StyledSelect>
+  </Label>
+}
+SelectInput.propTypes = {
+  elStyle: PropTypes.object,
+  label: PropTypes.string,
+  options: PropTypes.object,
+  disabled: PropTypes.bool,
+}
+
+function TextInput({elStyle, label, style, inputStyle, ...props}) {
+  return <Label style={{...elStyle, ...style}} disabled={props.disabled} readOnly={props.readOnly}>
+    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+    <StyledTextInput style={inputStyle} {...props} />
   </Label>
 }
 TextInput.propTypes = {
   elStyle: PropTypes.object,
   label: PropTypes.string,
   disabled: PropTypes.bool,
+  readOnly: PropTypes.bool,
+  style: PropTypes.object,
+  inputStyle: PropTypes.string,
 }
 
 // eslint-disable-next-line no-unused-vars
-function ButtonInput({elStyle, label: _,...props}) {
-  return <CTAButton as="input" style={elStyle} {...props} />
+function ButtonInput({elStyle, label: _, buttonType='normal', type, ...props}) {
+  let value = props.value
+  if(props.isLoading) {
+    value = 'Loading…'
+  }
+  return <Button type={buttonType} inputType={type} as="input" style={elStyle} {...props} value={value} />
 }
 ButtonInput.propTypes = {
   elStyle: PropTypes.object,
   label: PropTypes.string,
+  value: PropTypes.string,
+  isLoading: PropTypes.bool,
+  buttonType: PropTypes.string,
+  type: PropTypes.string,
 }
 
-export default function Input({grouped, firstInGroup, lastInGroup, ...props}) {
+function SelectInput({elStyle, label, style, children, ...props}) {
+  return <Label style={{...elStyle, ...style}} disabled={props.disabled} readOnly={props.readOnly}>
+    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+    <StyledSelect {...props}>
+      {children}
+    </StyledSelect>
+  </Label>
+}
+SelectInput.propTypes = {
+  elStyle: PropTypes.object,
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
+  readOnly: PropTypes.bool,
+  style: PropTypes.object,
+  children: PropTypes.node,
+}
+
+function ButtonSelectInput({elStyle, label, style, disabled, readOnly, options, value, onChange}) {
+  return <Label style={{...elStyle, ...style}} disabled={disabled} readOnly={readOnly}>
+    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+    <SectionOptions size='small' {...elStyle}>
+      {options.map(o =>
+        <OptionButton
+          size='small'
+          key={o.value}
+          selected={value===o.value}
+          data-selected={value===o.value}
+          onClick={e => {e.preventDefault(); onChange(o.value)}}
+          disabled={o.disabled}
+        >{o.label}</OptionButton>
+      )}
+    </SectionOptions>
+  </Label>
+}
+ButtonSelectInput.propTypes = {
+  elStyle: PropTypes.object,
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
+  readOnly: PropTypes.bool,
+  style: PropTypes.object,
+  options: PropTypes.array.isRequired,
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+}
+
+export default function Input({grouped, firstInGroup, lastInGroup, isLoading, disabled, ...props}) {
   const elStyle = {}
   if(grouped) {
     if(firstInGroup) {
@@ -237,10 +359,16 @@ export default function Input({grouped, firstInGroup, lastInGroup, ...props}) {
       elStyle.borderBottom = 'none'
     }
   }
+  const sharedProps = { disabled: disabled || isLoading }
   switch (props.type) {
+    case 'select':
+      return <SelectInput elStyle={elStyle} {...props} {...sharedProps} />
+    case 'button-select':
+      return <ButtonSelectInput elStyle={elStyle} {...props} {...sharedProps} />
     case 'submit':
-      return <ButtonInput elStyle={elStyle} {...props} />
+      return <ButtonInput elStyle={elStyle} isLoading={isLoading} buttonType={props.buttonType || 'cta'} {...props} {...sharedProps} />
     case 'textarea':
+      return <TextareaInput  elStyle={elStyle} {...props} {...sharedProps} />
       return <TextareaInput  elStyle={elStyle} {...props} />
     case 'select':
       return <SelectInput elStyle={elStyle} {...props} />
@@ -248,7 +376,7 @@ export default function Input({grouped, firstInGroup, lastInGroup, ...props}) {
     case 'password':
     case 'email':
     default:
-      return <TextInput elStyle={elStyle} {...props} />
+      return <TextInput elStyle={elStyle} {...props} {...sharedProps} />
   }
 }
 
@@ -258,21 +386,25 @@ Input.propTypes = {
   firstInGroup: PropTypes.bool,
   lastInGroup: PropTypes.bool,
   type: PropTypes.string.isRequired,
+  isLoading: PropTypes.bool,
+  disabled: PropTypes.bool,
+  buttonType: PropTypes.string,
 }
 
-export function Button({type, ...props}) {
+export function Button({type, inputType, ...props}) {
   switch(type) {
     case 'outline':
-      return <OutlineButton {...props} />
+      return <OutlineButton type={inputType} {...props} />
     case 'cta':
-      return <CTAButton {...props} />
+      return <CTAButton type={inputType} {...props} />
     case 'link':
-      return <LinkButton {...props} />
+      return <LinkButton type={inputType} {...props} />
     default:
     case 'normal':
-      return <NormalButton {...props} />
+      return <NormalButton type={inputType} {...props} />
   }
 }
 Button.propTypes = {
   type: PropTypes.string,
+  inputType: PropTypes.string,
 }

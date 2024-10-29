@@ -5,6 +5,7 @@ namespace App\Listener;
 use DateTime;
 
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Uid\Ulid;
 use App\Entity\Project;
 
 class ProjectListener
@@ -21,6 +22,7 @@ class ProjectListener
         // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
         $project->setCreatedAt(new DateTime());
         $project->setEditedAt(new DateTime());
+        $project->setCode(new Ulid());
 
         $project->setUser($this->token_storage->getToken()->getUser());
     }
