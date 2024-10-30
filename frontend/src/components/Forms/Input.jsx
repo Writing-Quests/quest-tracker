@@ -54,18 +54,6 @@ const StyledTextInput = styled.input`
   }
 `
 
-const StyledSelect = styled.select`
-  width: 100%;
-  font-size: 16px;
-  padding: 0;
-  position: relative;
-  background: transparent;
-  border: none;
-  &:focus {
-    outline: none;
-  }
-`
-
 const StyledTextarea = styled.textarea`
   width: 100%;
   font-size: 16px;
@@ -88,6 +76,9 @@ const StyledSelect = styled.select`
   font-size: 16px;
   &[readonly] {
     cursor: not-allowed;
+  }
+  &:focus {
+    outline: none;
   }
 `
 
@@ -233,40 +224,6 @@ TextareaInput.propTypes = {
   disabled: PropTypes.bool,
 }
 
-function SelectInput({elStyle, label, options, ...props}) {
-  const selectOptions = options.map(opt => <option key={opt.value} value={opt.value}>{opt.text}</option>)
-  return <Label style={elStyle} disabled={props.disabled}>
-    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
-    <StyledSelect {...props}>
-      <option value="noneSelected"></option>
-      {selectOptions}
-    </StyledSelect>
-  </Label>
-}
-SelectInput.propTypes = {
-  elStyle: PropTypes.object,
-  label: PropTypes.string,
-  options: PropTypes.object,
-  disabled: PropTypes.bool,
-}
-
-function SelectInput({elStyle, label, options, ...props}) {
-  const selectOptions = options.map(opt => <option key={opt.value} value={opt.value}>{opt.text}</option>)
-  return <Label style={elStyle} disabled={props.disabled}>
-    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
-    <StyledSelect {...props}>
-      <option value="noneSelected"></option>
-      {selectOptions}
-    </StyledSelect>
-  </Label>
-}
-SelectInput.propTypes = {
-  elStyle: PropTypes.object,
-  label: PropTypes.string,
-  options: PropTypes.object,
-  disabled: PropTypes.bool,
-}
-
 function TextInput({elStyle, label, style, inputStyle, ...props}) {
   return <Label style={{...elStyle, ...style}} disabled={props.disabled} readOnly={props.readOnly}>
     <span style={{position: 'relative', top: '-4px'}}>{label}</span>
@@ -369,9 +326,6 @@ export default function Input({grouped, firstInGroup, lastInGroup, isLoading, di
       return <ButtonInput elStyle={elStyle} isLoading={isLoading} buttonType={props.buttonType || 'cta'} {...props} {...sharedProps} />
     case 'textarea':
       return <TextareaInput  elStyle={elStyle} {...props} {...sharedProps} />
-      return <TextareaInput  elStyle={elStyle} {...props} />
-    case 'select':
-      return <SelectInput elStyle={elStyle} {...props} />
     case 'text':
     case 'password':
     case 'email':

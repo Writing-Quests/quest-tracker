@@ -188,7 +188,7 @@ class UserController extends AbstractController
       foreach ($POST as $key=>$value) {
         switch ($key) {
           case 'description':
-            $user->setDescription($value);
+            $user->setDescription(htmlspecialchars($value));
           break;
 
           case 'link':
