@@ -6,7 +6,7 @@ use Exception;
 
 use App\Entity\User;
 use App\Entity\LoginToken;
-use App\State\MailManager;
+use App\Service\Mailer;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,7 +23,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class UserController extends AbstractController
 {
   #[Route('/api/user/$create/', name: 'register_user', methods: ['POST'])]
-  public function create_user (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer, ValidatorInterface $validator): JsonResponse
+  public function create_user (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, Mailer $mailer, ValidatorInterface $validator): JsonResponse
   {
       $resp = [
         'errors' => []
@@ -84,9 +84,8 @@ class UserController extends AbstractController
           $entityManager->persist($newUser);
           $entityManager->flush();
           $created = true;
-          // TODO: set up the SMTP stuff for novelquests
-          $newUserMsg = (new MailManager)->sendEmailVerification($username, $email, $verifyEmailURL, $expiresAt, true);
-          $mailer->send($newUserMsg);
+          $newUserMsg = 
+          
           $resp['sentVerificationEmail'] = true;
         } catch (\Exception $err) {
           array_push($resp['errors'],['id'=> 'phpError', 'text'=>$err->getMessage()]);
@@ -99,7 +98,7 @@ class UserController extends AbstractController
   }
 
   #[Route('/api/password/$request/', name: 'request_reset', methods: ['POST'])]
-  public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse 
+  public function requestReset (Request $request, EntityManagerInterface $entityManager, Mailer $mailer): JsonResponse 
   {
     try {
       $resp = [
@@ -133,8 +132,8 @@ class UserController extends AbstractController
         // TODO: Have this autodetect or grab from consts
         $resetURL = 'http://questy.writingquests.org/resetform?e='.$email.'&t='.$token;
         $entityManager->persist($resetPasswordToken);
-        $resetPasswordMsg = (new MailManager)->createPasswordReset($email, $resetURL);
-        $mailer->send($resetPasswordMsg);
+        $resetPasswordMsg = $mailer->createPasswordReset($email, $resetURL);
+        
         $resp['emailSent'] = true;
       }
     } catch (\Exception $err) {
@@ -147,7 +146,7 @@ class UserController extends AbstractController
   }
 
   #[Route('api/password/$submit', name: 'finish_reset', methods: ['POST'])]
-  public function finishReset (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
+  public function finishReset (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, Mailer $mailer): JsonResponse
   {
     $resp = [
       'errors' => []
@@ -168,8 +167,8 @@ class UserController extends AbstractController
       $entityManager->remove($tokenEntry);
       $entityManager->flush();
       $passwordChanged = true;
-      $confirmMsg = (new MailManager)->notificationPasswordChange($email);
-      $mailer->send($confirmMsg);
+      $confirmMsg = $mailer->notificationPasswordChange($email);
+      
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
       $passwordChanged = false;
@@ -179,7 +178,7 @@ class UserController extends AbstractController
   }
 
   #[Route('api/profile/$edit', name: 'edit_profile', methods: ['POST'])]
-  public function updateUserProfile(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
+  public function updateUserProfile(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, Mailer $mailer): JsonResponse
   {
     try{
       $resp = ['errors'=>[]];
@@ -218,8 +217,8 @@ class UserController extends AbstractController
               // TODO: Have this auto-detect or grab from consts
               $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$email.'&t='.$token;
               $entityManager->persist($verifyEmailToken);
-              $newVerificationMsg = (new MailManager)->changedEmailVerification($POST['username'], $email, $oldEmail, $verifyEmailURL, $expiresAt);
-              $mailer->send($newVerificationMsg);
+              $newVerificationMsg = $mailer->changedEmailVerification($POST['username'], $email, $oldEmail, $verifyEmailURL, $expiresAt);
+              
             } else {
               $resp['revertEmail'] = $user->getUnverifiedEmail();
               throw new \Exception('Email address not changed; ' . $email . ' already in use.');
@@ -247,7 +246,7 @@ class UserController extends AbstractController
   }
 
   #[Route('/api/user/$resend', name: 'resend_verification', methods: ['POST'])]
-  public function resendVerification (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse {
+  public function resendVerification (Request $request, EntityManagerInterface $entityManager, Mailer $mailer): JsonResponse {
     $resp = ['errors'=>[]];
     $verifyEmailURL = null;
     try {
@@ -294,12 +293,11 @@ class UserController extends AbstractController
       $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$unverifiedEmail.'&t='.$token;
       if ($verifiedEmail != $unverifiedEmail) {
         $resp['newEmail'] = true;
-        $verificationMsg = (new MailManager)->changedEmailVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL, $expiresAt);
+        $verificationMsg = $mailer->changedEmailVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL, $expiresAt);
       } else {
         $resp['newEmail'] = false;
-        $verificationMsg = (new MailManager)->sendEmailVerification($username, $unverifiedEmail, $verifyEmailURL, $expiresAt);
       }
-      $mailer->send($verificationMsg);
+      
       $resp['sent'] = true;
     } catch (\Exception $err) {
       $resp['sent'] = false;
@@ -310,7 +308,7 @@ class UserController extends AbstractController
   }
 
   #[Route('api/user/$revert', name: 'revert_email', methods: ['POST'])]
-  public function revertVerifiedEmail(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse
+  public function revertVerifiedEmail(Request $request, EntityManagerInterface $entityManager, Mailer $mailer): JsonResponse
   {
     // TODO: maybe: email user when their email is reverted to the old verified address?
     try{

@@ -22,6 +22,8 @@ use Doctrine\ORM\Mapping as ORM;
   security: "is_granted('ROLE_USER')",
 )]
 
+# TODO: I cannot, to save my life, get the ManyToOne user connection to work with ApiPlatform. Works when the reported_by comes in as a string, though. 
+
 class Report
 {
     #[ORM\Id]
@@ -38,7 +40,7 @@ class Report
     #[ORM\Column(length: 255)]
     #[ApiProperty]
     private ?string $path = null;
-
+    
     #[ORM\Column(length: 255, nullable: true)]
     #[ApiProperty]
     private ?string $reported_by = null;
@@ -50,6 +52,9 @@ class Report
     #[ORM\Column(length: 255, nullable: true)]
     #[ApiProperty]
     private ?string $reason = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $type = null;
 
     public function getId(): ?int
     {
@@ -127,4 +132,16 @@ class Report
 
         return $this;
     }
-}
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+  }

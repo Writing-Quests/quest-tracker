@@ -3,7 +3,6 @@ import { useContext, useState, useEffect, useMemo, createContext } from 'react'
 import PropTypes from 'prop-types'
 import dayjs from 'dayjs'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import Modal from 'react-modal';
 import styled from 'styled-components'
 import context from '../../services/context'
 import Page from '../Page'
@@ -13,6 +12,7 @@ import Notices from '../Notices'
 import Loading from '../Loading'
 import Progress from '../Progress'
 import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer } from '../Containers'
+import Modal from 'react-modal'
 
 const { LoggedInUserContext } = context
 
@@ -34,11 +34,16 @@ const ProfileDataContainer = styled.div`
 
 const ReportLink = styled.div`
   font-size: 0.8rem;
-  color: #838686;
+  color: ${(props) => (props.color || '#838686')};
   line-height: 0.8rem;
   cursor: pointer;
   user-select: none;
+  opacity: 0.8;
+  svg path {
+    fill: ${(props) => (props.color || '#838686')};
+  }
   &:hover {
+    opacity: 1;
     color: #E77425;
     svg {
       line-height: 1rem;
@@ -50,16 +55,7 @@ const ReportLink = styled.div`
   }
 `
 
-const ModalCloseButton = styled.div`
-  float: right;
-  font-size: 2rem;
-  cursor: pointer;
-  &:hover {
-    color: #E77425;
-  }
-`
-
-const reportModal = {
+const modalStyle = {
   content: {
     top: '50%',
     left: '50%',
@@ -79,6 +75,15 @@ const reportModal = {
   }
 }
 
+const ModalCloseButton = styled.div`
+  float: right;
+  font-size: 2rem;
+  cursor: pointer;
+  &:hover {
+    color: #E77425;
+  }
+`
+
 const reportReasons = [{
   'value': 'abuse',
   'text': 'Abusive Material'
@@ -92,7 +97,7 @@ const reportReasons = [{
 
 // TODO: create ReportProjectContent
 
-function ReportUserContent ({username, reporting_user}) {
+function ReportProfileContent ({username, reportedBy, reportType}) {
   const [submitWait,setSubmitWait] = useState(false)
   const [reportError, setReportError] = useState(null)
   const [characterCountLabel, setCharacterCountLabel] = useState("Additional Context (0/500 characters)")
@@ -116,8 +121,9 @@ function ReportUserContent ({username, reporting_user}) {
     try {
       const reportInfo = {
         'path': `/profile/${username}`,
-        'reportedBy': reporting_user,
-        'type': reportReason,
+        'reportedBy': reportedBy.username,
+        'type': reportType,
+        'reason': reportReason,
         'details': reportContext
       }
       let resp = await api.post('report/new',reportInfo)
@@ -125,6 +131,7 @@ function ReportUserContent ({username, reporting_user}) {
     } catch (err) {
       console.error(err);
       setReportError(JSON.stringify(err))
+      
     } finally {
       setSubmitWait(false)
     }
@@ -134,15 +141,16 @@ function ReportUserContent ({username, reporting_user}) {
     <>
     <h2>Report User Account</h2>
     <p>This form submits a review request to the Writing Quests team. Please do not submit multiple reports for the same profile/issue. If you have any questions, please reach out to <a href="mailto:reports@writingquests.org">reports@writingquests.org</a>.</p>
-    {reportError && <ErrorContainer>{reportError}</ErrorContainer>}
+    {reportError && <ErrorContainer>An error occurred while submitting this report. Please try again, or email our team directly.</ErrorContainer>}
+    {submitWait && <div>Please wait...</div>}
     <form onSubmit={handleSubmit}>
-      <Input type="text" label="Type of Report" value="User Profile" disabled={true} />
+      <Input type="text" label="Type of Report" value={reportType} disabled={true} />
       <Input type="select" label="Reason for Report" onChange={(e) => { setReportReason(e.target.value)}}{...formProps}>
         <option value="null"></option>
         {reportReasons.map(({value,text}) => { return <option key={value} value={value}>{text}</option>})}
       </Input>
       <Input type="textarea" label={characterCountLabel} onChange={setWordcount} {...formProps} />
-      <Input type="submit" value="Submit Report" disabled={reportError != null || submitWait}/>
+      <Input type="submit" value={submitWait ? "Submitting..." : (reportError !== null ? 'Resubmit Report': 'Submit Report')} disabled={submitWait} />
     </form>
     </>
   )
@@ -154,6 +162,7 @@ function ProjectsList({username}) {
   const [error, setError] = useState()
   const [data, setData] = useState()
   const {isMyProfile} = useContext(ProfileContext)
+  const loggedIn = (useContext(LoggedInUserContext) !== null)
   useEffect(() => {
     if(!username) {
       setError("Need username to load projects")
@@ -215,6 +224,7 @@ function ProjectsList({username}) {
           </h2>
           {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.code}`}>Edit</Link></small></>}
           {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
+          {(!isMyProfile && loggedIn) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink color="#ffffff"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
       </>)}
@@ -263,7 +273,7 @@ export default function Profile() {
   const [profile, setProfile] = useState()
   const [loading, setLoading] = useState(true)
   const [profileNotAvailable, setProfileNotAvailable] = useState(false)
-  const [modalOpen,setModalOpen] = useState(false)
+  const [isModalOpen,setIsModalOpen] = useState(false)
   const user = useContext(LoggedInUserContext)
   const { username } = useParams()
   const navigate = useNavigate()
@@ -284,9 +294,15 @@ export default function Profile() {
       return
     }
   }, [profile])
-  Modal.setAppElement('#root');
-  function openModal () { setModalOpen(true) }
-  function closeModal () { setModalOpen(false) }
+  Modal.setAppElement('#root')
+  function setUpModal (type,path) {
+    console.log(type)
+    console.log(path)
+    setIsModalOpen(true)
+  }
+  function closeModal () { 
+    setIsModalOpen(false)
+  }
   useEffect(() => {
     let lookupUser
     if(username?.length) { lookupUser = username }
@@ -329,13 +345,7 @@ export default function Profile() {
               {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
             </div>
             {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
-            {(!isMyProfile && user) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => {openModal()}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
-            {(!isMyProfile && user) && 
-            <Modal isOpen={modalOpen} onRequestClose={closeModal} style={reportModal} contentLabel="Report User Account">
-              <ModalCloseButton onClick={closeModal}>&#215;</ModalCloseButton>
-              <ReportUserContent username={username} reporting_user={user.username} />
-            </Modal>
-           }
+            {(!isMyProfile && user) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => {setUpModal('User Profile',`/profile/${username}`)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
           </ProfileDataContainer>
         </ContentBlock>
         {(Boolean(profile.username) && Boolean(profile.projects?.length)) ?
@@ -351,6 +361,12 @@ export default function Profile() {
           )
         }
       </ContentContainer>
+      {(!isMyProfile && user) && 
+           <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={modalStyle} contentLabel="Report User Profile Content">
+           <ModalCloseButton onClick={closeModal}>&#215;</ModalCloseButton>
+            <ReportProfileContent username={username} reportedBy={user} reportType="User Profile" />
+          </Modal>
+      }
     </Page>
   </ProfileContext.Provider>
 }

@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\LoginToken;
 use App\Entity\User;
-use App\State\MailManager;
+use App\Service\Mailer;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mailer\MailerInterface;
 use Doctrine\ORM\EntityManagerInterface;
