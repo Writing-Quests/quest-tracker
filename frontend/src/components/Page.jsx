@@ -97,7 +97,31 @@ function UserControls() {
   </UserControlsLinks>
 }
 
+function StaticPages ({header=true}) {
+  const user = useContext(LoggedInUserContext)
+  function Spacer () {
+    return <>&nbsp;&bull;&nbsp;</>
+  }
+  function ProfileLink ({username}) {
+    const profileURL = `/profile/${username}`
+    return (<Link to={profileURL}>Your Profile</Link>)
+  }
+  ProfileLink.propTypes = {
+    username: PropTypes.string
+  }
+  return <UserControlsLinks>
+    <Link to='/about'>{header ? 'About Questy' : 'About the Questy Tracker'}</Link><Spacer />
+    <Link to='/privacy'>{ header ? 'Privacy' : 'Privacy Policy'}</Link>
+    {!header && <><Spacer /><Link to='/terms'>Terms of Use</Link></>}
+    {user ? <><Spacer /><ProfileLink username={user.username} /></> : <><Spacer /><Link to ='/login'>Login</Link></>}
+  </UserControlsLinks>
+}
+StaticPages.propTypes = {
+  header: PropTypes.bool
+}
+
 export default function Page({children}) {
+  // TODO: we should have some sort of "Hey, we use cookies" alert in the nearish future.
   const user = useContext(LoggedInUserContext)
   return <>
       <LogoContainer>
@@ -105,7 +129,7 @@ export default function Page({children}) {
         <div style={{position: 'relative'}}>
           <SiteTitle to='/'>Writing Quests</SiteTitle>
           <Beta href='/feedback' target='_blank' rel='noopener noreferrer'>Beta!</Beta>
-          {user && <UserControls />}
+          {user ? <UserControls /> : <StaticPages />}
         </div>
       </LogoContainer>
       {children}
@@ -115,6 +139,9 @@ export default function Page({children}) {
         fontSize: '0.7rem',
         marginBottom: '30px'
       }}>
+        <div style={{marginBottom: 10, fontWeight: 'bold', fontSize: '0.9rem'}}>
+          <StaticPages header={false} />
+        </div>
         <div style={{marginBottom: 10, fontWeight: 'bold', fontSize: '0.9rem'}}>
           Help us improve: <a href='/feedback' target='_blank' rel='noopener' style={{fontWeight: 'inherit'}}>share your feedback!</a>
         </div>
