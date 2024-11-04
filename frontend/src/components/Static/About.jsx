@@ -16,7 +16,12 @@ export function AboutQuesty () {
       <p>Writing Quests is an open-source framework that allows groups to create their own challenges to fit their needs and individual needs. The Questy tracker is managed by <a href="https://www.writingquests.org/get-involved/contributors/" target="_blank" title="Writing Quests contributors list, on writingquests.org">the Writing Quests team</a>.</p>
 
       <p>Have an idea or running into an issue? Please reach out via our <a href='/feedback' target='_blank' rel='noopener' style={{fontWeight: 'inherit'}}>feedback form!</a>.</p>
-      <p></p>
+      <h2>Get Involved</h2>
+      <ul>
+        <li><a href="https://writingquests.substack.com/" title="Writing Quests on Substack" target="_blank">Writing Quests Newsletter (Substack)</a></li>
+        <li><a href="https://facebook.com/groups/writingquests" target="_blank" title="Writing Quests on Facebook">The Writing Quests Facebook Group</a></li>
+        <li><a href="https://www.instagram.com/writingquests" target="_blank" title="Writing Quests on Instagram">Instagram: @writingquests</a></li>
+      </ul>
       </ContentBlock>
       </ContentContainer>
     </Page>

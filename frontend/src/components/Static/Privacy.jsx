@@ -35,7 +35,7 @@ export function PrivacyPolicy () {
              </ul>
             </li>
           <li>We do not use generative AI tools, nor is your project or personal data used to &quot;teach&quot; any such AI tools.</li>
-          <li>Your data as stored in our site database is visible to Writing Quests volunteers with access to our website.</li>
+          <li>Your data is stored in our site database is visible to Writing Quests volunteers with access to our website.</li>
           <li>We cannot account for the content or behavior of third-party links shared on another user&apos;s profile.
             <ul>
               <li>Accounts may be removed from the service for violating the <Link to='/terms'>Terms of Use &amp; Community Values</Link>. This includes content that is used to spam, harrass, or trick other participants.</li>
