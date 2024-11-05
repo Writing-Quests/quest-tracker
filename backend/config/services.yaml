@@ -10,10 +10,6 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-    mailer_service:
-      class: App\Services\Mailer
-      autowire: true
-      arguments: ["@mailer"]
     project_listener:
       class: App\Listener\ProjectListener
       public: false
@@ -28,7 +24,7 @@ services:
       autoconfigure: true
       tags:
         - {name: doctrine.orm.entity_listener}
-      arguments: ["@security.token_storage"]
+      arguments: ["@security.token_storage", "@mailer"]
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

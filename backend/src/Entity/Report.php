@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Post;
 use App\Repository\ReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Ulid;
 
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
 #[ORM\EntityListeners(["App\Listener\ReportListener"])]
@@ -40,12 +41,8 @@ class Report
     #[ORM\Column(length: 255)]
     #[ApiProperty]
     private ?string $path = null;
-    
-    #[ORM\Column(length: 255, nullable: true)]
-    #[ApiProperty]
-    private ?string $reported_by = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 500, nullable: true)]
     #[ApiProperty]
     private ?string $details = null;
 
@@ -55,6 +52,12 @@ class Report
 
     #[ORM\Column(length: 255)]
     private ?string $type = null;
+
+    #[ORM\Column(type: 'ulid')]
+    private ?Ulid $code = null;
+
+    #[ORM\ManyToOne(inversedBy: 'reports')]
+    private ?User $reported_by_user = null;
 
     public function getId(): ?int
     {
@@ -97,18 +100,6 @@ class Report
         return $this;
     }
 
-    public function getReportedBy(): ?string
-    {
-        return $this->reported_by;
-    }
-
-    public function setReportedBy(?string $reported_by): static
-    {
-        $this->reported_by = $reported_by;
-
-        return $this;
-    }
-
     public function getDetails(): ?string
     {
         return $this->details;
@@ -116,7 +107,7 @@ class Report
 
     public function setDetails(?string $details): static
     {
-        $this->details = $details;
+        $this->details = htmlentities($details);
 
         return $this;
     }
@@ -128,7 +119,7 @@ class Report
 
     public function setReason(?string $reason): static
     {
-        $this->reason = $reason;
+        $this->reason = htmlentities($reason);
 
         return $this;
     }
@@ -143,5 +134,42 @@ class Report
         $this->type = $type;
 
         return $this;
+    }
+
+    public function getCode(): ?Ulid
+    {
+        return $this->code;
+    }
+
+    public function setCode(Ulid $code): static
+    {
+        $this->code = $code;
+
+        return $this;
+    }
+
+    public function getReportedByUser(): ?User
+    {
+        return $this->reported_by_user;
+    }
+
+    public function setReportedByUser(?User $reported_by_user): static
+    {
+        $this->reported_by_user = $reported_by_user;
+
+        return $this;
+    }
+
+    public function makeEmailObject() {
+      return [
+        'reported_by'=>$this->getReportedByUser()->getUsername(),
+        'reported_by_email'=>$this->getReportedByUser()->getEmail(),
+        'created_at'=>$this->getCreatedAt()->format('F jS, Y \a\t g:i a \(e\)'),
+        'type'=>$this->getType(),
+        'path'=>$this->getPath(),
+        'reason'=>$this->getReason(),
+        'details'=>$this->getDetails(),
+        'review_link'=>'http://frontend.quest-tracker.lndo.site/admin/report/' . $this->getCode()
+      ];
     }
   }

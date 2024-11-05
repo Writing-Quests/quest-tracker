@@ -119,10 +119,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user', fetch: 'EAGER')]
     private Collection $projects;
 
+    /**
+     * @var Collection<int, Report>
+     */
+    #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'reported_by_user')]
+    private Collection $reports;
+
     public function __construct()
     {
         $this->loginTokens = new ArrayCollection();
         $this->projects = new ArrayCollection();
+        $this->reports = new ArrayCollection();
     }
 
     #[ApiResource (writable: false)]
@@ -401,5 +408,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function preUpdate(): void
     {
         $this->edited_at = new \DateTime();
+    }
+
+    /**
+     * @return Collection<int, Report>
+     */
+    public function getReports(): Collection
+    {
+        return $this->reports;
+    }
+
+    public function addReport(Report $report): static
+    {
+        if (!$this->reports->contains($report)) {
+            $this->reports->add($report);
+            $report->setReportedByUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReport(Report $report): static
+    {
+        if ($this->reports->removeElement($report)) {
+            // set the owning side to null (unless already changed)
+            if ($report->getReportedByUser() === $this) {
+                $report->setReportedByUser(null);
+            }
+        }
+
+        return $this;
     }
 }

@@ -11,7 +11,7 @@ import Input, { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
 import Progress from '../Progress'
-import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer } from '../Containers'
+import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer, SuccessContainer } from '../Containers'
 import Modal from 'react-modal'
 
 const { LoggedInUserContext } = context
@@ -97,12 +97,13 @@ const reportReasons = [{
 
 // TODO: create ReportProjectContent
 
-function ReportProfileContent ({username, reportedBy, reportType}) {
+function ReportProfileContent ({username, reportType}) {
   const [submitWait,setSubmitWait] = useState(false)
   const [reportError, setReportError] = useState(null)
   const [characterCountLabel, setCharacterCountLabel] = useState("Additional Context (0/500 characters)")
   const [reportReason,setReportReason] = useState('')
   const [reportContext,setReportContext] = useState(null)
+  const [reportSubmitted,setReportSubmitted] = useState(false)
   function setWordcount (e) {
     setReportContext(e.target.value);
     if (reportContext !== null) {
@@ -121,13 +122,14 @@ function ReportProfileContent ({username, reportedBy, reportType}) {
     try {
       const reportInfo = {
         'path': `/profile/${username}`,
-        'reportedBy': reportedBy.username,
         'type': reportType,
         'reason': reportReason,
         'details': reportContext
       }
       let resp = await api.post('report/new',reportInfo)
-      console.log(resp)
+      if (resp.statusText == 'Created') {
+        setReportSubmitted(true)
+      }
     } catch (err) {
       console.error(err);
       setReportError(JSON.stringify(err))
@@ -136,13 +138,14 @@ function ReportProfileContent ({username, reportedBy, reportType}) {
       setSubmitWait(false)
     }
   }
-  const formProps = {disabled: submitWait}
+  const formProps = {disabled: submitWait || reportSubmitted}
   return (
     <>
     <h2>Report User Account</h2>
     <p>This form submits a review request to the Writing Quests team. Please do not submit multiple reports for the same profile/issue. If you have any questions, please reach out to <a href="mailto:reports@writingquests.org">reports@writingquests.org</a>.</p>
     {reportError && <ErrorContainer>An error occurred while submitting this report. Please try again, or email our team directly.</ErrorContainer>}
     {submitWait && <div>Please wait...</div>}
+    {reportSubmitted && <SuccessContainer>Your report has been submitted and the administrators have been alerted. You should receive a copy in your email for your records. We&apos;ll review the report at our earliest convenience. Thank you for letting us know.</SuccessContainer>}
     <form onSubmit={handleSubmit}>
       <Input type="text" label="Type of Report" value={reportType} disabled={true} />
       <Input type="select" label="Reason for Report" onChange={(e) => { setReportReason(e.target.value)}}{...formProps}>
@@ -150,7 +153,7 @@ function ReportProfileContent ({username, reportedBy, reportType}) {
         {reportReasons.map(({value,text}) => { return <option key={value} value={value}>{text}</option>})}
       </Input>
       <Input type="textarea" label={characterCountLabel} onChange={setWordcount} {...formProps} />
-      <Input type="submit" value={submitWait ? "Submitting..." : (reportError !== null ? 'Resubmit Report': 'Submit Report')} disabled={submitWait} />
+      <Input type="submit" value={submitWait ? "Submitting..." : (reportError !== null ? 'Resubmit Report': 'Submit Report')} disabled={submitWait || reportSubmitted} />
     </form>
     </>
   )
@@ -224,7 +227,9 @@ function ProjectsList({username}) {
           </h2>
           {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.code}`}>Edit</Link></small></>}
           {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
-          {(!isMyProfile && loggedIn) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink color="#ffffff"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
+          {/* this isn't working/ready yet.
+
+          {(!isMyProfile && loggedIn) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink color="#ffffff"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>} */}
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
       </>)}
@@ -295,9 +300,8 @@ export default function Profile() {
     }
   }, [profile])
   Modal.setAppElement('#root')
-  function setUpModal (type,path) {
-    console.log(type)
-    console.log(path)
+  function setUpModal () {
+    // todo: i think this'll set which type of report to open
     setIsModalOpen(true)
   }
   function closeModal () { 
@@ -364,7 +368,7 @@ export default function Profile() {
       {(!isMyProfile && user) && 
            <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={modalStyle} contentLabel="Report User Profile Content">
            <ModalCloseButton onClick={closeModal}>&#215;</ModalCloseButton>
-            <ReportProfileContent username={username} reportedBy={user} reportType="User Profile" />
+            <ReportProfileContent username={username} reportType="User Profile" />
           </Modal>
       }
     </Page>
