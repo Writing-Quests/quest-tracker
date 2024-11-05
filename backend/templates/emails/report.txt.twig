@@ -1,0 +1,19 @@
+{% extends "base.email.txt" %}
+{% block content %}
+{% if admin %}
+  A new safety report thas been submitted by {{report.reported_by}} at {{ report.created_at}}.
+{% else %}
+  This is a confirmation receipt of your safefy & abuse report to Questy maintainers. No further action is needed at this time. This email is only for your records.
+{% endif %}
+
+Report Type: {{ report.type }}
+Path to Content: {{ report.path }}
+Reason: {{ report.reason }}
+Addition Details {{ report.details }}
+
+{% if admin %}
+To review this report, go to {{ report.review_link }}.
+{% else %}
+  Thank you for letting us know. Someone at Writing Quests will review the report as soon as possible. We appreciate your dedication to our community's safety and well-being.
+{% endif %}
+{% endblock %}

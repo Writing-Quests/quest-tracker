@@ -1,0 +1,7 @@
+{
+    "require": {
+        "symfony/uid": "^7.1",
+        "symfony/twig-bundle": "^7.1",
+        "symfony/mime": "^7.1"
+    }
+}

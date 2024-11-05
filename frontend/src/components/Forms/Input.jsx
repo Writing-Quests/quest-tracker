@@ -77,6 +77,9 @@ const StyledSelect = styled.select`
   &[readonly] {
     cursor: not-allowed;
   }
+  &:focus {
+    outline: none;
+  }
 `
 
 const Label = styled.label`

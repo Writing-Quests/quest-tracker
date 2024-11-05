@@ -4,16 +4,11 @@ namespace App\Controller;
 
 use App\Entity\LoginToken;
 use App\Entity\User;
-use App\State\MailManager;
-use Symfony\Component\Mime\Email;
-use Symfony\Component\Mailer\MailerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\Validator\Constraints as Assert;
 
 class VerificationController extends AbstractController
 {

@@ -1,0 +1,19 @@
+{% extends "base.email.html" %}
+{% block content %}
+{% if admin %}
+  <p>A new safety report has been submitted by {{report.reported_by}} at {{ report.created_at}}.</p>
+{% else %}
+  <p>This is a confirmation receipt of your safefy & abuse report to Questy maintainers. No further action is needed at this time. This email is only for your records.</p>
+{% endif %}
+<ul>
+  <li>Report Type: {{ report.type }}</li>
+  <li>Path to Content: {{ report.path }}</li>
+  <li>Reason: {{ report.reason }}</li>
+  <li>Addition Details {{ report.details }}</li>
+</ul>
+{% if admin %}
+  <p>To review this report, go to <a href="{{report.review_link}}">{{ report.review_link }}</a></p>
+{% else %}
+  <p>Thank you for letting us know. Someone at Writing Quests will review the report as soon as possible. We appreciate your dedication to our community's safety and well-being.</p>
+{% endif %}
+{% endblock content %}

@@ -7,11 +7,12 @@ import styled from 'styled-components'
 import context from '../../services/context'
 import Page from '../Page'
 import api from '../../services/api'
-import { Button } from '../Forms/Input'
+import Input, { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
 import Progress from '../Progress'
-import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer } from '../Containers'
+import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer, SuccessContainer } from '../Containers'
+import Modal from 'react-modal'
 
 const { LoggedInUserContext } = context
 
@@ -33,16 +34,138 @@ const ProfileDataContainer = styled.div`
 
 const ReportLink = styled.div`
   font-size: 0.8rem;
-  color: #838686;
-  line-height: 1rem;
+  color: ${(props) => (props.color || '#838686')};
+  line-height: 0.8rem;
   cursor: pointer;
+  user-select: none;
+  opacity: 0.8;
+  svg path {
+    fill: ${(props) => (props.color || '#838686')};
+  }
+  &:hover {
+    opacity: 1;
+    color: #E77425;
+    svg {
+      line-height: 1rem;
+      height: 1rem;
+      path {
+        fill: #E77425;
+      }
+    }
+  }
 `
+
+const modalStyle = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: 'white',
+    maxHeight: '90%',
+    maxWidth: '90%',
+    padding: '15px',
+    marginTop: '6px',
+    border: '2px solid rgba(0,0,0,0.5)',
+    borderRadius: '3px',
+    fontSize: '1rem',
+    transition: 'all 0.15s'
+  }
+}
+
+const ModalCloseButton = styled.div`
+  float: right;
+  font-size: 2rem;
+  cursor: pointer;
+  &:hover {
+    color: #E77425;
+  }
+`
+
+const reportReasons = [{
+  'value': 'abuse',
+  'text': 'Abusive Material'
+},{
+  'value':'spam',
+  'text': 'Spam Content'
+},{
+  'value':'other',
+  'text': 'Other'
+}]
+
+// TODO: create ReportProjectContent
+
+function ReportProfileContent ({username, reportType}) {
+  const [submitWait,setSubmitWait] = useState(false)
+  const [reportError, setReportError] = useState(null)
+  const [characterCountLabel, setCharacterCountLabel] = useState("Additional Context (0/500 characters)")
+  const [reportReason,setReportReason] = useState('')
+  const [reportContext,setReportContext] = useState(null)
+  const [reportSubmitted,setReportSubmitted] = useState(false)
+  function setWordcount (e) {
+    setReportContext(e.target.value);
+    if (reportContext !== null) {
+      setCharacterCountLabel(`Additional Context (${reportContext.length}/500 characters)`)
+      if (reportContext.length > 500) {
+        setReportError('Additional context field limited to 500 characters.')
+      } else if (reportError !== null) {
+        setReportError(null)
+      }
+    }
+  }
+  async function handleSubmit (e) {
+    setSubmitWait(true)
+    setReportError(null)
+    e && e.preventDefault()
+    try {
+      const reportInfo = {
+        'path': `/profile/${username}`,
+        'type': reportType,
+        'reason': reportReason,
+        'details': reportContext
+      }
+      let resp = await api.post('report/new',reportInfo)
+      if (resp.statusText == 'Created') {
+        setReportSubmitted(true)
+      }
+    } catch (err) {
+      console.error(err);
+      setReportError(JSON.stringify(err))
+      
+    } finally {
+      setSubmitWait(false)
+    }
+  }
+  const formProps = {disabled: submitWait || reportSubmitted}
+  return (
+    <>
+    <h2>Report User Account</h2>
+    <p>This form submits a review request to the Writing Quests team. Please do not submit multiple reports for the same profile/issue. If you have any questions, please reach out to <a href="mailto:reports@writingquests.org">reports@writingquests.org</a>.</p>
+    {reportError && <ErrorContainer>An error occurred while submitting this report. Please try again, or email our team directly.</ErrorContainer>}
+    {submitWait && <div>Please wait...</div>}
+    {reportSubmitted && <SuccessContainer>Your report has been submitted and the administrators have been alerted. You should receive a copy in your email for your records. We&apos;ll review the report at our earliest convenience. Thank you for letting us know.</SuccessContainer>}
+    <form onSubmit={handleSubmit}>
+      <Input type="text" label="Type of Report" value={reportType} disabled={true} />
+      <Input type="select" label="Reason for Report" onChange={(e) => { setReportReason(e.target.value)}}{...formProps}>
+        <option value="null"></option>
+        {reportReasons.map(({value,text}) => { return <option key={value} value={value}>{text}</option>})}
+      </Input>
+      <Input type="textarea" label={characterCountLabel} onChange={setWordcount} {...formProps} />
+      <Input type="submit" value={submitWait ? "Submitting..." : (reportError !== null ? 'Resubmit Report': 'Submit Report')} disabled={submitWait || reportSubmitted} />
+    </form>
+    </>
+  )
+}
+
 function ProjectsList({username}) {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
   const [data, setData] = useState()
   const {isMyProfile} = useContext(ProfileContext)
+  const loggedIn = (useContext(LoggedInUserContext) !== null)
   useEffect(() => {
     if(!username) {
       setError("Need username to load projects")
@@ -104,6 +227,9 @@ function ProjectsList({username}) {
           </h2>
           {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.code}`}>Edit</Link></small></>}
           {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
+          {/* this isn't working/ready yet.
+
+          {(!isMyProfile && loggedIn) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink color="#ffffff"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>} */}
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
       </>)}
@@ -150,8 +276,9 @@ ProjectsList.propTypes = {
 
 export default function Profile() {
   const [profile, setProfile] = useState()
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [profileNotAvailable, setProfileNotAvailable] = useState(false)
+  const [isModalOpen,setIsModalOpen] = useState(false)
   const user = useContext(LoggedInUserContext)
   const { username } = useParams()
   const navigate = useNavigate()
@@ -172,6 +299,14 @@ export default function Profile() {
       return
     }
   }, [profile])
+  Modal.setAppElement('#root')
+  function setUpModal () {
+    // todo: i think this'll set which type of report to open
+    setIsModalOpen(true)
+  }
+  function closeModal () { 
+    setIsModalOpen(false)
+  }
   useEffect(() => {
     let lookupUser
     if(username?.length) { lookupUser = username }
@@ -191,7 +326,7 @@ export default function Profile() {
       }
     })()
   }, [user, username])
-  if(loading || (!profileNotAvailable && !profile)) {
+  if(loading) {
     return <Page>
       <Notices />
       <Loading />
@@ -214,7 +349,7 @@ export default function Profile() {
               {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
             </div>
             {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
-            {(!isMyProfile && user) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { console.log(username)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path fill="#838686" d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
+            {(!isMyProfile && user) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => {setUpModal('User Profile',`/profile/${username}`)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
           </ProfileDataContainer>
         </ContentBlock>
         {(Boolean(profile.username) && Boolean(profile.projects?.length)) ?
@@ -230,66 +365,12 @@ export default function Profile() {
           )
         }
       </ContentContainer>
+      {(!isMyProfile && user) && 
+           <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={modalStyle} contentLabel="Report User Profile Content">
+           <ModalCloseButton onClick={closeModal}>&#215;</ModalCloseButton>
+            <ReportProfileContent username={username} reportType="User Profile" />
+          </Modal>
+      }
     </Page>
   </ProfileContext.Provider>
-}
-
-// note: this returns a list of public profiles; not in use as of this comment
-// eslint-disable-next-line no-unused-vars
-function AllPublicProfiles () {
-  const ProfileCard = styled.div`
-    clear: both;
-    width: 75%;
-    margin: 10px auto;
-    border: 1px solid #AF402D;
-    border-radius: 3px;
-    padding: 10px;
-    cursor: pointer;
-    position: relative;
-  `
-
-  const CardAvatar = styled.img`
-    width: 75px;
-    float: left;
-    margin: 0 10px 10px 0;
-  `
-
-  const EstablishedAt = styled.span`
-    position: abolute;
-    font-size: 0.8rem;
-    font-style: italic;
-    bottom: 10px;
-    right: 10px;
-  `
-  function ProfileInner(props) {
-    const profile = props.profile
-    return <>
-      { profile.gravatar && <CardAvatar src={profile.gravatar} />}
-      <h1 style={{margin: '0'}}>{profile.username}</h1>
-      { profile.description && <p>{profile.description}</p> }
-      <EstablishedAt>Since {profile.memberSince.substring(0,4)}</EstablishedAt>
-    </>
-  }
-  async function getAllProfiles () {
-    const resp = await api.get('profile/$public')
-    setLoading(false)
-    const cardsMap = resp.data.map((card) => <ProfileCard key={card.username} onClick={() => {window.location.href = `/profile/${card.username}`}}><ProfileInner profile={card} /></ProfileCard>)
-    setCards(cardsMap)
-  }
-  const [loading,setLoading] = useState(true)
-  const [cards,setCards] = useState('')
-  useEffect(() => {
-    getAllProfiles()
-  },[])
-  if (loading) {
-    return <Page>
-      <Notices />
-      <h1>Loading&hellip;</h1>
-      <Loading />
-    </Page>
-  } else {
-    return <Page>
-      {cards}
-    </Page>
-  }
 }
