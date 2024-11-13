@@ -97,17 +97,17 @@ const reportReasons = [{
 
 // TODO: create ReportProjectContent
 
-function ReportProfileContent ({username, reportType}) {
+function ReportProfileContent ({reportType, reportPath}) {
   const [submitWait,setSubmitWait] = useState(false)
   const [reportError, setReportError] = useState(null)
-  const [characterCountLabel, setCharacterCountLabel] = useState("Additional Context (0/500 characters)")
+  const [characterCountLabel, setCharacterCountLabel] = useState(0)
   const [reportReason,setReportReason] = useState('')
   const [reportContext,setReportContext] = useState(null)
   const [reportSubmitted,setReportSubmitted] = useState(false)
   function setWordcount (e) {
     setReportContext(e.target.value);
     if (reportContext !== null) {
-      setCharacterCountLabel(`Additional Context (${reportContext.length}/500 characters)`)
+      setCharacterCountLabel(reportContext.length)
       if (reportContext.length > 500) {
         setReportError('Additional context field limited to 500 characters.')
       } else if (reportError !== null) {
@@ -121,7 +121,7 @@ function ReportProfileContent ({username, reportType}) {
     e && e.preventDefault()
     try {
       const reportInfo = {
-        'path': `/profile/${username}`,
+        'path': reportPath,
         'type': reportType,
         'reason': reportReason,
         'details': reportContext
@@ -152,14 +152,14 @@ function ReportProfileContent ({username, reportType}) {
         <option value="null"></option>
         {reportReasons.map(({value,text}) => { return <option key={value} value={value}>{text}</option>})}
       </Input>
-      <Input type="textarea" label={characterCountLabel} onChange={setWordcount} {...formProps} />
+      <Input type="textarea" label={`Additional Context (${characterCountLabel}/500 characters)`} onKeyDown={setWordcount} {...formProps} />
       <Input type="submit" value={submitWait ? "Submitting..." : (reportError !== null ? 'Resubmit Report': 'Submit Report')} disabled={submitWait || reportSubmitted} />
     </form>
     </>
   )
 }
 
-function ProjectsList({username}) {
+function ProjectsList({username,setUpModal}) {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
@@ -227,9 +227,7 @@ function ProjectsList({username}) {
           </h2>
           {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.code}`}>Edit</Link></small></>}
           {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
-          {/* this isn't working/ready yet.
-
-          {(!isMyProfile && loggedIn) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink color="#ffffff"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>} */}
+          {(!isMyProfile && loggedIn) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { setUpModal('project',p.code)}} color="#ffffff"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
       </>)}
@@ -272,13 +270,17 @@ function ProjectsList({username}) {
 }
 ProjectsList.propTypes = {
   username: PropTypes.string.isRequired,
+  setUpModal: PropTypes.func
 }
 
 export default function Profile() {
   const [profile, setProfile] = useState()
   const [loading, setLoading] = useState(true)
   const [profileNotAvailable, setProfileNotAvailable] = useState(false)
-  const [isModalOpen,setIsModalOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalTitle, setModalTitle] = useState('Report User Profile Content')
+  const [modalForm, setModalForm] = useState('user')
+  const [reportPath, setReportPath] = useState('')
   const user = useContext(LoggedInUserContext)
   const { username } = useParams()
   const navigate = useNavigate()
@@ -299,14 +301,6 @@ export default function Profile() {
       return
     }
   }, [profile])
-  Modal.setAppElement('#root')
-  function setUpModal () {
-    // todo: i think this'll set which type of report to open
-    setIsModalOpen(true)
-  }
-  function closeModal () { 
-    setIsModalOpen(false)
-  }
   useEffect(() => {
     let lookupUser
     if(username?.length) { lookupUser = username }
@@ -336,6 +330,26 @@ export default function Profile() {
       <ErrorContainer>Profile not found.</ErrorContainer>
     </Page>
   }
+  Modal.setAppElement('#root')
+  function closeModal () { 
+    setIsModalOpen(false)
+  }
+  function setUpModal (form,projectCode=null) {
+    switch (form) {
+      case 'user':
+        setModalTitle('Report User Profile Content')
+        setModalForm('User Profile')
+        setReportPath(`/profile/${profile?.username}`)
+      break;
+
+      case 'project':
+        setModalTitle('Report User Project Content')
+        setModalForm('Project Content')
+        setReportPath(`/project/${projectCode}`)
+      break;
+    }
+    setIsModalOpen(true)
+  }
   const isMyProfile = user && (profile?.username === user?.username)
   return <ProfileContext.Provider value={{isMyProfile}}>
     <Page>
@@ -349,11 +363,11 @@ export default function Profile() {
               {url && <a href={url.href} target="_blank" rel="noopener noreferrer nofollow">{url.hostname}</a>}
             </div>
             {profile.description && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', padding: '0'}}>{profile.description}</div>}
-            {(!isMyProfile && user) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => {setUpModal('User Profile',`/profile/${username}`)}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
+            {(!isMyProfile && user) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => {setUpModal('user')}}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
           </ProfileDataContainer>
         </ContentBlock>
         {(Boolean(profile.username) && Boolean(profile.projects?.length)) ?
-          <ProjectsList username={profile.username} />
+          <ProjectsList username={profile.username} setUpModal={setUpModal} />
           :
           (isMyProfile ?
             <>
@@ -366,10 +380,10 @@ export default function Profile() {
         }
       </ContentContainer>
       {(!isMyProfile && user) && 
-           <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={modalStyle} contentLabel="Report User Profile Content">
-           <ModalCloseButton onClick={closeModal}>&#215;</ModalCloseButton>
-            <ReportProfileContent username={username} reportType="User Profile" />
-          </Modal>
+        <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={modalStyle} contentLabel={modalTitle}>
+          <ModalCloseButton onClick={closeModal}>&#215;</ModalCloseButton>
+          <ReportProfileContent reportPath={reportPath} reportType={modalForm} />
+        </Modal>
       }
     </Page>
   </ProfileContext.Provider>
