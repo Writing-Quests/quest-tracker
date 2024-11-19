@@ -413,6 +413,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Report>
      */
+    #[Ignore]
+    // TODO: this should have some level of security so that the user or an admin can see it, but it's not just given out with the API 
     public function getReports(): Collection
     {
         return $this->reports;
@@ -438,5 +440,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $this;
+    }
+
+    public function makeSnapshot () {
+      // returns a version of the user data that's compatible with the JSON field in MySQL
+      return [
+        'username'=>$this->getUsername(),
+        'email'=>$this->getEmail(),
+        'createdAt'=>$this->getCreatedAt(),
+        'editedAt'=>$this->getEditedAt(),
+        'profile_link'=>$this->getLink(),
+        'gravatar'=>$this->getGravatarUrl(),
+        'description'=>$this->getDescription()
+      ];
     }
 }

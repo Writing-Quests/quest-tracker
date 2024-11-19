@@ -7,9 +7,8 @@
 {% endif %}
 <ul>
   <li>Report Type: {{ report.type }}</li>
-  <li>Path to Content: {{ report.path }}</li>
   <li>Reason: {{ report.reason }}</li>
-  <li>Addition Details {{ report.details }}</li>
+  <li>Addition Details {{ report.details|escape }}</li>
 </ul>
 {% if admin %}
   <p>To review this report, go to <a href="{{report.review_link}}">{{ report.review_link }}</a></p>

@@ -12,7 +12,9 @@ import Notices from '../Notices'
 import Loading from '../Loading'
 import Progress from '../Progress'
 import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer, SuccessContainer } from '../Containers'
+import { ModalStyle, ModalCloseButton } from '../Modal'
 import Modal from 'react-modal'
+import {CountdownBar} from '../Forms/Countdown'
 
 const { LoggedInUserContext } = context
 
@@ -55,35 +57,6 @@ const ReportLink = styled.div`
   }
 `
 
-const modalStyle = {
-  content: {
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    marginRight: '-50%',
-    transform: 'translate(-50%, -50%)',
-    backgroundColor: 'white',
-    maxHeight: '90%',
-    maxWidth: '90%',
-    padding: '15px',
-    marginTop: '6px',
-    border: '2px solid rgba(0,0,0,0.5)',
-    borderRadius: '3px',
-    fontSize: '1rem',
-    transition: 'all 0.15s'
-  }
-}
-
-const ModalCloseButton = styled.div`
-  float: right;
-  font-size: 2rem;
-  cursor: pointer;
-  &:hover {
-    color: #E77425;
-  }
-`
-
 const reportReasons = [{
   'value': 'abuse',
   'text': 'Abusive Material'
@@ -95,9 +68,7 @@ const reportReasons = [{
   'text': 'Other'
 }]
 
-// TODO: create ReportProjectContent
-
-function ReportProfileContent ({reportType, reportPath}) {
+function ReportProfileContent ({reportType, reportedIdentifier, closeModal, modalTitle}) {
   const [submitWait,setSubmitWait] = useState(false)
   const [reportError, setReportError] = useState(null)
   const [characterCountLabel, setCharacterCountLabel] = useState(0)
@@ -105,11 +76,11 @@ function ReportProfileContent ({reportType, reportPath}) {
   const [reportContext,setReportContext] = useState(null)
   const [reportSubmitted,setReportSubmitted] = useState(false)
   function setWordcount (e) {
-    setReportContext(e.target.value);
-    if (reportContext !== null) {
-      setCharacterCountLabel(reportContext.length)
-      if (reportContext.length > 500) {
-        setReportError('Additional context field limited to 500 characters.')
+    let count = e.target.value.length;
+    if (count > 0) {
+      setCharacterCountLabel(count)
+      if (count > 1000) {
+        setReportError('Additional context field limited to 1000 characters.')
       } else if (reportError !== null) {
         setReportError(null)
       }
@@ -121,7 +92,7 @@ function ReportProfileContent ({reportType, reportPath}) {
     e && e.preventDefault()
     try {
       const reportInfo = {
-        'path': reportPath,
+        'reported_identifier': reportedIdentifier,
         'type': reportType,
         'reason': reportReason,
         'details': reportContext
@@ -141,18 +112,18 @@ function ReportProfileContent ({reportType, reportPath}) {
   const formProps = {disabled: submitWait || reportSubmitted}
   return (
     <>
-    <h2>Report User Account</h2>
+    <h2>{modalTitle}</h2>
     <p>This form submits a review request to the Writing Quests team. Please do not submit multiple reports for the same profile/issue. If you have any questions, please reach out to <a href="mailto:reports@writingquests.org">reports@writingquests.org</a>.</p>
     {reportError && <ErrorContainer>An error occurred while submitting this report. Please try again, or email our team directly.</ErrorContainer>}
     {submitWait && <div>Please wait...</div>}
-    {reportSubmitted && <SuccessContainer>Your report has been submitted and the administrators have been alerted. You should receive a copy in your email for your records. We&apos;ll review the report at our earliest convenience. Thank you for letting us know.</SuccessContainer>}
+    {reportSubmitted && <SuccessContainer><p>Your report has been submitted and the administrators have been alerted. You should receive a copy in your email for your records. We&apos;ll review the report at our earliest convenience. Thank you for letting us know.</p><p>You can close this window; it will close automatically in five seconds.</p><CountdownBar totalTime={5} closeModal={closeModal} colorScheme="success" /></SuccessContainer>}
     <form onSubmit={handleSubmit}>
       <Input type="text" label="Type of Report" value={reportType} disabled={true} />
       <Input type="select" label="Reason for Report" onChange={(e) => { setReportReason(e.target.value)}}{...formProps}>
         <option value="null"></option>
         {reportReasons.map(({value,text}) => { return <option key={value} value={value}>{text}</option>})}
       </Input>
-      <Input type="textarea" label={`Additional Context (${characterCountLabel}/500 characters)`} onKeyDown={setWordcount} {...formProps} />
+      <Input type="textarea" label={`Additional Context (${characterCountLabel}/1000 characters)`} onKeyDown={setWordcount} onChange={(e) => {setReportContext(e.target.value)}} {...formProps} />
       <Input type="submit" value={submitWait ? "Submitting..." : (reportError !== null ? 'Resubmit Report': 'Submit Report')} disabled={submitWait || reportSubmitted} />
     </form>
     </>
@@ -280,7 +251,7 @@ export default function Profile() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalTitle, setModalTitle] = useState('Report User Profile Content')
   const [modalForm, setModalForm] = useState('user')
-  const [reportPath, setReportPath] = useState('')
+  const [reportedIdentifier, setReportedIdentifier] = useState('')
   const user = useContext(LoggedInUserContext)
   const { username } = useParams()
   const navigate = useNavigate()
@@ -330,7 +301,7 @@ export default function Profile() {
       <ErrorContainer>Profile not found.</ErrorContainer>
     </Page>
   }
-  Modal.setAppElement('#root')
+  
   function closeModal () { 
     setIsModalOpen(false)
   }
@@ -338,14 +309,14 @@ export default function Profile() {
     switch (form) {
       case 'user':
         setModalTitle('Report User Profile Content')
-        setModalForm('User Profile')
-        setReportPath(`/profile/${profile?.username}`)
+        setModalForm('Profile')
+        setReportedIdentifier(profile?.username)
       break;
 
       case 'project':
         setModalTitle('Report User Project Content')
-        setModalForm('Project Content')
-        setReportPath(`/project/${projectCode}`)
+        setModalForm('Project')
+        setReportedIdentifier(projectCode)
       break;
     }
     setIsModalOpen(true)
@@ -380,9 +351,9 @@ export default function Profile() {
         }
       </ContentContainer>
       {(!isMyProfile && user) && 
-        <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={modalStyle} contentLabel={modalTitle}>
+        <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={ModalStyle} contentLabel={modalTitle}>
           <ModalCloseButton onClick={closeModal}>&#215;</ModalCloseButton>
-          <ReportProfileContent reportPath={reportPath} reportType={modalForm} />
+          <ReportProfileContent reportedIdentifier={reportedIdentifier} reportType={modalForm} closeModal={closeModal} title={modalTitle}/>
         </Modal>
       }
     </Page>
