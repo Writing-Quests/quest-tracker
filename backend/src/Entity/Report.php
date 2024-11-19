@@ -195,7 +195,7 @@ class Report
         'reported_identifier'=>$this->getReportedIdentifier(),
         'reason'=>$this->getReason(),
         'details'=>$this->getDetails(),
-        'review_link'=>'http://frontend.quest-tracker.lndo.site/admin/report/' . $this->getCode()
+        'review_link'=>'https://questy.writingquests.org/admin/report/' . $this->getCode()
       ];
     }
 
