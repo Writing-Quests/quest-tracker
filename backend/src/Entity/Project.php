@@ -25,7 +25,10 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\EntityListeners(["App\Listener\ProjectListener"])]
 #[ApiResource(
     operations: [
-        new Get(),
+        new Get(
+          uriTemplate: '/project/{code}',
+          security: "is_granted('ROLE_ADMIN') or object.getUser() == user or object.getUser().isPublic()",
+        ),
         new GetCollection(
             uriTemplate: '/users/{id}/projects',
             uriVariables: [
@@ -147,7 +150,12 @@ class Project
 
     public function getDetails(): array
     {
-        return $this->details;
+        // this was giving the reporting snapshot issues when it came back null, idk why
+        if ($this->details == null) {
+          return [];
+        } else {
+          return $this->details;
+        }
     }
 
     public function setDetails(array $details): static
@@ -219,5 +227,17 @@ class Project
         $this->code = $code;
 
         return $this;
+    }
+
+    public function makeSnapshot () {
+      // returns a version of the entity data that's compatible with the JSON field in MySQL
+      return [
+        'username'=>$this->getUser()->getUsername(),
+        'email'=>$this->getUser()->getEmail(),
+        'createdAt'=>$this->getCreatedAt(),
+        'lastUpdate'=>$this->getEditedAt(),
+        'title'=>$this->getTitle(),
+        'details'=>$this->getDetails()
+      ];
     }
 }

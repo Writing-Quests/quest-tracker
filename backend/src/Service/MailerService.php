@@ -92,4 +92,15 @@ class MailerService {
       ->context(['report'=>$report_details,'admin'=>false]);
     return $msg;
   }
+
+  public function logEmail ($data) {
+    $msg = (new TemplatedEmail())
+      ->from(new Address($this->from_addr, $this->from_name))
+      ->to('ashleymhill86@gmail.com')
+      ->subject('Data Dump')
+      ->htmlTemplate('emails/generic.html.twig')
+      ->textTemplate('emails/generic.txt.twig')
+      ->context(['data'=>var_dump($data)]);
+    return $msg;
+  }
 }

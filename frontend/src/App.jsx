@@ -16,6 +16,8 @@ import { ErrorContainer } from './components/Containers'
 import { PrivacyPolicy } from './components/Static/Privacy'
 import { TermsOfUse } from './components/Static/Terms'
 import { AboutQuesty } from './components/Static/About'
+import { ReviewReport } from './components/Admin/Report'
+import Modal from 'react-modal'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
 
@@ -24,7 +26,7 @@ export function App() {
   const [error, setError] = useState(null)
   const [loggedIn, setLoggedIn] = useState(null)
   const [data, setData] = useState(null)
-
+  Modal.setAppElement('#root')
   useEffect(() => { getLoggedInUser() }, [])
 
   let title = ''
@@ -71,6 +73,7 @@ export function App() {
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/admin/report/:code" element={<ReviewReport />} />
             <Route path="*" element={<Navigate to='/' replace />} />
           </Routes>
         </BrowserRouter>

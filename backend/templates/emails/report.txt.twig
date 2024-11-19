@@ -7,9 +7,8 @@
 {% endif %}
 
 Report Type: {{ report.type }}
-Path to Content: {{ report.path }}
 Reason: {{ report.reason }}
-Addition Details {{ report.details }}
+Addition Details {{ report.details|escape }}
 
 {% if admin %}
 To review this report, go to {{ report.review_link }}.

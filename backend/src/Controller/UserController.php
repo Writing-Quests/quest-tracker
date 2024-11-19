@@ -7,6 +7,7 @@ use Exception;
 use App\Entity\User;
 use App\Entity\LoginToken;
 use App\Service\MailerService;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -185,6 +186,7 @@ class UserController extends AbstractController
       $resp = ['errors'=>[]];
       $POST = $request->getPayload()->all();
       $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
+      $user->setEditedAt(new DateTimeImmutable());
       foreach ($POST as $key=>$value) {
         switch ($key) {
           case 'description':

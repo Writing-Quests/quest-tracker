@@ -6,7 +6,13 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Link;
+use ApiPlatform\Metadata\QueryParameter;
+
 use App\Repository\ReportRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Ulid;
@@ -15,21 +21,27 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\EntityListeners(["App\Listener\ReportListener"])]
 #[ApiResource(
   operations: [
-      new Get(),
+      new Get(
+        uriTemplate: '/report/{code}',
+        security: "is_granted('ROLE_ADMIN')",
+      ),
       new Post(
         uriTemplate: '/report/new'
       ),
+      new Patch(
+        uriTemplate: '/report/{code}',
+        security: "is_granted('ROLE_ADMIN')",
+     )
   ],
   security: "is_granted('ROLE_USER')",
 )]
-
-# TODO: I cannot, to save my life, get the ManyToOne user connection to work with ApiPlatform. Works when the reported_by comes in as a string, though. 
 
 class Report
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[ApiProperty(identifier: false, readable: false)]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -40,9 +52,9 @@ class Report
 
     #[ORM\Column(length: 255)]
     #[ApiProperty]
-    private ?string $path = null;
+    private ?string $reported_identifier = null;
 
-    #[ORM\Column(length: 500, nullable: true)]
+    #[ORM\Column(length: 1000, nullable: true)]
     #[ApiProperty]
     private ?string $details = null;
 
@@ -53,11 +65,25 @@ class Report
     #[ORM\Column(length: 255)]
     private ?string $type = null;
 
+    #[ApiProperty(identifier: true, writable: false)]
     #[ORM\Column(type: 'ulid')]
     private ?Ulid $code = null;
 
     #[ORM\ManyToOne(inversedBy: 'reports')]
     private ?User $reported_by_user = null;
+
+
+    #[ORM\Column(length: 1000, nullable: true)]
+    private ?string $reviewAction = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $reviewComplete = null;
+
+    #[ORM\ManyToOne]
+    private ?User $reviewedByUser = null;
+
+    #[ORM\Column]
+    private array $snapshot = [];
 
     public function getId(): ?int
     {
@@ -88,14 +114,14 @@ class Report
         return $this;
     }
 
-    public function getPath(): ?string
+    public function getReportedIdentifier(): ?string
     {
-        return $this->path;
+        return $this->reported_identifier;
     }
 
-    public function setPath(string $path): static
+    public function setReportedIdentifier(string $reported_identifier): static
     {
-        $this->path = $path;
+        $this->reported_identifier = $reported_identifier;
 
         return $this;
     }
@@ -166,10 +192,58 @@ class Report
         'reported_by_email'=>$this->getReportedByUser()->getEmail(),
         'created_at'=>$this->getCreatedAt()->format('F jS, Y \a\t g:i a \(e\)'),
         'type'=>$this->getType(),
-        'path'=>$this->getPath(),
+        'reported_identifier'=>$this->getReportedIdentifier(),
         'reason'=>$this->getReason(),
         'details'=>$this->getDetails(),
         'review_link'=>'http://frontend.quest-tracker.lndo.site/admin/report/' . $this->getCode()
       ];
+    }
+
+    public function getReviewAction(): ?string
+    {
+        return $this->reviewAction;
+    }
+
+    public function setReviewAction(?string $reviewAction): static
+    {
+        $this->reviewAction = $reviewAction;
+
+        return $this;
+    }
+
+    public function isReviewed(): ?bool
+    {
+        return $this->reviewComplete;
+    }
+
+    public function setReviewed(?bool $reviewComplete): static
+    {
+        $this->reviewComplete = $reviewComplete;
+
+        return $this;
+    }
+
+    public function getReviewedByUser(): ?User
+    {
+        return $this->reviewedByUser;
+    }
+
+    public function setReviewedByUser(?User $reviewedByUser): static
+    {
+        $this->reviewedByUser = $reviewedByUser;
+
+        return $this;
+    }
+
+    public function getSnapshot(): array
+    {
+        return $this->snapshot;
+    }
+
+    public function setSnapshot(array $snapshot): static
+    {
+        $this->snapshot = $snapshot;
+
+        return $this;
     }
   }
