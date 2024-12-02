@@ -1,6 +1,16 @@
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 
+export const StandaloneLabel = styled.label`
+  padding: 15px 5px;
+  padding-bottom: 3px;
+  display: block;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.01rem;
+  color: #333;
+`
+
 export const SectionOptions = styled.div`
   display: ${(props) => (props.hidden == true && 'none') || 'flex'};
   width: ${(props) => (props.size === 'small' && 'fit-content') || '100%'};
@@ -9,6 +19,9 @@ export const SectionOptions = styled.div`
   border: 1px solid #838686;
   border-radius: 3px;
   padding: 0;
+  &[disabled] {
+    border: 1px solid red;
+  }
 `
 
 export const OptionButton = styled.button`
@@ -76,6 +89,9 @@ const StyledSelect = styled.select`
   font-size: 16px;
   &[readonly] {
     cursor: not-allowed;
+  }
+  &:focus {
+    outline: none;
   }
 `
 

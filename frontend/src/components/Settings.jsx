@@ -7,7 +7,7 @@ import Page from './Page'
 import Notices from './Notices'
 import Loading from './Loading'
 import api from '../services/api'
-import Input, { SectionOptions, OptionButton } from './Forms/Input'
+import Input, { SectionOptions, OptionButton, StandaloneLabel } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
 
 const { LoggedInUserContext } = context
@@ -45,16 +45,6 @@ const ToggledSection = styled.div`
   margin-bottom: 1rem;
 `
 
-const Label = styled.label`
-  padding: 15px 5px;
-  padding-bottom: 3px;
-  display: block;
-  font-size: 0.8rem;
-  font-weight: bold;
-  letter-spacing: 0.01rem;
-  color: #333;
-`
-
 const NotALink = styled.span`
   color: #D7722C;
   font-weight: bold;
@@ -81,14 +71,12 @@ export default function Settings () {
   }
   function holdProfileChanges (e,key,value=e.target.value) {
     e && e.preventDefault()
-    console.log(value)
     if (key === 'public') {
       profile['public'] = value === 'true'
       setPublicProfile(profile['public'])
     } else {
       profile[key] = value
     }
-    console.log('publicProfile',publicProfile)
   }
   function checkPassword() {
     setPasswordMatch(password1 === password2)
@@ -124,6 +112,8 @@ export default function Settings () {
       if (profile.unverified_email && profile.email !== profile.unverified_email) {
         profile.emailChange = true
       }
+      // TOOD: fold this into APIPlatform at some point in the future
+      // This will include complications on pre-update, i think: https://github.com/doctrine/orm/issues/9346
       const resp = await api.post('profile/$edit',{...profile})
       if (resp.data.errors?.length) {
         setFormError(resp.data.errors[0].text)
@@ -232,7 +222,7 @@ export default function Settings () {
                 <Input type='textarea' rows='7' label='Description' defaultValue={profile.description} onChange={(e)=>{holdProfileChanges(e,'description')}} {...formProps} />
               </InputGroup>
               <p style={{fontSize: '0.9rem'}}><strong>Change your avatar</strong> on <a href='https://gravatar.com/profile/' target='_blank' rel='noopener notarget'>Gravatar.com</a> with your email address {profile.email}.</p>
-              <Label>Privacy</Label>
+              <StandaloneLabel>Privacy</StandaloneLabel>
               {unverifiedAccount && <VerificationContainer>Your account and projects are private. You can choose to make them public after you verifiy your email address.</VerificationContainer>}
               <SectionOptions size='small' hidden={unverifiedAccount}>
                   <OptionButton size='small' selected={(publicProfile === true)} value={true} onClick={(e) => {holdProfileChanges(e,'public')}}>Public</OptionButton>

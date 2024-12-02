@@ -119,10 +119,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user', fetch: 'EAGER')]
     private Collection $projects;
 
+    /**
+     * @var Collection<int, Report>
+     */
+    #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'reported_by_user')]
+    private Collection $reports;
+
     public function __construct()
     {
         $this->loginTokens = new ArrayCollection();
         $this->projects = new ArrayCollection();
+        $this->reports = new ArrayCollection();
     }
 
     #[ApiResource (writable: false)]
@@ -401,5 +408,50 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function preUpdate(): void
     {
         $this->edited_at = new \DateTime();
+    }
+
+    /**
+     * @return Collection<int, Report>
+     */
+    #[Ignore]
+    // TODO: this should have some level of security so that the user or an admin can see it, but it's not just given out with the API 
+    public function getReports(): Collection
+    {
+        return $this->reports;
+    }
+
+    public function addReport(Report $report): static
+    {
+        if (!$this->reports->contains($report)) {
+            $this->reports->add($report);
+            $report->setReportedByUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReport(Report $report): static
+    {
+        if ($this->reports->removeElement($report)) {
+            // set the owning side to null (unless already changed)
+            if ($report->getReportedByUser() === $this) {
+                $report->setReportedByUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function makeSnapshot () {
+      // returns a version of the user data that's compatible with the JSON field in MySQL
+      return [
+        'username'=>$this->getUsername(),
+        'email'=>$this->getEmail(),
+        'createdAt'=>$this->getCreatedAt(),
+        'editedAt'=>$this->getEditedAt(),
+        'profile_link'=>$this->getLink(),
+        'gravatar'=>$this->getGravatarUrl(),
+        'description'=>$this->getDescription()
+      ];
     }
 }

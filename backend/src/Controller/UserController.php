@@ -6,7 +6,8 @@ use Exception;
 
 use App\Entity\User;
 use App\Entity\LoginToken;
-use App\State\MailManager;
+use App\Service\MailerService;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -85,7 +86,7 @@ class UserController extends AbstractController
           $entityManager->flush();
           $created = true;
           // TODO: set up the SMTP stuff for novelquests
-          $newUserMsg = (new MailManager)->sendEmailVerification($username, $email, $verifyEmailURL, $expiresAt, true);
+          $newUserMsg = (new MailerService)->sendEmailVerification($username, $email, $verifyEmailURL, $expiresAt, true);
           $mailer->send($newUserMsg);
           $resp['sentVerificationEmail'] = true;
         } catch (\Exception $err) {
@@ -133,7 +134,7 @@ class UserController extends AbstractController
         // TODO: Have this autodetect or grab from consts
         $resetURL = 'http://questy.writingquests.org/resetform?e='.$email.'&t='.$token;
         $entityManager->persist($resetPasswordToken);
-        $resetPasswordMsg = (new MailManager)->createPasswordReset($email, $resetURL);
+        $resetPasswordMsg = (new MailerService)->createPasswordReset($email, $resetURL);
         $mailer->send($resetPasswordMsg);
         $resp['emailSent'] = true;
       }
@@ -168,7 +169,7 @@ class UserController extends AbstractController
       $entityManager->remove($tokenEntry);
       $entityManager->flush();
       $passwordChanged = true;
-      $confirmMsg = (new MailManager)->notificationPasswordChange($email);
+      $confirmMsg = (new MailerService)->notificationPasswordChange($email);
       $mailer->send($confirmMsg);
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
@@ -185,6 +186,7 @@ class UserController extends AbstractController
       $resp = ['errors'=>[]];
       $POST = $request->getPayload()->all();
       $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
+      $user->setEditedAt(new DateTimeImmutable());
       foreach ($POST as $key=>$value) {
         switch ($key) {
           case 'description':
@@ -218,7 +220,7 @@ class UserController extends AbstractController
               // TODO: Have this auto-detect or grab from consts
               $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$email.'&t='.$token;
               $entityManager->persist($verifyEmailToken);
-              $newVerificationMsg = (new MailManager)->changedEmailVerification($POST['username'], $email, $oldEmail, $verifyEmailURL, $expiresAt);
+              $newVerificationMsg = (new MailerService)->changedEmailVerification($POST['username'], $email, $oldEmail, $verifyEmailURL, $expiresAt);
               $mailer->send($newVerificationMsg);
             } else {
               $resp['revertEmail'] = $user->getUnverifiedEmail();
@@ -294,10 +296,10 @@ class UserController extends AbstractController
       $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$unverifiedEmail.'&t='.$token;
       if ($verifiedEmail != $unverifiedEmail) {
         $resp['newEmail'] = true;
-        $verificationMsg = (new MailManager)->changedEmailVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL, $expiresAt);
+        $verificationMsg = (new MailerService)->changedEmailVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL, $expiresAt);
       } else {
         $resp['newEmail'] = false;
-        $verificationMsg = (new MailManager)->sendEmailVerification($username, $unverifiedEmail, $verifyEmailURL, $expiresAt);
+        $verificationMsg = (new MailerService)->sendEmailVerification($username, $unverifiedEmail, $verifyEmailURL, $expiresAt);
       }
       $mailer->send($verificationMsg);
       $resp['sent'] = true;
