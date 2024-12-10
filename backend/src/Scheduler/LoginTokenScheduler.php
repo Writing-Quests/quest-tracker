@@ -1,4 +1,4 @@
 <?php
-Namespace App\Scheduler;
+namespace App\Scheduler;
 
 ?>
