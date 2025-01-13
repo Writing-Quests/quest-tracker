@@ -85,8 +85,7 @@ class UserController extends AbstractController
           $entityManager->persist($newUser);
           $entityManager->flush();
           $created = true;
-          // TODO: set up the SMTP stuff for novelquests
-          $newUserMsg = (new MailerService)->sendEmailVerification($username, $email, $verifyEmailURL, $expiresAt, true);
+          $newUserMsg = (new MailerService)->sendEmailVerification($newUser, $email, $verifyEmailURL, $expiresAt, true);
           $mailer->send($newUserMsg);
           $resp['sentVerificationEmail'] = true;
         } catch (\Exception $err) {
@@ -99,7 +98,7 @@ class UserController extends AbstractController
       return $this->json($resp);
   }
 
-  #[Route('/api/password/$request/', name: 'request_reset', methods: ['POST'])]
+  #[Route('/api/password/$reset/', name: 'request_reset', methods: ['POST'])]
   public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse 
   {
     try {
@@ -134,7 +133,7 @@ class UserController extends AbstractController
         // TODO: Have this autodetect or grab from consts
         $resetURL = 'http://questy.writingquests.org/resetform?e='.$email.'&t='.$token;
         $entityManager->persist($resetPasswordToken);
-        $resetPasswordMsg = (new MailerService)->createPasswordReset($email, $resetURL);
+        $resetPasswordMsg = (new MailerService)->createPasswordReset($user, $email, $resetURL);
         $mailer->send($resetPasswordMsg);
         $resp['emailSent'] = true;
       }
@@ -259,6 +258,7 @@ class UserController extends AbstractController
       $resp['userInfo'] = ['vEmail'=>$verifiedEmail, 'uEmail'=>$unverifiedEmail, 'username'=>$username];
       $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload' => $unverifiedEmail, 'type' => 'verify-email']);
       $currentTime = new \DateTimeImmutable();
+      $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$username]);
       $resp['time'] = $currentTime;
       if (!$tokenEntry) { // there is no existing verification token; create a new one
         $resp['tokenStatus'] = 'null';
@@ -266,7 +266,7 @@ class UserController extends AbstractController
         $expiresAt = new \DateTimeImmutable('now +24 hours');
         $tokenEntry = new LoginToken;
         ($tokenEntry)
-          ->setUser($entityManager->getRepository(User::class)->findOneBy(['username'=>$username]))
+          ->setUser($user)
           ->setSecret($token)
           ->setCreatedAt($currentTime)
           ->setExpiresAt($expiresAt)
@@ -279,7 +279,7 @@ class UserController extends AbstractController
         $token = bin2hex(random_bytes(32));
         $expiresAt = new \DateTimeImmutable('now +24 hours');
         ($tokenEntry)
-          ->setUser($entityManager->getRepository(User::class)->findOneBy(['username'=>$username]))
+          ->setUser($user)
           ->setSecret($token)
           ->setCreatedAt($currentTime)
           ->setExpiresAt($expiresAt)
@@ -296,13 +296,18 @@ class UserController extends AbstractController
       $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$unverifiedEmail.'&t='.$token;
       if ($verifiedEmail != $unverifiedEmail) {
         $resp['newEmail'] = true;
-        $verificationMsg = (new MailerService)->changedEmailVerification($username, $unverifiedEmail, $verifiedEmail, $verifyEmailURL, $expiresAt);
+        $verificationMsg = (new MailerService)->changedEmailVerification($user, $unverifiedEmail, $verifiedEmail, $verifyEmailURL, $expiresAt);
       } else {
         $resp['newEmail'] = false;
-        $verificationMsg = (new MailerService)->sendEmailVerification($username, $unverifiedEmail, $verifyEmailURL, $expiresAt);
+        $verificationMsg = (new MailerService)->sendEmailVerification($user, $unverifiedEmail, $verifyEmailURL, $expiresAt);
       }
-      $mailer->send($verificationMsg);
-      $resp['sent'] = true;
+      if ($verificationMsg) {
+        $mailer->send($verificationMsg);
+        $resp['sent'] = true;
+      } else {
+        $resp['sent'] = false;
+        $resp['maybeEmail'] = $verificationMsg;
+      }
     } catch (\Exception $err) {
       $resp['sent'] = false;
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);

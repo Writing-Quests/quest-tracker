@@ -3,5 +3,7 @@ An automated email from Questy
 {% block content%}
 {% endblock %}
 --------------------------------------------------------------------------------
+Please note: this mailbox is not monitored. Replies will not be delivered. 
+--------------------------------------------------------------------------------
 About Questy: https://questy.writingquests.org/about/
 Writing Quests: https://www.writingquests.org/
