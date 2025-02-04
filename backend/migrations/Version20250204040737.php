@@ -26,6 +26,8 @@ final class Version20250204040737 extends AbstractMigration
           created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
           entry_date DATETIME NOT NULL,
           value NUMERIC(12, 2) NOT NULL,
+          type VARCHAR(255) NOT NULL,
+          units VARCHAR(255) NOT NULL,
           INDEX IDX_C9996E4B166D1F9C (project_id),
           PRIMARY KEY(id)
         ) DEFAULT CHARACTER

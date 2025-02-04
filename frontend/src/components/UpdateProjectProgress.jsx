@@ -1,16 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, createContext, useContext } from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
-import dayjs from 'dayjs'
-import api from '../services/api'
-import usePrev from '../services/usePrev'
 import Input, { Button, SectionOptions } from './Forms/Input'
-import { ErrorContainer, SuccessContainer } from './Containers'
-import ProgressChart from './ProgressChart'
-import { fireworks, Confetti } from '../services/confetti'
-import Modal from 'react-modal'
-import Certificate from './Certificate'
-import UpdateProjectProgress from './UpdateProjectProgress'
+
+const ProgressContext = createContext()
 
 const ProgressForm = styled.form`
   background: #333;
@@ -35,6 +28,12 @@ const ProgressForm = styled.form`
   }
   & span {
     top: 0 !important;
+  }
+  & select {
+    background-color: white;
+    color: $333;
+    border-radius: 3px;
+    padding: 5px;
   }
   & ${SectionOptions} button {
     background-color: #d8d8d8;
@@ -85,6 +84,76 @@ function capitalizeFirstLetter(str='') {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+export default function UpdateProjectProgress({project}) {
+  const [show, setShow] = useState(false)
+  if(show) {
+    return <ProgressContext.Provider value={{project}}>
+      <Form onFinish={() => setShow(false)} />
+    </ProgressContext.Provider>
+  } else {
+    return <Button type='cta' onClick={() => setShow(true)}>✏️ Update progress</Button>
+  }
+}
+UpdateProjectProgress.propTypes = {
+  project: PropTypes.object.isRequired,
+}
+
+function Form({onFinish}) {
+  const { project } = useContext(ProgressContext)
+  const progress = project.progress
+  const existingProgressTypes = []
+  for(const type in progress) {
+    for(const units in progress[type]) {
+      existingProgressTypes.push({units, type})
+    }
+  }
+
+  const inputProps = {}
+
+  if(!existingProgressTypes.length) {
+    existingProgressTypes.push({units: 'words', type: 'writing'})
+  }
+  const handleSave = () => alert('save')
+  return <div>
+    <ProgressForm onSubmit={handleSave}>
+      <h3 style={{textAlign: 'center', marginTop: '8px', marginBottom: '9px', fontSize: '1.1rem'}}>Update Progress</h3>
+      <Input type='select' label='Progress type'>
+        {existingProgressTypes.map((val, id) => <option key={id} value={id}>
+          {capitalizeFirstLetter(val.units)} ({val.type})
+        </option>)}
+        <option value={-1}>+ Track new type of progress</option>
+      </Input>
+      {/*
+      <Input type='number' label={capitalizeFirstLetter(goal.units)} value={value}
+        onChange={e => setValue(e.target.value)}
+        min={(action === 'setTotal') ? (minOnDate || 0) : 0}
+        //max={(action === 'setTotal') && maxOnDate}
+        step={goal.units === 'hours' ? 0.1 : 1}
+      {...inputProps} />
+      <Input type='button-select' label='Mode' value={action} onChange={setAction} {...inputProps} options={[
+        { label: `Add ${goal.units}`, value: 'add' },
+        { label: `Set total ${goal.units} for day`, value: 'replace'},
+        { label: `Set cumulative ${goal.units}`, value: 'setTotal'},
+      ]} />
+      <Input type='button-select' label='As of' value={dateSelect} onChange={setDateSelect} {...inputProps} options={[
+        { label: 'Today', value: 'today', disabled: !todayEnabled },
+        { label: 'Yesterday', value: 'yesterday', disabled: !yesterdayEnabled},
+        { label: 'Another date', value: 'other'},
+      ]} />
+      {dateSelect === 'other' && <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} min={dayjs(goal.start_date).format('YYYY-MM-DD')} max={dayjs(goal.end_date).format('YYYY-MM-DD')} />}
+      */}
+      <ButtonGroup>
+        <Input type='submit' buttonType='normal' {...inputProps} value='Save' />
+        <Button onClick={e => {e.preventDefault; onFinish()}} style={{color: '#f79274', fontWeight: 'normal'}}>Cancel</Button>
+      </ButtonGroup>
+    </ProgressForm>
+    </div>
+}
+Form.propTypes = {
+  onFinish: PropTypes.func.isRequired,
+}
+
+/*
 function UpdateProgress({goal, refetchGoal}) {
   const yesterdayStr = dayjs().subtract(1, 'd').format('YYYYMMDD')
   const todayStr = dayjs().format('YYYYMMDD')
@@ -224,149 +293,4 @@ UpdateProgress.propTypes = {
   refetchGoal: PropTypes.func.isRequired,
   goal: PropTypes.object.isRequired,
 }
-
-function getUnitText(unit, val) {
-  switch(unit) {
-    case 'words':
-      if(val == 1) { return 'word' }
-      return 'words'
-    case 'hours':
-      if(val == 1) { return 'hour' }
-      return 'hours'
-    default:
-      return unit
-  }
-}
-
-function getPastParticiple(type) {
-  switch(type) {
-    case 'writing':
-      return 'written'
-    default:
-      return type
-  }
-}
-
-function ProgressNumericDisplay({progress}) {
-  const values = []
-  for(const type in progress) {
-    for(const unit in progress[type]) {
-      const val = parseFloat(progress[type][unit])
-      values.push({val: val, unit: getUnitText(unit, val), type: getPastParticiple(type)})
-    }
-  }
-
-  if(progress.length === 0) {
-    return <div>Time to get started: add your first progress entry!</div>
-  }
-
-  return <ul>
-    {values.map((val, i) =>
-      <li key={i}><strong>{val.val}</strong> {val.unit} {val.type}</li>
-    )}
-  </ul>
-}
-ProgressNumericDisplay.propTypes = {
-  progress: PropTypes.object.isRequired,
-}
-
-function EditProgressInner({project, goals, refetchGoal, allowEditing}) {
-  const goal = goals[0]
-  const [fireworksRunning, setFireworksRunning] = useState(false)
-  const [modalIsOpen, setModalIsOpen] = useState(false)
-  const prevProgressPercent = usePrev(goal.goal_progress_percent)
-  useEffect(() => {
-    if(prevProgressPercent?.length && prevProgressPercent < 100 && goal.goal_progress_percent >= 100) {
-      triggerCelebration()
-    }
-  }, [goal.goal_progress_percent, prevProgressPercent])
-
-  function handleFireworks() {
-    if(fireworksRunning) { return }
-    setFireworksRunning(true)
-    fireworks(() => setFireworksRunning(false))
-  }
-
-  function triggerCelebration() {
-    handleFireworks()
-    setModalIsOpen(true)
-  }
-
-  return <div>
-    <ProgressNumericDisplay progress={project.progress} />
-    <UpdateProjectProgress project={project} />
-    <p style={{fontSize: '1.2em'}}>
-      <strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}
-      &nbsp;<small>({Number(goal.goal_progress_percent).toLocaleString()}% done{goal.goal_progress_percent >= 100 && <strong onClick={handleFireworks}><em>&nbsp;Completed! 🎉</em></strong>})</small>
-      {goal.goal_progress_percent >= 100 && <Button onClick={triggerCelebration}>Download your certificate</Button>}
-    </p>
-    {goal.goal_progress_percent >= 100 && <Modal
-      isOpen={modalIsOpen}
-      onRequestClose={() => setModalIsOpen(false)}
-      contentLabel="Example Modal"
-      style={{content: {
-        width: '700px',
-        maxWidth: '90vw',
-        height: '500px',
-        left: '50%',
-        top: '50%',
-        transform: 'translateX(-50%) translateY(-50%)',
-      }, overlay: {
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        backdropFilter: 'blur(2px)',
-      }}}
-    >
-      <button onClick={() => setModalIsOpen(false)} style={{
-        backgroundColor: '#eee',
-        border: 'none',
-        borderRadius: '3px',
-        fontWeight: 'bold',
-        position: 'absolute',
-        padding: '10px',
-        cursor: 'pointer',
-      }}>x</button>
-      <div style={{fontSize: '2rem', fontWeight: 'bold', textAlign: 'center'}}>🥳 Congratulations! 🥳</div>
-      <Certificate project={project} />
-    </Modal>}
-    {allowEditing && <UpdateProgress refetchGoal={refetchGoal} goal={goal} />}
-    {(parseFloat(goal.current_value) > 0) && <ProgressChart goal={goal} />}
-  </div>
-}
-EditProgressInner.propTypes = {
-  goals: PropTypes.array.isRequired,
-  refetchGoal: PropTypes.func.isRequired,
-  allowEditing: PropTypes.bool,
-  project: PropTypes.object.isRequired,
-}
-
-export default function Progress({project, allowEditing}) {
-  const [data, setData] = useState()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState()
-  const fetchGoals = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const resp = await api.get(`/projects/${project.code}/goals`)
-      setData(resp.data?.['hydra:member'] || [])
-    } catch (e) {
-      setError(e)
-    } finally {
-      setLoading(false)
-    }
-  }, [project.code])
-  useEffect(() => {
-    fetchGoals()
-  }, [project, fetchGoals])
-  return <>
-    {loading && <div>Loading&hellip;</div>}
-    {(error && !data) && <div>ERROR: {JSON.stringify(error)}</div>}
-    {(data?.[0].start_date && data?.[0].end_date) &&
-      <EditProgressInner project={project} goals={data} refetchGoal={fetchGoals} allowEditing={allowEditing} />
-    }
-  </>
-}
-Progress.propTypes = {
-  project: PropTypes.object.isRequired,
-  allowEditing: PropTypes.bool,
-}
+*/

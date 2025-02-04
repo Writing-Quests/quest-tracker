@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Ulid;
 
 #[ORM\Entity(repositoryClass: ProgressEntryRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 #[ApiResource]
 class ProgressEntry
 {
@@ -29,6 +30,12 @@ class ProgressEntry
 
     #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2)]
     private ?string $value = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $type = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $units = null;
 
     public function getId(): ?int
     {
@@ -86,6 +93,39 @@ class ProgressEntry
     public function setValue(string $value): static
     {
         $this->value = $value;
+
+        return $this;
+    }
+
+    #[ORM\PrePersist]
+    public function prePersist(): void
+    {
+        // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
+        $this->setCreatedAt(new DateTime());
+        $this->setEditedAt(new DateTime());
+        $this->setCode(new Ulid());
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    public function getUnits(): ?string
+    {
+        return $this->units;
+    }
+
+    public function setUnits(string $units): static
+    {
+        $this->units = $units;
 
         return $this;
     }

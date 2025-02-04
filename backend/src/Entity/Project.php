@@ -251,9 +251,30 @@ class Project
     /**
      * @return Collection<int, ProgressEntry>
      */
+    #[Ignore]
     public function getProgressEntries(): Collection
     {
         return $this->progressEntries;
+    }
+
+    #[ApiProperty]
+    public function getProgress(): array
+    {
+        $ret = array();
+        foreach($this->progressEntries as $entry) {
+            if(!isset($ret[$entry->getType()])) {
+                $ret[$entry->getType()] = array();
+            }
+            if(!isset($ret[$entry->getType()][$entry->getUnits()])) {
+                $ret[$entry->getType()][$entry->getUnits()] = "0";
+            }
+            $ret[$entry->getType()][$entry->getUnits()] = bcadd(
+                $ret[$entry->getType()][$entry->getUnits()],
+                $entry->getValue(),
+                2
+            );
+        }
+        return $ret;
     }
 
     public function addProgressEntry(ProgressEntry $progressEntry): static

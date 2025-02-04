@@ -26,6 +26,7 @@ For development, a "Mail Catcher" SMTP server runs with Docker/Lando and is auto
 `php bin/console make:entity`
 `php bin/console make:migration --formatted`
 `php bin/console doctrine:migrations:migrate`
+`php bin/console doctrine:migrations:migrate prev` // Undo the last migration
 
 # Deploy Instructions
 
