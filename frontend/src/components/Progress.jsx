@@ -216,7 +216,7 @@ function UpdateProgress({goal, refetchGoal}) {
       </ButtonGroup>
     </ProgressForm>
     :
-    <Button type='cta' onClick={() => setShow(true)}>✏️ Update progress</Button>}
+    <Button type='cta' onClick={() => setShow(true)}>✏️ Update progress (old version)</Button>}
     {newSuccess && <Confetti />}
   </>
 }
@@ -295,6 +295,22 @@ function EditProgressInner({project, goals, refetchGoal, allowEditing}) {
   return <div>
     <ProgressNumericDisplay progress={project.progress} />
     <UpdateProjectProgress project={project} />
+    <hr />
+    <hr />
+    <hr />
+    <hr />
+    <hr />
+    <hr />
+    <hr />
+    <h2>OLD VERSION:</h2>
+    <hr />
+    <hr />
+    <hr />
+    <hr />
+    <hr />
+    <hr />
+    <hr />
+    <hr />
     <p style={{fontSize: '1.2em'}}>
       <strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}
       &nbsp;<small>({Number(goal.goal_progress_percent).toLocaleString()}% done{goal.goal_progress_percent >= 100 && <strong onClick={handleFireworks}><em>&nbsp;Completed! 🎉</em></strong>})</small>
@@ -329,7 +345,7 @@ function EditProgressInner({project, goals, refetchGoal, allowEditing}) {
       <Certificate project={project} />
     </Modal>}
     {allowEditing && <UpdateProgress refetchGoal={refetchGoal} goal={goal} />}
-    {(parseFloat(goal.current_value) > 0) && <ProgressChart goal={goal} />}
+    {(parseFloat(goal.current_value) > 0) && false && <ProgressChart goal={goal} />}
   </div>
 }
 EditProgressInner.propTypes = {

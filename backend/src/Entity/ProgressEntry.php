@@ -3,14 +3,40 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Link;
 use App\Repository\ProgressEntryRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Ulid;
+use Symfony\Component\Serializer\Annotation\Groups;
+use DateTime;
+use DateTimeImmutable;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 
 #[ORM\Entity(repositoryClass: ProgressEntryRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            uriTemplate: '/project/{code}/progress',
+            uriVariables: [
+                'code' => new Link(
+                    fromClass: Project::class,
+                    fromProperty: 'code',
+                    toProperty: 'project',
+                    securityObjectName: 'uriProject',
+                    security: "uriProject.getUser() == user or is_granted('ROLE_ADMIN') or uriProject.getUser().isPublic()",
+                )
+            ],
+            security: "true", // Security is on the Link level
+        ),
+        new Post(
+            securityPostDenormalize: "object.getProject().getUser() == user or is_granted('ROLE_ADMIN')",
+        ),
+    ]
+)]
 class ProgressEntry
 {
     #[ORM\Id]
@@ -26,15 +52,19 @@ class ProgressEntry
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['progress:write'])]
     private ?\DateTimeInterface $entry_date = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 12, scale: 2)]
+    #[Groups(['progress:write'])]
     private ?string $value = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['progress:write'])]
     private ?string $type = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['progress:write'])]
     private ?string $units = null;
 
     public function getId(): ?int
@@ -101,9 +131,10 @@ class ProgressEntry
     public function prePersist(): void
     {
         // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
-        $this->setCreatedAt(new DateTime());
-        $this->setEditedAt(new DateTime());
-        $this->setCode(new Ulid());
+        $this->setCreatedAt(new DateTimeImmutable());
+        if(!$this->getEntryDate()) {
+            $this->setEntryDate(new DateTime());
+        }
     }
 
     public function getType(): ?string

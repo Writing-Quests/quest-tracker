@@ -1,6 +1,9 @@
-import { useState, createContext, useContext } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
+import dayjs from 'dayjs'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
+import { ErrorContainer, SuccessContainer } from './Containers'
+import api from '../services/api'
 import Input, { Button, SectionOptions } from './Forms/Input'
 
 const ProgressContext = createContext()
@@ -86,12 +89,19 @@ function capitalizeFirstLetter(str='') {
 
 export default function UpdateProjectProgress({project}) {
   const [show, setShow] = useState(false)
+  const [success, setSuccess] = useState()
   if(show) {
     return <ProgressContext.Provider value={{project}}>
-      <Form onFinish={() => setShow(false)} />
+      <Form onFinish={({success}) => {
+        setSuccess(success)
+        setShow(false)
+      }}/>
     </ProgressContext.Provider>
   } else {
-    return <Button type='cta' onClick={() => setShow(true)}>✏️ Update progress</Button>
+    return <>
+      {success && <SuccessContainer>Saved!</SuccessContainer>}
+      <Button type='cta' onClick={() => { setShow(true); setSuccess(null)}}>✏️ Update progress (new version)</Button>
+    </>
   }
 }
 UpdateProjectProgress.propTypes = {
@@ -100,48 +110,86 @@ UpdateProjectProgress.propTypes = {
 
 function Form({onFinish}) {
   const { project } = useContext(ProgressContext)
-  const progress = project.progress
+  const [progressTypeId, setProgressTypeId] = useState(0)
+  const [progressType, setProgressType] = useState(null)
+  const [value, setValue] = useState(0)
+  const [action, setAction] = useState('add')
+  const [dateSelect, setDateSelect] = useState('today')
+  const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState()
+  useEffect(() => {
+    if(progressTypeId >= 0) {
+      setProgressType(existingProgressTypes[progressTypeId])
+    }
+  }, [progressTypeId])
   const existingProgressTypes = []
+  const progress = project.progress
   for(const type in progress) {
     for(const units in progress[type]) {
       existingProgressTypes.push({units, type})
     }
   }
 
-  const inputProps = {}
-
   if(!existingProgressTypes.length) {
     existingProgressTypes.push({units: 'words', type: 'writing'})
   }
-  const handleSave = () => alert('save')
+  async function handleSave(e) {
+    e.preventDefault()
+    if(loading) { return }
+    // TODO: loading, error, and success states
+    setLoading(true)
+    setError(null)
+    try {
+      if(action === 'setTotal') {
+        throw new Error('setTotal not implemented')
+      }
+      await api.post('progress_entries', {
+        type: progressType.type,
+        units: progressType.units,
+        value: String(value),
+        project: '/api/project/'+project.code,
+      })
+      // TODO: refetch
+      onFinish({success: true})
+    } catch (e) {
+      setError(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const inputProps = { isLoading: loading }
+
   return <div>
+    {error && <ErrorContainer error={error} />}
     <ProgressForm onSubmit={handleSave}>
       <h3 style={{textAlign: 'center', marginTop: '8px', marginBottom: '9px', fontSize: '1.1rem'}}>Update Progress</h3>
-      <Input type='select' label='Progress type'>
+      <Input type='select' label='Progress type' value={progressTypeId} onChange={e => setProgressTypeId(e.target.value)} {...inputProps}>
         {existingProgressTypes.map((val, id) => <option key={id} value={id}>
           {capitalizeFirstLetter(val.units)} ({val.type})
         </option>)}
         <option value={-1}>+ Track new type of progress</option>
       </Input>
-      {/*
-      <Input type='number' label={capitalizeFirstLetter(goal.units)} value={value}
-        onChange={e => setValue(e.target.value)}
-        min={(action === 'setTotal') ? (minOnDate || 0) : 0}
-        //max={(action === 'setTotal') && maxOnDate}
-        step={goal.units === 'hours' ? 0.1 : 1}
-      {...inputProps} />
-      <Input type='button-select' label='Mode' value={action} onChange={setAction} {...inputProps} options={[
-        { label: `Add ${goal.units}`, value: 'add' },
-        { label: `Set total ${goal.units} for day`, value: 'replace'},
-        { label: `Set cumulative ${goal.units}`, value: 'setTotal'},
-      ]} />
-      <Input type='button-select' label='As of' value={dateSelect} onChange={setDateSelect} {...inputProps} options={[
-        { label: 'Today', value: 'today', disabled: !todayEnabled },
-        { label: 'Yesterday', value: 'yesterday', disabled: !yesterdayEnabled},
-        { label: 'Another date', value: 'other'},
-      ]} />
-      {dateSelect === 'other' && <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} min={dayjs(goal.start_date).format('YYYY-MM-DD')} max={dayjs(goal.end_date).format('YYYY-MM-DD')} />}
-      */}
+      {progressType && <>
+        <Input type='number' label={capitalizeFirstLetter(progressType.units)} value={value}
+          onChange={e => setValue(e.target.value)}
+          min={progressType.units === 'hours' ? 0.1 : 1}
+          //min={(action === 'setTotal') ? (minOnDate || 0) : 0}
+          //max={(action === 'setTotal') && maxOnDate}
+          step={progressType.units === 'hours' ? 0.1 : 1}
+        {...inputProps} />
+        <Input type='button-select' label='Mode' value={action} onChange={setAction} {...inputProps} options={[
+          { label: `Add ${progressType.units}`, value: 'add' },
+          { label: `Set total ${progressType.units}`, value: 'setTotal'},
+        ]} />
+        <Input type='button-select' label='As of' value={dateSelect} onChange={setDateSelect} {...inputProps} options={[
+          { label: 'Today', value: 'today'},
+          { label: 'Yesterday', value: 'yesterday'},
+          { label: 'Another date', value: 'other'},
+        ]} />
+        {dateSelect === 'other' && <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} max={dayjs().format('YYYY-MM-DD')} />}
+      </>}
       <ButtonGroup>
         <Input type='submit' buttonType='normal' {...inputProps} value='Save' />
         <Button onClick={e => {e.preventDefault; onFinish()}} style={{color: '#f79274', fontWeight: 'normal'}}>Cancel</Button>
