@@ -24,6 +24,13 @@ services:
       autoconfigure: true
       tags:
         - {name: doctrine.orm.entity_listener}
+    connection_listener:
+      class: App\Listener\ConnectionListener
+      public: false
+      autowire: true
+      autoconfigure: true
+      tags:
+        - {name: doctrine.orm.entity_listener}
       arguments: ["@security.token_storage", "@mailer"]
     user_listener:
       class: App\Listener\User

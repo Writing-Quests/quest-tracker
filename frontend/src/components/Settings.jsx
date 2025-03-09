@@ -1,5 +1,5 @@
 import { useContext,useState,useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate,Link } from 'react-router-dom'
 import { WarningContainer, ContentContainer, ContentBlock, SuccessContainer } from './Containers'
 import styled from 'styled-components'
 import context from '../services/context'
@@ -57,17 +57,11 @@ const NotALink = styled.span`
 
 export default function Settings () {
   async function getProfileInformation (username) {
-    try {
-      const resp = await api.get(`users/${username}`)
-      setProfile(resp.data)
-      setPublicProfile(resp.data.public)
-      setUnverifiedAccount(resp.data.email_verified_at == null && resp.data.email !== resp.data.unverified_email)
-      setVerificationHidden(resp.data.email_verified_at && !resp.data.unverified_email)
-    } catch (err) {
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
+    const resp = await api.get(`users/${username}`)
+    setProfile(resp.data)
+    setPublicProfile(resp.data.public)
+    setUnverifiedAccount(resp.data.email_verified_at == null && resp.data.email !== resp.data.unverified_email)
+    setVerificationHidden(resp.data.email_verified_at && !resp.data.unverified_email)
   }
   function holdProfileChanges (e,key,value=e.target.value) {
     e && e.preventDefault()
@@ -175,7 +169,7 @@ export default function Settings () {
     setFormError(null)
     setNotice(null)
   }
-  const [profile, setProfile] = useState()
+  const [profile, setProfile] = useState(null)
   const [section, setSection] = useState('profile')
   const [unverifiedAccount, setUnverifiedAccount] = useState(true);
   const [publicProfile,setPublicProfile] = useState(false)
@@ -191,9 +185,16 @@ export default function Settings () {
   const navigate = useNavigate();
   const formProps = {disabled: loading}
   useEffect(() => {
-    getProfileInformation(user.username)
+    try {
+      getProfileInformation(user.username)
+    } catch (err) {
+      console.error(err)
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
   },[user])
-  if(loading || profile.length == 0) {
+  if(loading || profile == null) {
     return <Page>
       <Notices />
       <Loading />
@@ -213,6 +214,7 @@ export default function Settings () {
           <h1>Settings</h1>
           {formError !== null && <ErrorContainer>{formError}</ErrorContainer>}
           {notice && <SuccessContainer>{notice}</SuccessContainer>}
+          <Link style={{'text-align': 'center', 'font-weight': 'bold', 'font-size': '1.1rem'}} to="/connections">View Your Buddies &amp; Pending Requests</Link>
           <SectionOptions>
             <OptionButton selected={section === 'profile'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Profile</OptionButton>
             <OptionButton selected={section === 'account'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Account</OptionButton>
@@ -220,8 +222,8 @@ export default function Settings () {
           <form style={{position: 'relative'}} onSubmit={updateProfileInformation}>
             <ToggledSection selected={(section === 'profile')}>
               <InputGroup>
-                <Input label='Link' type='text' placeholder='https://www.writingquests.org/' defaultValue={profile.link} onChange={(e)=>{holdProfileChanges(e,'link')}} {...formProps} />
-                <Input type='textarea' rows='7' label='Description' defaultValue={profile.description} onChange={(e)=>{holdProfileChanges(e,'description')}} {...formProps} />
+                <Input label='Link' type='text' placeholder='https://www.writingquests.org/' defaultValue={profile && profile.link} onChange={(e)=>{holdProfileChanges(e,'link')}} {...formProps} />
+                <Input type='textarea' rows='7' label='Description' defaultValue={profile && profile.description} onChange={(e)=>{holdProfileChanges(e,'description')}} {...formProps} />
               </InputGroup>
               <p style={{fontSize: '0.9rem'}}><strong>Change your avatar</strong> on <a href='https://gravatar.com/profile/' target='_blank' rel='noopener notarget'>Gravatar.com</a> with your email address {profile.email}.</p>
               <StandaloneLabel>Privacy</StandaloneLabel>
@@ -232,12 +234,12 @@ export default function Settings () {
               </SectionOptions>
               {publicProfile && <WarningContainer><b>Your profile page and projects will be visible to the public.</b> This includes your username, bio, link, goals, progress, and other project information.</WarningContainer>}
             </ToggledSection>
-            <ToggledSection selected={(section === 'account')}>
+            <ToggledSection selected={(section === 'account')}> 
               <InputGroup>
-                <Input label='Username' disabled={true} type='text' value={profile.username} />
-                <Input label='Email Address' type='email' defaultValue={profile.unverified_email ? profile.unverified_email : profile.email} onChange={(e) => {holdProfileChanges(e,'unverified_email')}}{...formProps} style={{zIndex: '1', position: 'relative'}} />
+                <Input label='Username' disabled={true} type='text' value={profile && profile.username} />
+                <Input label='Email Address' type='email' defaultValue={(profile.unverified_email ? profile.unverified_email : profile.email)} onChange={(e) => {holdProfileChanges(e,'unverified_email')}}{...formProps} style={{zIndex: '1', position: 'relative'}} />
               </InputGroup>
-              <VerificationNotice unverified={profile.unverified_email} verified={profile.email} hidden={verificationHidden}/>
+              <VerificationNotice unverified={profile && profile.unverified_email} verified={profile && profile.email} hidden={verificationHidden}/>
               <InputGroup>
                 <Input label='New Password' type='password' onChange={(e) => {setPassword1(e.target.value)}} {...formProps} />
                 <Input label='Confirm Password' type='password' onChange={(e) => {setPassword2(e.target.value)}} onBlur={checkPassword} {...formProps} />

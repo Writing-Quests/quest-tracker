@@ -10,6 +10,7 @@ use App\Service\MailerService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\Entity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Mailer\MailerInterface;

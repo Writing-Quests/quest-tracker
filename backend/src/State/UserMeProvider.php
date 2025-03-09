@@ -3,6 +3,7 @@
 namespace App\State;
 
 use App\Entity\User;
+use App\Entity\Connection;
 use App\State\NotLoggedInRepresentation;
 use ApiPlatform\State\ProviderInterface;
 use ApiPlatform\Metadata\Operation;
@@ -28,6 +29,7 @@ final class UserMeProvider implements ProviderInterface {
                 ->entityManager
                 ->getRepository(User::class)
                 ->find($user->getId());
+              
         } else {
             return new NotLoggedInRepresentation();
         }

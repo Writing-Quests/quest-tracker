@@ -5,6 +5,7 @@ import {
 } from './components/User'
 import EditProject from './components/EditProject'
 import Profile from './components/User/Profile'
+import Connections from './components/User/Connections'
 import Login from './components/Login'
 import Settings from './components/Settings'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
@@ -17,6 +18,7 @@ import { PrivacyPolicy } from './components/Static/Privacy'
 import { TermsOfUse } from './components/Static/Terms'
 import { AboutQuesty } from './components/Static/About'
 import { ReviewReport } from './components/Admin/Report'
+import HomeFeed from './components/Feed'
 import Modal from 'react-modal'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
@@ -64,12 +66,13 @@ export function App() {
       <LoggedInUserContext.Provider value={data}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Profile />} />
+            <Route path="/" element={<HomeFeed />} />
             <Route path="/profile/:username?" element={<Profile />} />
             <Route path="/project/new" element={<EditProject />} />
             <Route path="/project/:projectCode" element={<EditProject />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/connections" element={<Connections />} />
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
