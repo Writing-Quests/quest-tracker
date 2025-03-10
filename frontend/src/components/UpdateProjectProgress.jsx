@@ -95,7 +95,7 @@ export default function UpdateProjectProgress({project}) {
   const [success, setSuccess] = useState()
   if(show) {
     return <ProgressContext.Provider value={{project}}>
-      <Form onFinish={({success}) => {
+      <Form onFinish={({success=null}={}) => {
         setSuccess(success)
         setShow(false)
       }}/>
@@ -137,6 +137,26 @@ function Form({onFinish}) {
   if(!existingProgressTypes.length) {
     existingProgressTypes.push({units: 'words', type: 'writing'})
   }
+  const defaultMinProgress = progressType?.units === 'hours' ? 0.1 : 1
+  const getCurProgress = () => progress?.[progressType?.type]?.[progressType?.units]
+  const [minProgress, setMinProgress] = useState(defaultMinProgress)
+  useEffect(() => {
+    if(action === 'setTotal') {
+      const curProgress = getCurProgress()
+      if(curProgress) {
+        setMinProgress(curProgress)
+        if(Number(value) < Number(curProgress)) {
+          setValue(String(Number(curProgress)))
+        }
+      }
+    } else {
+      setMinProgress(defaultMinProgress)
+    }
+  }, [action, progress, progressType])
+  function handleCancel(e) {
+    e.preventDefault()
+    onFinish()
+  }
   async function handleSave(e) {
     e.preventDefault()
     if(loading) { return }
@@ -144,20 +164,22 @@ function Form({onFinish}) {
     setLoading(true)
     setError(null)
     try {
-      if(action === 'setTotal') {
-        throw new Error('setTotal not implemented')
-      }
       const update = {
         type: progressType.type,
         units: progressType.units,
-        value: String(value),
         project: '/api/project/'+project.code,
         entry_date: dayjs().format()
       }
-      if(dateSelect === 'yesterday') {
-        update.entry_date = dayjs().subtract(1, 'day').format()
-      } else if (dateSelect === 'other') {
-        update.entry_date = dayjs(date).format()
+      if(action === 'setTotal') {
+        const curProgress = getCurProgress()
+        update.value = String(Number(value) - (Number(curProgress || 0)))
+      } else {
+        update.value = String(value)
+        if(dateSelect === 'yesterday') {
+          update.entry_date = dayjs().subtract(1, 'day').format()
+        } else if (dateSelect === 'other') {
+          update.entry_date = dayjs(date).format()
+        }
       }
       await api.post('progress_entries', update)
       // TODO: refetch
@@ -170,6 +192,7 @@ function Form({onFinish}) {
   }
 
   const inputProps = { isLoading: loading }
+
 
   return <div>
     {error && <ErrorContainer error={error} />}
@@ -184,25 +207,25 @@ function Form({onFinish}) {
       {progressType && <>
         <Input type='number' label={capitalizeFirstLetter(progressType.units)} value={value}
           onChange={e => setValue(e.target.value)}
-          min={progressType.units === 'hours' ? 0.1 : 1}
-          //min={(action === 'setTotal') ? (minOnDate || 0) : 0}
-          //max={(action === 'setTotal') && maxOnDate}
+          min={minProgress}
           step={progressType.units === 'hours' ? 0.1 : 1}
         {...inputProps} />
         <Input type='button-select' label='Mode' value={action} onChange={setAction} {...inputProps} options={[
           { label: `Add ${progressType.units}`, value: 'add' },
           { label: `Set total ${progressType.units}`, value: 'setTotal'},
         ]} />
-        <Input type='button-select' label='As of' value={dateSelect} onChange={setDateSelect} {...inputProps} options={[
-          { label: 'Today', value: 'today'},
-          { label: 'Yesterday', value: 'yesterday'},
-          { label: 'Another date', value: 'other'},
-        ]} />
-        {dateSelect === 'other' && <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} max={dayjs().format('YYYY-MM-DD')} />}
+        {action !== 'setTotal' && <>
+          <Input type='button-select' label='As of' value={dateSelect} onChange={setDateSelect} {...inputProps} options={[
+            { label: 'Today', value: 'today'},
+            { label: 'Yesterday', value: 'yesterday'},
+            { label: 'Another date', value: 'other'},
+          ]} />
+          {dateSelect === 'other' && <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} max={dayjs().format('YYYY-MM-DD')} />}
+        </>}
       </>}
       <ButtonGroup>
         <Input type='submit' buttonType='normal' {...inputProps} value='Save' />
-        <Button onClick={e => {e.preventDefault; onFinish()}} style={{color: '#f79274', fontWeight: 'normal'}}>Cancel</Button>
+        <Button onClick={handleCancel} style={{color: '#f79274', fontWeight: 'normal'}}>Cancel</Button>
       </ButtonGroup>
     </ProgressForm>
     </div>
