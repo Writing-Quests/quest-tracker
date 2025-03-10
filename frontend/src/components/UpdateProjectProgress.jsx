@@ -1,10 +1,13 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { ErrorContainer, SuccessContainer } from './Containers'
 import api from '../services/api'
 import Input, { Button, SectionOptions } from './Forms/Input'
+
+dayjs.extend(utc)
 
 const ProgressContext = createContext()
 
@@ -144,12 +147,19 @@ function Form({onFinish}) {
       if(action === 'setTotal') {
         throw new Error('setTotal not implemented')
       }
-      await api.post('progress_entries', {
+      const update = {
         type: progressType.type,
         units: progressType.units,
         value: String(value),
         project: '/api/project/'+project.code,
-      })
+        entry_date: dayjs().format()
+      }
+      if(dateSelect === 'yesterday') {
+        update.entry_date = dayjs().subtract(1, 'day').format()
+      } else if (dateSelect === 'other') {
+        update.entry_date = dayjs(date).format()
+      }
+      await api.post('progress_entries', update)
       // TODO: refetch
       onFinish({success: true})
     } catch (e) {
