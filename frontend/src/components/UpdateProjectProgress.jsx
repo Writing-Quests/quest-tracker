@@ -90,13 +90,16 @@ function capitalizeFirstLetter(str='') {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-export default function UpdateProjectProgress({project}) {
+export default function UpdateProjectProgress({project, refetch}) {
   const [show, setShow] = useState(false)
   const [success, setSuccess] = useState()
   if(show) {
     return <ProgressContext.Provider value={{project}}>
       <Form onFinish={({success=null}={}) => {
         setSuccess(success)
+        if(success === true && refetch) {
+          refetch()
+        }
         setShow(false)
       }}/>
     </ProgressContext.Provider>
@@ -109,6 +112,7 @@ export default function UpdateProjectProgress({project}) {
 }
 UpdateProjectProgress.propTypes = {
   project: PropTypes.object.isRequired,
+  refetch: PropTypes.func,
 }
 
 function Form({onFinish}) {

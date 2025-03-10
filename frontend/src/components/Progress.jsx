@@ -53,7 +53,7 @@ ProgressNumericDisplay.propTypes = {
   progress: PropTypes.object.isRequired,
 }
 
-function EditProgressInner({project, goals, allowEditing}) {
+function EditProgressInner({project, goals, allowEditing, refetch}) {
   const goal = goals[0]
   //const [fireworksRunning, setFireworksRunning] = useState(false)
   //const [modalIsOpen, setModalIsOpen] = useState(false)
@@ -77,7 +77,7 @@ function EditProgressInner({project, goals, allowEditing}) {
 
   return <div>
     <ProgressNumericDisplay progress={project.progress} />
-    {allowEditing && <UpdateProjectProgress project={project} />}
+    {allowEditing && <UpdateProjectProgress project={project} refetch={refetch} />}
     {/*
     <p style={{fontSize: '1.2em'}}>
       <strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}
@@ -121,9 +121,10 @@ EditProgressInner.propTypes = {
   refetchGoal: PropTypes.func.isRequired,
   allowEditing: PropTypes.bool,
   project: PropTypes.object.isRequired,
+  refetch: PropTypes.func,
 }
 
-export default function Progress({project, allowEditing}) {
+export default function Progress({project, allowEditing, refetch}) {
   const [data, setData] = useState()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState()
@@ -146,11 +147,12 @@ export default function Progress({project, allowEditing}) {
     {loading && <div>Loading&hellip;</div>}
     {(error && !data) && <div>ERROR: {JSON.stringify(error)}</div>}
     {(data?.[0].start_date && data?.[0].end_date) &&
-      <EditProgressInner project={project} goals={data} refetchGoal={fetchGoals} allowEditing={allowEditing} />
+      <EditProgressInner project={project} goals={data} refetchGoal={fetchGoals} allowEditing={allowEditing} refetch={refetch} />
     }
   </>
 }
 Progress.propTypes = {
   project: PropTypes.object.isRequired,
   allowEditing: PropTypes.bool,
+  refetch: PropTypes.func,
 }
