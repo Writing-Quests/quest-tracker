@@ -117,7 +117,7 @@ UpdateProjectProgress.propTypes = {
 
 function Form({onFinish}) {
   const { project } = useContext(ProgressContext)
-  const [progressTypeId, setProgressTypeId] = useState(0)
+  const [progressTypeId, setProgressTypeId] = useState('0')
   const [progressType, setProgressType] = useState(null)
   const [value, setValue] = useState(0)
   const [action, setAction] = useState('add')
@@ -125,9 +125,15 @@ function Form({onFinish}) {
   const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
+  const [newProgressType, setNewProgressType] = useState('writing')
+  const [newProgressUnits, setNewProgressUnits] = useState('words')
   useEffect(() => {
     if(progressTypeId >= 0) {
       setProgressType(existingProgressTypes[progressTypeId])
+    } else if(progressTypeId == 'new') {
+      setProgressType(null)
+    } else if(progressTypeId == 'custom') {
+      setProgressType({units: newProgressUnits, type: newProgressType})
     }
   }, [progressTypeId])
   const existingProgressTypes = []
@@ -195,8 +201,16 @@ function Form({onFinish}) {
     }
   }
 
-  const inputProps = { isLoading: loading }
+  function handleAddProgressType(e) {
+    e.preventDefault()
+    if(newProgressType?.trim()?.length && newProgressUnits?.trim()?.length) {
+      setNewProgressType(newProgressType.trim().toLowerCase())
+      setNewProgressUnits(newProgressUnits.trim().toLowerCase())
+      setProgressTypeId('custom')
+    }
+  }
 
+  const inputProps = { isLoading: loading }
 
   return <div>
     {error && <ErrorContainer error={error} />}
@@ -206,8 +220,16 @@ function Form({onFinish}) {
         {existingProgressTypes.map((val, id) => <option key={id} value={id}>
           {capitalizeFirstLetter(val.units)} ({val.type})
         </option>)}
-        <option value={-1}>+ Track new type of progress</option>
+        {progressTypeId === 'custom' && <option value='custom'>
+          {capitalizeFirstLetter(newProgressUnits)} ({newProgressType})
+        </option>}
+        <option value='new'>+ Track new type of progress</option>
       </Input>
+      {progressTypeId === 'new' && <>
+        <Input type='text' label='Type (writing, editing, drawing, etc.)' value={newProgressType} onChange={e => setNewProgressType(e.target.value)} required />
+        <Input type='text' label='Units (words, hours, pages, etc.)' value={newProgressUnits} onChange={e => setNewProgressUnits(e.target.value)} required />
+        <Button onClick={handleAddProgressType}>Add progress type</Button>
+      </>}
       {progressType && <>
         <Input type='number' label={capitalizeFirstLetter(progressType.units)} value={value}
           onChange={e => setValue(e.target.value)}
@@ -227,10 +249,10 @@ function Form({onFinish}) {
           {dateSelect === 'other' && <Input type='date' label='Date' value={date} onChange={e => setDate(e.target.value)} {...inputProps} max={dayjs().format('YYYY-MM-DD')} />}
         </>}
       </>}
-      <ButtonGroup>
+      {progressType && <ButtonGroup>
         <Input type='submit' buttonType='normal' {...inputProps} value='Save' />
         <Button onClick={handleCancel} style={{color: '#f79274', fontWeight: 'normal'}}>Cancel</Button>
-      </ButtonGroup>
+      </ButtonGroup>}
     </ProgressForm>
     </div>
 }

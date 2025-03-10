@@ -25,8 +25,12 @@ function getPastParticiple(type) {
   switch(type) {
     case 'writing':
       return 'written'
+    case 'editing':
+      return 'edited'
+    case 'drawing':
+      return 'drawn'
     default:
-      return type
+      return `(${type})`
   }
 }
 
