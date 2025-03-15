@@ -1,0 +1,15 @@
+
+{% extends "base.email.html" %}
+{% block content %}
+
+<p><b><a href="https://questy.writingquests.org/profile/{{ username }}/" target="_blank" title="{{username}}'s Questy Profile Page">{{ username }}</a></b> has accepted your friend on Questy!</p>
+
+<p>As friends you can both:</p>
+<ul>
+<li>Initiate direct messages.</li>
+<li>See each other's project updates.</li>
+</ul>
+
+<p>Happy Writing!</p>
+
+{% endblock %}

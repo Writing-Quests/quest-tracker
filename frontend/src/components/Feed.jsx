@@ -13,13 +13,15 @@ import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer, Succ
 const { LoggedInUserContext } = context
 
 
+function DisplayUserInfo ({userInfo}) {
+  return (JSON.stringify(userInfo))
+}
+
 export default function HomeFeed() {
   const user = useContext(LoggedInUserContext)
   const [following,setFollowing] = useState([])
   const [buddies,setBuddies] = useState([])
   const [loading, setLoading] = useState(true)
-  console.log(user)
-  
     useEffect(() => {
     async function getConnections () {
       const resp = await api.get("/connection/feed");
@@ -29,15 +31,16 @@ export default function HomeFeed() {
     }
     getConnections()
   },[user])
-
+  const buddy_blocks = buddies.map((buddy) => <div key={buddy.id} style={{border:'1px solid black'}}><DisplayUserInfo userInfo={buddy} /></div>)
+  const follow_blocks = following.map((follow) => <div key={follow.id} style={{border:'1px solid black'}}><DisplayUserInfo userInfo={follow} /></div>)
   return (
     <Page>
       <ContentContainer>
         <ContentBlock>
           <h1>Buddy List</h1>
-            {JSON.stringify(buddies)}
+            {buddy_blocks}
           <h1>Following</h1>
-          {JSON.stringify(following)}
+          {follow_blocks}
         </ContentBlock>
       </ContentContainer>
     </Page>

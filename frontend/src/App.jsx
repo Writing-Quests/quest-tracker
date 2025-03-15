@@ -5,10 +5,10 @@ import {
 } from './components/User'
 import EditProject from './components/EditProject'
 import Profile from './components/User/Profile'
-import Connections from './components/User/Connections'
+import {Connections, ConnectionLink } from './components/User/Connections'
 import Login from './components/Login'
 import Settings from './components/Settings'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import api from './services/api'
 import Context from './services/context'
 import useTitle from './services/useTitle'
@@ -22,6 +22,13 @@ import HomeFeed from './components/Feed'
 import Modal from 'react-modal'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
+
+function NavigateWithPath () {
+  const navigate = useNavigate();
+  const location = useLocation();
+  console.log(location);
+  return (<p>Testing...</p>)
+}
 
 export function App() {
   const [loading, setLoading] = useState(true)
@@ -73,6 +80,7 @@ export function App() {
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/connections" element={<Connections />} />
+            <Route path="/connections/manage" element={<ConnectionLink />} />
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -84,7 +92,7 @@ export function App() {
     )
   } else {
     return (
-      <GetLoggedInUserContext.Provider value={getLoggedInUser}>
+      <GetLoggedInUserContext.Provider value={getLoggedInUser} path={window.location.href}>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login form='login' />} />
@@ -97,7 +105,8 @@ export function App() {
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="*" element={<Navigate to='/' replace />} />
+            {/*<Route path="*" element={<Navigate to='/' replace />} />*/}
+            <Route path="*" element={<NavigateWithPath />} />
           </Routes>
         </BrowserRouter>
       </GetLoggedInUserContext.Provider>

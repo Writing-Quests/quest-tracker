@@ -64,6 +64,12 @@ class Connection
     #[ORM\Column]
     private ?int $connected_user_id;
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $notifyInitiatingUser = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $notifyConnectedUser = null;
+
     public function __construct()
     {}
 
@@ -134,6 +140,30 @@ class Connection
     public function setInitiatingUserId(int $initiating_user_id): static
     {
         $this->initiating_user_id = $initiating_user_id;
+
+        return $this;
+    }
+
+    public function isNotifyInitiatingUser(): ?bool
+    {
+        return $this->notifyInitiatingUser;
+    }
+
+    public function setNotifyInitiatingUser(?bool $notifyInitiatingUser): static
+    {
+        $this->notifyInitiatingUser = $notifyInitiatingUser;
+
+        return $this;
+    }
+
+    public function isNotifyConnectedUser(): ?bool
+    {
+        return $this->notifyConnectedUser;
+    }
+
+    public function setNotifyConnectedUser(?bool $notifyConnectedUser): static
+    {
+        $this->notifyConnectedUser = $notifyConnectedUser;
 
         return $this;
     }

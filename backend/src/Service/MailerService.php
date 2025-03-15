@@ -5,6 +5,7 @@ use DateTime;
 use Symfony\Component\Mime\Email;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mime\Address;
+use App\Entity\User;
 use DateTimeImmutable;
 
 class MailerService {
@@ -117,6 +118,21 @@ class MailerService {
       ->htmlTemplate('emails/report.html.twig')
       ->textTemplate('emails/report.txt.twig')
       ->context(['report'=>$report_details,'admin'=>false]);
+    return $msg;
+  }
+
+  public function newConnectionRequest ($connectedUser,$initiatingUser,$connectionId) {
+    $msg = (new TemplatedEmail())
+      ->from(new Address($this->from_addr, $this->from_name))
+      ->to($connectedUser->getEmail())
+      ->subject('[Questy Notification] New User Safety Report')
+      ->htmlTemplate('emails/newFriendRequest.html.twig')
+      ->textTemplate('emails/newFriendRequest.txt.twig')
+      ->context([
+        'username'=>$initiatingUser->getUsername(),
+        'connectionId'=>$connectionId
+      ]);
+      // TODO: should this have a token, like a password reset, if folks can accept/ignore via email?
     return $msg;
   }
 }

@@ -28,15 +28,17 @@ class ConnectionListener
   }
 
   public function preUpdate(Connection $connection) {
-    $connection->setCreatedAt(new DateTime());
+    //$connection->setCreatedAt(new DateTime());
     $connection->setChangedAt(new DateTime());
   }
 
   public function postPersist(Connection $connection): void
   {
-      //$connection_email = (new MailerService)->reportSubmitted($connection);
-      //$this->mailer->send($connection_email);
-      //$receipt_email = (new MailerService)->reportReceipt($connection);
-      //$this->mailer->send($receipt_email);
+    if ($connection->getStatus() == 'pending') {
+      $connectedUser = $this->entityManager->getRepository(User::class)->findOneBy(['id'=>$connection->getConnectedUserId()]);
+      $initiatingUser = $this->token_storage->getToken()->getUser();
+      $connection_email = (new MailerService)->newConnectionRequest($connectedUser,$initiatingUser,$connection->getId());
+      $this->mailer->send($connection_email);
+    }
   }
 }

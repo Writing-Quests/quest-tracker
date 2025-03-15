@@ -1,14 +1,14 @@
+import PropTypes from 'prop-types'
 import { useContext,useState,useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { WarningContainer, ContentContainer, ContentBlock, SuccessContainer,ErrorContainer, NeutralContainer } from '../Containers'
+import { useSearchParams } from 'react-router-dom'
+import { ContentContainer, ContentBlock, ErrorContainer } from '../Containers'
 import styled from 'styled-components'
 import context from '../../services/context'
 import Page from '../Page'
 import Notices from '../Notices'
 import Loading from '../Loading'
 import api from '../../services/api'
-import Input, { SectionOptions, OptionButton, Button } from '../Forms/Input'
-import InputGroup from '../Forms/InputGroup'
+import { SectionOptions, OptionButton, Button } from '../Forms/Input'
 
 const { LoggedInUserContext } = context
 
@@ -64,13 +64,19 @@ function UserActions ({type, connection,manageConnection}) {
       return <Button onClick={(e) => {e.preventDefault(); console.log('remove buddy') }}>Remove</Button>;
   }
 }
+UserActions.propTypes = {
+  type: PropTypes.string,
+  connection: PropTypes.object,
+  manageConnection: PropTypes.func
+}
 
-function ListConnections ({connections,type,title,manageConnection, ifnone=null}) {
+
+function ListConnections ({connections,setConnections,setSubmitWait,setWaitingText,type,title,ifnone=null}) {
   let username_field = 'connected_username';
   if (type == 'waiting') {
     username_field = 'initiating_username';
   }
-  const users = connections[type].map(u => <li key={u.id}><ProfileLink href={"/profile/"+ u[username_field]}>{u[username_field]}</ProfileLink><UserActions type={type} connection={u} manageConnection={manageConnection} /></li>)
+  const users = connections[type].map(u => <li key={u.id}><ProfileLink href={"/profile/"+ u[username_field]}>{u[username_field]}</ProfileLink><UserActions type={type} connection={u} setConnections={setConnections} setSubmitWait={setSubmitWait} setWaitingText={setWaitingText} /></li>)
   if (users.length > 0) {
     return (<>
         <h2>{title}</h2>
@@ -84,8 +90,60 @@ function ListConnections ({connections,type,title,manageConnection, ifnone=null}
     )
   }
 }
+ListConnections.propTypes = {
+  connections: PropTypes.object,
+  setConnections: PropTypes.func,
+  setSubmitWait: PropTypes.func,
+  setWaitingText: PropTypes.func,
+  type: PropTypes.string,
+  title: PropTypes.string,
+  ifnone: PropTypes.string
+}
 
-export default function Connections () {
+async function manageConnection (connections,setConnections,setSubmitWait,setWaitingText,type) {
+  setSubmitWait(true)
+  setWaitingText('Doing the thing');
+  console.log(connections[type])
+  console.log(connections);
+  //console.log(connections[currentList].indexOf(connection))
+  setTimeout(() => { setSubmitWait(false); setWaitingText('')},4000)
+  {/*
+  // TODO: we need to reset the page after changes on the interaction take place
+  let resp = null;
+  console.log('plz wait, how to present?????')
+  if (status == 'delete') {
+    resp = await api.delete(`/connection/${connectionId}`)
+
+  } else {
+    resp = await api.patch(`/connection/${connectionId}`,{
+      'status': status
+    })
+  }
+  if (resp) {
+    console.log('done!')
+    console.log(resp);
+  }
+    */}
+}
+
+export function ConnectionLink () {
+  // accept/decline via email
+  const [queryParameters] = useSearchParams()
+  const connectionId = queryParameters.get('conn')
+  const connectionStatus = queryParameters.get('status')
+  const user = useContext(LoggedInUserContext)
+  const [loading,setLoading] = useState(true)
+  const [error,setError] = useState(null)
+}
+
+export function Connections () {
+  const user = useContext(LoggedInUserContext)
+  const [loading,setLoading] = useState(true)
+  const [error,setError] = useState(null)
+  const [connections,setConnections] = useState(null)
+  const [section, setSection] = useState('pending')
+  const [submitWait,setSubmitWait] = useState(false)
+  const [waitingText,setWaitingText] = useState('')
   async function getUserConnections () {
     try {
       const resp = await api.get('connection/all')
@@ -97,38 +155,7 @@ export default function Connections () {
       setLoading(false);
     }
   }
-  async function manageConnection ({connections,setSubmitWait,setWaitingText}) {
-    setSubmitWait(true)
-    setWaitingText('Doing the thing');
-    //console.log(connections[currentList])
-    //console.log(connection);
-    //console.log(connections[currentList].indexOf(connection))
-    setTimeout(() => { setSubmitWait(false); setWaitingText('')},4000)
-    {/*
-    // TODO: we need to reset the page after changes on the interaction take place
-    let resp = null;
-    console.log('plz wait, how to present?????')
-    if (status == 'delete') {
-      resp = await api.delete(`/connection/${connectionId}`)
-  
-    } else {
-      resp = await api.patch(`/connection/${connectionId}`,{
-        'status': status
-      })
-    }
-    if (resp) {
-      console.log('done!')
-      console.log(resp);
-    }
-      */}
-  }
-  const user = useContext(LoggedInUserContext)
-  const [loading,setLoading] = useState(true)
-  const [error,setError] = useState(null)
-  const [connections,setConnections] = useState(null)
-  const [section, setSection] = useState('pending')
-  const [submitWait,setSubmitWait] = useState(false)
-  const [waitingText,setWaitingText] = useState('')
+ 
   useEffect(() => {
     try {
       getUserConnections(user.username)
@@ -167,20 +194,20 @@ export default function Connections () {
           </SectionOptions>
 
             <ToggledSection selected={(section === 'pending')}>
-              <ListConnections connections={connections} type="waiting" title="Your Incoming Requests" ifnone="You don't have any connections waiting for approval." manageConnection={manageConnection} />
-              <ListConnections connections={connections} type="pending" title="Your Outgoing Requests" manageConnection={manageConnection} />
+              <ListConnections connections={connections} type="waiting" title="Your Incoming Requests" ifnone="You don't have any connections waiting for approval."  setConnections={setConnections} setSubmitWait={setSubmitWait}  setWaitingText={setWaitingText} />
+              <ListConnections connections={connections} type="pending" title="Your Outgoing Requests"  setConnections={setConnections} setSubmitWait={setSubmitWait}  setWaitingText={setWaitingText} />
             </ToggledSection>
 
             <ToggledSection selected={(section === 'buddies')}>
-              <ListConnections connections={connections} type="mutual" title="Your Mutual Buddies" ifnone="No mutual buddies (yet)." manageConnection={manageConnection} />
+              <ListConnections connections={connections} type="mutual" title="Your Mutual Buddies" ifnone="No mutual buddies (yet)."  setConnections={setConnections} setSubmitWait={setSubmitWait}  setWaitingText={setWaitingText} />
             </ToggledSection>
 
             <ToggledSection selected={(section === 'following')}>
-              <ListConnections connections={connections} type="following" title="Users You Follow" ifnone="You&apos;re not following any users (yet)." manageConnection={manageConnection()} />
+              <ListConnections connections={connections} type="following" title="Users You Follow" ifnone="You&apos;re not following any users (yet)." manageConnection={manageConnection} />
             </ToggledSection>
 
             <ToggledSection selected={(section === 'blocked')}>
-              <ListConnections connections={connections} type="blocked" title="Blocked Users" ifnone="You haven&apos;t blocked any users." manageConnection={manageConnection} />
+              <ListConnections connections={connections} type="blocked" title="Blocked Users" ifnone="You haven&apos;t blocked any users."  setConnections={setConnections} setSubmitWait={setSubmitWait}  setWaitingText={setWaitingText} />
             </ToggledSection>
         </ContentBlock>
       </ContentContainer>
