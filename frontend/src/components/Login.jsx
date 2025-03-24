@@ -37,7 +37,8 @@ function PasswordResetForm() {
     setLoading(true)
     setError(null)
     try {
-      const apiResult = await api.post('password/request', {email})
+      const apiResult = await api.post('password/$reset/', {email})
+      console.log(apiResult)
       if (!apiResult.data?.emailSent) { // email not sent
         const errorMessage = apiResult.data.errors?.[0]?.text || "password reset request wasn't processed"
         setError(`Error: ${errorMessage}`)

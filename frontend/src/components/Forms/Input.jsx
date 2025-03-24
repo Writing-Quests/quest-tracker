@@ -358,7 +358,9 @@ Input.propTypes = {
   buttonType: PropTypes.string,
 }
 
-export function Button({type, inputType, ...props}) {
+// Including isLoading in destructured properties to remove it from being passed to the button DOM element (and making React mad)
+//eslint-disable-next-line react/prop-types, no-unused-vars
+export function Button({type, inputType, isLoading, ...props}) {
   switch(type) {
     case 'outline':
       return <OutlineButton type={inputType} {...props} />

@@ -34,6 +34,7 @@ export function UserVerifyEmail () {
         resp = await api.get('user/$verify', {params:
           {e: email, t: token, type: 'verify-email'}
         })
+        // TODO: 2024-01-10: the verification was successful, but threw an error: couldn't read resp.data.verified. need to double-check what comes in on the resp.data?
         if (resp.data.verified === true) {
           message = {type: 'success', text: `Your email address (${email}) has been verified!`}
         } else {

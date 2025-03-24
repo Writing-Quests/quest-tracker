@@ -1,64 +1,91 @@
 <?php
 namespace App\Service;
 
+use DateTime;
 use Symfony\Component\Mime\Email;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mime\Address;
+use DateTimeImmutable;
 
 class MailerService {
   protected string $from_name;
   protected string $from_addr;
-  protected string $settingsURL;
-  // I had trouuble getting this to pull in the MailerInterface on it's own, but it may work if we just pass it the mailer directly.
+  protected string $currentDateTimeString;
   public function __construct()
   {
       $this->from_name = 'Writing Quests';
       $this->from_addr = 'no-reply@writingquests.org';
-      $this->settingsURL = '/settings';
+      $this->currentDateTimeString = (new DateTimeImmutable())->format('F jS, Y \a\t g:i a \(e\)');
       return $this;
   }
-  // TODO: look up the twig integration for email for formatting - https://symfony.com/doc/current/mailer.html#mailer-twig 
-  // TODO: working with HTML to plain text; which is the more logical place to start? 
-  public function sendEmailVerification ($username, $email, $verifyEmailURL, $expiresAt, $newAccount=false) {
+
+  public function sendEmailVerification ($user, $email, $verifyEmailURL, $expiresAt, $newAccount=false) {
     // used for both new accounts and resending a verification when the email hasn't changed
+    $username = $user->getUsername();
+    $timezone = $user->getTimezone();
     // FIXME: maybe; this currently shows in UTC. Appended that to the timestamp for clarity.
     $expirationString = $expiresAt->format('F jS, Y \a\t g:i a \(e\)');
-    $bodyHTML = '<p>';
-    if ($newAccount) {
-      // TODO: do we have a "welcome, new users?" sort of FAQ?
-      $bodyHTML .= 'Welcome to the Novel Quests tracker!</b></p><p>Your user account (' . $username . ') has been created. ';
-    }
-    $bodyHTML .= 'Please verify your email address by clicking the link below, or copy/pasting it into the browser:</p><p><a href="'. $verifyEmailURL .'">'. $verifyEmailURL . '</a></p><p>This link will expire on ' . $expirationString . '. If this link as expired, you can request a new one. See <a href="'. $this->settingsURL .'">the "Settings" page</a> on the tracker site.</p><p>Happy creating!</p>';
-    $msg = (new Email())
-      ->from($this->from_addr)
+    $msg = (new TemplatedEmail())
+      ->from(new Address($this->from_addr, $this->from_name))
       ->to($email)
-      ->subject('[Writing Quests] Verify Your Email Address')
-      ->html($bodyHTML);
+      ->subject('[Questy Notification] Verify Your Email Address')
+      ->htmlTemplate('emails/verifyEmail.html.twig')
+      ->textTemplate('emails/verifyEmail.txt.twig')
+      ->context([
+          'username'=>$username,
+          'verifyEmailURL'=>$verifyEmailURL,
+          'datetimerequested'=>$this->currentDateTimeString,
+          'datetimerexpires'=>$expirationString,
+          'newaccount'=>$newAccount,
+          'emailchange'=>false
+        ]);
     return $msg;
   }
   
-  public function changedEmailVerification ($username, $email, $oldEmail, $verifyEmailURL, $expiresAt) {
+  public function changedEmailVerification ($user, $email, $oldEmail, $verifyEmailURL, $expiresAt) {
+    $username = $user->getUsername();
+    $timezone = $user->getTimezone();
     // FIXME: maybe; this currently shows in UTC. Appended that to the timestamp for clarity.
     $expirationString = $expiresAt->format('F jS, Y \a\t g:i a \(e\)');
-    $bodyHTML = '<p>The email address connected to your Novel Quests tracker account (' . $username . ') has been changed.</p><p>Please verify your email address by clicking the link below, or copy/pasting it into the browser:</p><p><a href="'. $verifyEmailURL .'">'. $verifyEmailURL . '</a></p><p>This link will expire on ' . $expirationString . '. If this link as expired, you can request a new one. See <a href="'. $this->settingsURL .'">the "Settings" page</a> on the tracker site.</p><p>Happy creating!</p>';
-    $msg = (new Email())
-      ->from($this->from_addr)
+    $msg = (new TemplatedEmail())
+      ->from(new Address($this->from_addr, $this->from_name))
       ->to($email)
-      ->subject('[Writing Quests] Verify Your Email Address')
-      ->html($bodyHTML); 
+      ->subject('[Questy Notification] Verify Your Email Address')
+      ->htmlTemplate('emails/verifyEmail.html.twig')
+      ->textTemplate('emails/verifyEmail.txt.twig')
+      ->context([
+          'username'=>$username,
+          'verifyEmailURL'=>$verifyEmailURL,
+          'timezone'=>$timezone,
+          'datetimerequested'=>$this->currentDateTimeString,
+          'datetimerexpires'=>$expirationString,
+          'newaccount'=>false,
+          'emailchange'=>true,
+          'newemail'=>$email,
+          'oldemail'=>$oldEmail
+        ]);
     return $msg;
   }
 
-  public function createPasswordReset ($email, $resetPasswordURL) {
-    $msg = (new Email())
-      ->from($this->from_addr)
+  public function createPasswordReset ($user, $email, $resetPasswordURL) {
+    $username = $user->getUsername();
+    $timezone = $user->getTimezone();
+    $expiresAt = (new DateTimeImmutable('now +24 hours'))->format('F jS, Y \a\t g:i a \(e\)');
+    $msg = (new TemplatedEmail())
+      ->from(new Address($this->from_addr, $this->from_name))
       ->to($email)
-      ->subject('[Writing Quests] Reset Your Password')
-      ->text('Reset the password for your Novel Quest account by clicking the link below, or copy/pasting it into the browser:\n\n' . $resetPasswordURL . '\n\nThis link will expire in 24 hours. No changes will be able to your password unless you use this link.')
-      ->html('<div><p>Reset the password for your Novel Quest account by clicking the link below, or copy/pasting it into the browser:<p>' . $resetPasswordURL . '<p>This link will expire in 24 hours. No changes will be able to your password unless you use this link.</p></div>'); 
+      ->subject('[Questy Notification] Password Reset Request')
+      ->htmlTemplate('emails/passwordReset.html.twig')
+      ->textTemplate('emails/passwordReset.txt.twig')
+      ->context([
+          'username'=>$username,
+          'resetURL'=>$resetPasswordURL,
+          'timezone'=>$timezone,
+          'datetimerequested'=>$this->currentDateTimeString,
+          'datetimeexpires'=>$expiresAt
+        ]);
     return $msg;
   }
-
 
   public function notificationPasswordChange ($email) {
     $msg = (new Email())

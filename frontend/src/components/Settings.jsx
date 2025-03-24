@@ -141,6 +141,8 @@ export default function Settings () {
     try {
       setLoading(true)
       const resp = await api.post('user/$resend',{...profile})
+      console.log(resp)
+      console.log(resp.data.sent)
       if (resp.data.sent === true) {
         setNotice('Sent new verification email to ' + profile.unverified_email + '.')
         setVerificationHidden(true)

@@ -1,0 +1,22 @@
+{% extends 'base.email.html' %}
+{% block content %}
+{% if newaccount %}
+<p><b>Welcome to Questy!</b> Questy is a project tracking tool from the folks behind <a href="https://www.writingquests.org">Writing Quests</a>. You can learn more about who we are at <a href="https://questy.writingquests.org/about/" title="Questy: About the Questy Tracker">"About the Questy Tracker"</a> and <a href="https://www.writingquests.org/about/" title="Writing Quests website: About Writing Quests">"About Writing Quests."</a></p>
+{% elseif emailchange %}
+<p>Hello! The email change for your Questy account (from {{ oldemail }} to {{ newemail }}) is pending verification.</p>
+{% else %}
+<p>Hello! The email address for your Questy account needs to be verified.</p>
+{% endif %}
+
+<p>Please verify your email address by clicking the link below, or copy/pasting it into the browser:</p>
+
+<p><a href="{{ verifyEmailURL }}">{{ verifyEmailURL }}</a></p>
+
+<p>This link will expire on {{ datetimerexpires }}. If this link is expired, you can request a new on via <a href="https://questy.writingquests.org/settings" title="Questy: User Settings">the user settings page</a> on the tracker site.</p>
+
+{% if newaccount %}
+<p>Happy creating!</p>
+{% else %}
+<p>Thank you!</p>
+{% endif %}
+{% endblock content %}
