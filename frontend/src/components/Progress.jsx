@@ -7,6 +7,8 @@ import { fireworks, Confetti } from '../services/confetti'
 import Modal from 'react-modal'
 import Certificate from './Certificate'
 import UpdateProjectProgress from './UpdateProjectProgress'
+import { ErrorContainer } from './Containers'
+import Loading from './Loading'
 
 function getUnitText(unit, val) {
   switch(unit) {
@@ -82,42 +84,7 @@ function EditProgressInner({project, goals, allowEditing, refetch}) {
   return <div>
     <ProgressNumericDisplay progress={project.progress} />
     {allowEditing && <UpdateProjectProgress project={project} refetch={refetch} />}
-    {/*
-    <p style={{fontSize: '1.2em'}}>
-      <strong>{Number(goal.current_value).toLocaleString() || 0}</strong> out of {Number(goal.goal).toLocaleString()} {goal.units}
-      &nbsp;<small>({Number(goal.goal_progress_percent).toLocaleString()}% done{goal.goal_progress_percent >= 100 && <strong onClick={handleFireworks}><em>&nbsp;Completed! 🎉</em></strong>})</small>
-      {goal.goal_progress_percent >= 100 && <Button onClick={triggerCelebration}>Download your certificate</Button>}
-    </p>
-    {goal.goal_progress_percent >= 100 && <Modal
-      isOpen={modalIsOpen}
-      onRequestClose={() => setModalIsOpen(false)}
-      contentLabel="Example Modal"
-      style={{content: {
-        width: '700px',
-        maxWidth: '90vw',
-        height: '500px',
-        left: '50%',
-        top: '50%',
-        transform: 'translateX(-50%) translateY(-50%)',
-      }, overlay: {
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        backdropFilter: 'blur(2px)',
-      }}}
-    >
-      <button onClick={() => setModalIsOpen(false)} style={{
-        backgroundColor: '#eee',
-        border: 'none',
-        borderRadius: '3px',
-        fontWeight: 'bold',
-        position: 'absolute',
-        padding: '10px',
-        cursor: 'pointer',
-      }}>x</button>
-      <div style={{fontSize: '2rem', fontWeight: 'bold', textAlign: 'center'}}>🥳 Congratulations! 🥳</div>
-      <Certificate project={project} />
-    </Modal>}
-    */}
-    {(parseFloat(goal.current_value) > 0) && false && <ProgressChart goal={goal} />}
+    {Object.keys(project.progress).length && <ProgressChart project={project} />}
   </div>
 }
 EditProgressInner.propTypes = {
@@ -148,8 +115,8 @@ export default function Progress({project, allowEditing, refetch}) {
     fetchGoals()
   }, [project, fetchGoals])
   return <>
-    {loading && <div>Loading&hellip;</div>}
-    {(error && !data) && <div>ERROR: {JSON.stringify(error)}</div>}
+    {loading && <Loading />}
+    {(error && !data) && <ErrorContainer>ERROR: {JSON.stringify(error)}</ErrorContainer>}
     {(data?.[0].start_date && data?.[0].end_date) &&
       <EditProgressInner project={project} goals={data} refetchGoal={fetchGoals} allowEditing={allowEditing} refetch={refetch} />
     }
