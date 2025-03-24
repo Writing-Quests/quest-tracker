@@ -348,7 +348,7 @@ export default function ProgressChart({project}) {
   return <div>
     {loading && <Loading />}
     {(error && !data) && <ErrorContainer>ERROR: {JSON.stringify(error)}</ErrorContainer>}
-    {progressData && <TabContainer>
+    {progressData && types.length > 1 && <TabContainer>
       {types.map((t, i) =>
         <Tab key={i} href='#' onClick={makeTabClickHandler(i)} data-selected={i === graphIndex}>
           <strong>{t.type}</strong><br /><small>{t.units}</small>
