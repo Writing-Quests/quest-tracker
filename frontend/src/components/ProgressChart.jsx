@@ -48,6 +48,42 @@ const TooltipDate = styled.span`
   font-weight: bold;
 `
 
+const TabContainer = styled.div`
+  min-width: 100%;
+  overflow-x: scroll;
+  display: flex;
+  flex-direction: row;
+  margin-top: 10px;
+`
+
+const Tab = styled.a`
+  display: block;
+  flex: 1;
+  max-width: 200px;
+  text-align: center;
+  color: black;
+  text-decoration: none;
+  text-transform: uppercase;
+  line-height: 1;
+  &:hover {
+    color: black;
+    text-decoration: none;
+  }
+  margin: 0 10px;
+  padding: 10px 3px;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(to top, #ddd 0, #eee 7px, #eee 100%);
+  opacity: 0.9;
+  transition: opacity 0.2s
+  &:hover {
+    opacity: 1;
+  }
+  &[data-selected="true"] {
+    background: white;
+    opacity: 1;
+  }
+`
+
 //const TooltipAboveGoal = styled.span`
   //font-weight: bold;
   //color: green;
@@ -273,6 +309,7 @@ export default function ProgressChart({project}) {
   const [data, setData] = useState()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState()
+  const [graphIndex, setGraphIndex] = useState(0)
   const fetchProject = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -288,22 +325,37 @@ export default function ProgressChart({project}) {
   useEffect(() => {
     fetchProject()
   }, [project, fetchProject])
-  const progressData = useMemo(() => {
+  const [progressData, types] = useMemo(() => {
     const summary = {}
-    if(!data) { return null }
+    const typesSet = new Set()
+    if(!data) { return [null, null] }
     for(const record of data) {
+      typesSet.add(JSON.stringify({type: record.type, units: record.units}))
       const entryType = ((summary[record.type] ??= {})[record.units] ??= {})
       const day = record.entry_date.substring(0, DATE_LENGTH)
       entryType[day] ??= 0
       entryType[day] += Number(record.value)
     }
-    return summary
+    const types = Array.from(typesSet).map(el => JSON.parse(el))
+    return [summary, types]
   }, [data])
+  function makeTabClickHandler(i) {
+    return (e) => {
+      e.preventDefault()
+      setGraphIndex(i)
+    }
+  }
   return <div>
     {loading && <Loading />}
     {(error && !data) && <ErrorContainer>ERROR: {JSON.stringify(error)}</ErrorContainer>}
-    {progressData && JSON.stringify(progressData)}
-    {progressData && <ProgressChartSingle progress={progressData.writing.words} type={'writing'} units={'words'} />}
+    {progressData && <TabContainer>
+      {types.map((t, i) =>
+        <Tab key={i} href='#' onClick={makeTabClickHandler(i)} data-selected={i === graphIndex}>
+          <strong>{t.type}</strong><br /><small>{t.units}</small>
+        </Tab>
+      )}
+    </TabContainer>}
+    {progressData && <ProgressChartSingle progress={progressData[types[graphIndex].type][types[graphIndex].units]} type={types[graphIndex].type} units={types[graphIndex].units} />}
   </div>
 }
 ProgressChart.propTypes = {

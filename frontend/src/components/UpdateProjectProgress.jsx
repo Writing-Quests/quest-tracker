@@ -19,7 +19,7 @@ const ProgressForm = styled.form`
   border-bottom: 5px solid black;
   & label {
     display: grid;
-    grid-template-columns: 50px auto;
+    grid-template-columns: 100px auto;
     border-radius: 0;
     border: none;
     background: transparent;
@@ -34,6 +34,8 @@ const ProgressForm = styled.form`
   }
   & span {
     top: 0 !important;
+    text-align: right;
+    padding-right: 10px;
   }
   & select {
     background-color: white;
