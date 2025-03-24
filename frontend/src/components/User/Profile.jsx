@@ -157,6 +157,8 @@ function ProjectsList({username,setUpModal}) {
   }, [username, refetchProjects])
   const { activeProjects, pastProjects, futureProjects } = useMemo(() => {
     if(!data) { return {} }
+    // TODO: incorporate goals
+    return { activeProjects: data, pastProjects: [], futureProjects: [] }
     const activeProjects = []
     const pastProjects = []
     const futureProjects = []
@@ -196,8 +198,8 @@ function ProjectsList({username,setUpModal}) {
       {activeProjects.map((p, i) => <div key={p.code}>
         <div>
           <h2 style={{fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', marginBottom: 0}}>{p.title ? p.title : <em>untitled project</em>}
+            {isMyProfile && <span style={{fontSize: '0.9rem', fontWeight: 'bold', fontFamily: '"Poppins", sans-serif', display: 'inline-block', marginLeft: '10px'}}>&nbsp;<Link to={`/project/${p.code}`}>Edit</Link></span>}
           </h2>
-          {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.code}`}>Edit</Link></small></>}
           {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} refetch={() => setRefetchProjects(refetchProjects+1)} />}
           {(!isMyProfile && loggedIn) && <div style={{gridColumnStart: '1', gridColumnEnd: 'span 2', textAlign: 'right', padding: '10px'}}><ReportLink onClick={() => { setUpModal('project',p.code)}} color="#ffffff"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 256"><path d="M232 56v120a8 8 0 0 1-2.76 6c-15.28 13.23-29.89 18-43.82 18c-18.91 0-36.57-8.74-53-16.85C105.87 170 82.79 158.61 56 179.77V224a8 8 0 0 1-16 0V56a8 8 0 0 1 2.77-6c36-31.18 68.31-15.21 96.79-1.12C167 62.46 190.79 74.2 218.76 50A8 8 0 0 1 232 56"/></svg> Report</ReportLink></div>}
         </div>

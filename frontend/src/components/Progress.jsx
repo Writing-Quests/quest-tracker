@@ -5,10 +5,36 @@ import usePrev from '../services/usePrev'
 import ProgressChart from './ProgressChart'
 import { fireworks, Confetti } from '../services/confetti'
 import Modal from 'react-modal'
+import styled from 'styled-components'
 import Certificate from './Certificate'
 import UpdateProjectProgress from './UpdateProjectProgress'
 import { ErrorContainer } from './Containers'
 import Loading from './Loading'
+
+const NumericDisplayContainer = styled.ul`
+  display: grid;
+  grid-template-columns: repeat(4, 25%);
+  grid-gap: 10px;
+  margin: 20px 0;
+  padding: 0;
+  list-style: none;
+`
+const NumericDisplayItem = styled.li`
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 5px;
+  background-color: rgba(255,255,255,0.05);
+  padding: 8px 14px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+  & > strong {
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+  }
+`
 
 function getUnitText(unit, val) {
   switch(unit) {
@@ -49,18 +75,20 @@ function ProgressNumericDisplay({progress}) {
     return <div>Time to get started: add your first progress entry!</div>
   }
 
-  return <ul>
+  return <NumericDisplayContainer>
     {values.map((val, i) =>
-      <li key={i}><strong>{val.val}</strong> {val.unit} {val.type}</li>
+      <NumericDisplayItem key={i}>
+        <strong>{val.val}</strong> {val.unit} {val.type}
+      </NumericDisplayItem>
     )}
-  </ul>
+  </NumericDisplayContainer>
 }
 ProgressNumericDisplay.propTypes = {
   progress: PropTypes.object.isRequired,
 }
 
 function EditProgressInner({project, goals, allowEditing, refetch}) {
-  const goal = goals[0]
+  //const goal = goals[0]
   //const [fireworksRunning, setFireworksRunning] = useState(false)
   //const [modalIsOpen, setModalIsOpen] = useState(false)
   //const prevProgressPercent = usePrev(goal.goal_progress_percent)
@@ -84,7 +112,7 @@ function EditProgressInner({project, goals, allowEditing, refetch}) {
   return <div>
     <ProgressNumericDisplay progress={project.progress} />
     {allowEditing && <UpdateProjectProgress project={project} refetch={refetch} />}
-    {Object.keys(project.progress).length && <ProgressChart project={project} />}
+    {Boolean(Object.keys(project.progress).length) && <ProgressChart project={project} />}
   </div>
 }
 EditProgressInner.propTypes = {
