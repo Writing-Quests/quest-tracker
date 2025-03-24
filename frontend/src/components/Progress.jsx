@@ -13,11 +13,12 @@ import Loading from './Loading'
 
 const NumericDisplayContainer = styled.ul`
   display: grid;
-  grid-template-columns: repeat(4, 25%);
+  grid-template-columns: repeat(4, 1fr);
   grid-gap: 10px;
   margin: 20px 0;
   padding: 0;
   list-style: none;
+  justify-content: stretch;
 `
 const NumericDisplayItem = styled.li`
   border: 1px solid rgba(255,255,255,0.2);

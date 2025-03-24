@@ -217,7 +217,7 @@ function ProgressChartSingle({progress, type, units}) {
     const endDateObj = dayjs(dates[dates.length-1])
     const numDays = endDateObj.diff(startDateObj, 'd') + 1
     const ret = []
-    for(let day = 0; day <= numDays; day++) {
+    for(let day = 0; day < numDays; day++) {
       const toPush = { day: day+1 }
       const dayObj = startDateObj.add(day, 'day')
       const dayStr = dayObj.format('YYYY-MM-DD')
@@ -247,6 +247,7 @@ function ProgressChartSingle({progress, type, units}) {
     numYAxisTicks = Math.floor(yAxisLimit / tickWidth)
   }
   numYAxisTicks = numYAxisTicks + 1
+  console.log(data)
   return <ChartContainer>
     <ResponsiveContainer width='100%' height={500} debounce={250}>
       <LineChart data={data} margin={{left: 30, bottom: 20, right: 30, top: 20}}>
