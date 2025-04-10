@@ -90,9 +90,16 @@ class Project
     #[ApiProperty(identifier: true, writable: false)]
     private ?Ulid $code = null;
 
+    /**
+     * @var Collection<int, ProgressEntry>
+     */
+    #[ORM\OneToMany(targetEntity: ProgressEntry::class, mappedBy: 'project', orphanRemoval: true)]
+    private Collection $progressEntries;
+
     public function __construct()
     {
         $this->projectGoals = new ArrayCollection();
+        $this->progressEntries = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -239,5 +246,56 @@ class Project
         'title'=>$this->getTitle(),
         'details'=>$this->getDetails()
       ];
+    }
+
+    /**
+     * @return Collection<int, ProgressEntry>
+     */
+    #[Ignore]
+    public function getProgressEntries(): Collection
+    {
+        return $this->progressEntries;
+    }
+
+    #[ApiProperty]
+    public function getProgress(): array
+    {
+        $ret = array();
+        foreach($this->progressEntries as $entry) {
+            if(!isset($ret[$entry->getType()])) {
+                $ret[$entry->getType()] = array();
+            }
+            if(!isset($ret[$entry->getType()][$entry->getUnits()])) {
+                $ret[$entry->getType()][$entry->getUnits()] = "0";
+            }
+            $ret[$entry->getType()][$entry->getUnits()] = bcadd(
+                $ret[$entry->getType()][$entry->getUnits()],
+                $entry->getValue(),
+                2
+            );
+        }
+        return $ret;
+    }
+
+    public function addProgressEntry(ProgressEntry $progressEntry): static
+    {
+        if (!$this->progressEntries->contains($progressEntry)) {
+            $this->progressEntries->add($progressEntry);
+            $progressEntry->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProgressEntry(ProgressEntry $progressEntry): static
+    {
+        if ($this->progressEntries->removeElement($progressEntry)) {
+            // set the owning side to null (unless already changed)
+            if ($progressEntry->getProject() === $this) {
+                $progressEntry->setProject(null);
+            }
+        }
+
+        return $this;
     }
 }

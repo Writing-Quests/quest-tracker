@@ -86,13 +86,17 @@ function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
   return <Page>
     <ContentContainer>
       <FormContainer onSubmit={handleSubmit}>
-        <ContentBlock>
-          <h1>{project ? 'Edit' : 'New'} Project</h1>
-          {justSaved && <SuccessContainer>Saved project!</SuccessContainer>}
-          {error && <ErrorContainer error={error} />}
-          {saving && <Loading inline={true} text='Saving' />}
-          <Input type='text' label='Title' placeholder='Your project title' value={title} onChange={e => setTitle(e.target.value)} {...inputProps} />
-        </ContentBlock>
+        <AnimatedContainer color='#c46415'>
+          <ContentBlock>
+            <h1>{project ? 'Edit' : 'New'} Project</h1>
+            {justSaved && <SuccessContainer>Saved project!</SuccessContainer>}
+            {error && <ErrorContainer error={error} />}
+            {saving && <Loading inline={true} text='Saving' />}
+            <Input type='text' label='Title' placeholder='Your project title' value={title} onChange={e => setTitle(e.target.value)} {...inputProps} />
+            <Input type='submit' value='Save' {...inputProps} />
+          </ContentBlock>
+        </AnimatedContainer>
+        {/* TODO: Goals
         <AnimatedContainer color='#c46415'>
           <ContentBlock>
             <h2 style={{textAlign: 'center'}}>Goal</h2>
@@ -106,7 +110,7 @@ function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
                 <option value="words">Words</option>
                 <option value="hours">Hours</option>
               </Input>
-              {/* TODO: Add thousands separators. But this will have to change to type text with some crazy logic */}
+              // TODO: Add thousands separators. But this will have to change to type text with some crazy logic
               <Input
                 type='number'
                 min='0'
@@ -130,9 +134,7 @@ function EditProjectInner({project, goals=[], onSave, justSaved, saving}) {
             </DurationInfo>}
           </ContentBlock>
         </AnimatedContainer>
-        <ContentBlock>
-          <Input type='submit' value='Save' {...inputProps} />
-        </ContentBlock>
+        */}
       </FormContainer>
     </ContentContainer>
   </Page>
@@ -159,9 +161,9 @@ export default function EditProject() {
       setError(null)
       try {
         if(projectCode) {
-          const resp = await api.get(`/projects/${projectCode}`)
+          const resp = await api.get(`/project/${projectCode}`)
           setProject(resp.data)
-          const resp2 = await api.get(`/projects/${projectCode}/goals`)
+          const resp2 = await api.get(`/project/${projectCode}/goals`)
           setGoals(resp2.data?.['hydra:member'] || [])
         }
       } catch (e) {

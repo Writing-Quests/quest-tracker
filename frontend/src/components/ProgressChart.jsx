@@ -1,9 +1,14 @@
-import { useMemo, Fragment } from 'react'
+import { useMemo, useEffect, useCallback, useState, Fragment } from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
 import dayjs from 'dayjs'
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import api from '../services/api'
+import { ErrorContainer } from './Containers'
+import Loading from './Loading'
 
+
+const DATE_LENGTH = '2025-01-01'.length
 const DAYS_PER_WEEK = 7
 
 const ChartContainer = styled.div`
@@ -43,32 +48,71 @@ const TooltipDate = styled.span`
   font-weight: bold;
 `
 
-const TooltipAboveGoal = styled.span`
-  font-weight: bold;
-  color: green;
+const TabContainer = styled.div`
+  min-width: 100%;
+  overflow-x: scroll;
+  display: flex;
+  flex-direction: row;
+  margin-top: 10px;
 `
 
-function TooltipContent({goal, active, payload}) {
+const Tab = styled.a`
+  display: block;
+  flex: 1;
+  max-width: 200px;
+  text-align: center;
+  color: black;
+  text-decoration: none;
+  text-transform: uppercase;
+  line-height: 1;
+  &:hover {
+    color: black;
+    text-decoration: none;
+  }
+  margin: 0 10px;
+  padding: 10px 3px;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(to top, #ddd 0, #eee 7px, #eee 100%);
+  opacity: 0.9;
+  transition: opacity 0.2s
+  &:hover {
+    opacity: 1;
+  }
+  &[data-selected="true"] {
+    background: white;
+    opacity: 1;
+  }
+`
+
+//const TooltipAboveGoal = styled.span`
+  //font-weight: bold;
+  //color: green;
+//`
+
+function TooltipContent({progress, units, active, payload}) {
   if(!active || !payload[0]?.payload) { return null }
-  const {day, cumulative, dailyGoal} = payload[0].payload
-  const diff = cumulative - dailyGoal
-  const GoalDiffWrapper = diff >= 0 ? TooltipAboveGoal : Fragment
+  const {day, cumulative} = payload[0].payload
+  //const diff = cumulative - dailyGoal
+  //const GoalDiffWrapper = diff >= 0 ? TooltipAboveGoal : Fragment
+  const dates = Object.keys(progress).sort()
+  const startDateObj = dayjs(dates[0])
   return <TooltipDiv>
-    <TooltipDateContainer><TooltipDate>{dayjs(goal.start_date).add(day-1, 'd').format('MMMM D, YYYY')}</TooltipDate> (day {day})</TooltipDateContainer>
+    <TooltipDateContainer><TooltipDate>{startDateObj.add(day-1, 'd').format('MMMM D, YYYY')}</TooltipDate> (day {day})</TooltipDateContainer>
     {cumulative !== undefined && <div>
-      <strong style={{fontSize: '1rem'}}>{cumulative.toLocaleString()} {goal.units}</strong>
+      <strong style={{fontSize: '1rem'}}>{cumulative.toLocaleString()} {units}</strong>
       <br />
-      <GoalDiffWrapper>
+      {/*<GoalDiffWrapper>
         {diff > 0 && '+'}{diff.toLocaleString(undefined, {maximumFractionDigits: 1})}
-      </GoalDiffWrapper> {diff > 0 ? 'above goal' : 'below goal'}
+      </GoalDiffWrapper> {diff > 0 ? 'above goal' : 'below goal'}*/}
     </div>}
-    <div><em>Goal: {dailyGoal.toLocaleString(undefined, {maximumFractionDigits: 1})}</em></div>
+    {/*<div><em>Goal: {dailyGoal.toLocaleString(undefined, {maximumFractionDigits: 1})}</em></div>*/}
   </TooltipDiv>
 }
 TooltipContent.propTypes = {
   active: PropTypes.bool,
   payload: PropTypes.array,
-  goal: PropTypes.object.isRequired,
+  progress: PropTypes.object.isRequired,
+  units: PropTypes.string.isRequired,
 }
 
 function getOrderOfMagnitude(num) {
@@ -79,7 +123,7 @@ function formatNumber(n = 0) {
   return n.toLocaleString(undefined, {maximumFractionDigits: 1})
 }
 
-function yAxisTickFormatter(goal, value, index) {
+function yAxisTickFormatter(value, index) {
   if(index === 0) { return '' }
   const orderOfMagnitude = getOrderOfMagnitude(value)
   switch(orderOfMagnitude) {
@@ -111,15 +155,18 @@ XAxisTickLine.propTypes = {
 
 // We want at least 60px per tick
 const WIDTH_PER_TICK = 60
-function XAxisTick({x, y, payload, index, visibleTicksCount, goal, width}) {
+function XAxisTick({x, y, payload, index, visibleTicksCount, progress, width}) {
   if(x === undefined || y === undefined) { return null }
+  const dates = Object.keys(progress).sort()
+  const startDateObj = dayjs(dates[0])
+  const endDateObj = dayjs(dates[dates.length-1])
   if(index === 0) {
     // First day!
     return <>
       <XAxisTickLine x={x} y={y} major={true} />
       <g transform={`translate(${x},${y + 12})`}>
-        <text textAnchor='middle' y='1' fontWeight='bold' fontSize='0.9rem'>{dayjs(goal.start_date).format('MMM D')}</text>
-        <text textAnchor='middle' y='15' fontWeight='bold' fontSize='0.75rem'>{dayjs(goal.start_date).format('YYYY')}</text>
+        <text textAnchor='middle' y='1' fontWeight='bold' fontSize='0.9rem'>{startDateObj.format('MMM D')}</text>
+        <text textAnchor='middle' y='15' fontWeight='bold' fontSize='0.75rem'>{startDateObj.format('YYYY')}</text>
       </g>
     </>
   }
@@ -128,8 +175,8 @@ function XAxisTick({x, y, payload, index, visibleTicksCount, goal, width}) {
     return <>
       <XAxisTickLine x={x} y={y} major={true} />
       <g transform={`translate(${x},${y + 12})`}>
-        <text textAnchor='middle' y='1' fontWeight='bold' fontSize='0.9rem'>{dayjs(goal.end_date).format('MMM D')}</text>
-        <text textAnchor='middle' y='15' fontWeight='bold' fontSize='0.75rem'>{dayjs(goal.end_date).format('YYYY')}</text>
+        <text textAnchor='middle' y='1' fontWeight='bold' fontSize='0.9rem'>{endDateObj.format('MMM D')}</text>
+        <text textAnchor='middle' y='15' fontWeight='bold' fontSize='0.75rem'>{endDateObj.format('YYYY')}</text>
       </g>
     </>
   }
@@ -158,43 +205,40 @@ XAxisTick.propTypes = {
   payload: PropTypes.object,
   index: PropTypes.number,
   visibleTicksCount: PropTypes.number,
-  goal: PropTypes.object,
+  progress: PropTypes.object,
   width: PropTypes.number,
-
 }
 
-export default function ProgressChart({goal}) {
+function ProgressChartSingle({progress, type, units}) {
   const [data, largestValue] = useMemo(() => {
     let largestValue = 0
-    const startDateObj = dayjs(goal.start_date)
-    const endDateObj = dayjs(goal.end_date)
+    const dates = Object.keys(progress).sort()
+    const startDateObj = dayjs(dates[0])
+    const endDateObj = dayjs(dates[dates.length-1])
     const numDays = endDateObj.diff(startDateObj, 'd') + 1
-    const goalPerDay = goal.goal / numDays
     const ret = []
-    // 1-indexed loop!
-    for(let day = 1; day <= numDays; day++) {
-      const dailyGoal = day * goalPerDay
-      const toPush = { day, dailyGoal }
-      if(day <= goal.progress.length) {
-        toPush.daily = parseFloat(goal.progress[day-1]) || 0
-        if(day > 1) {
-          // Minus two due to get yesterday along with 0-indexing
-          toPush.cumulative = toPush.daily + ret[day-2].cumulative
-        } else {
-          toPush.cumulative = toPush.daily
-        }
-        largestValue = Math.max(largestValue, toPush.cumulative, toPush.daily, dailyGoal)
+    for(let day = 0; day < numDays; day++) {
+      const toPush = { day: day+1 }
+      const dayObj = startDateObj.add(day, 'day')
+      const dayStr = dayObj.format('YYYY-MM-DD')
+      toPush.daily = parseFloat(progress[dayStr]) || 0
+      if(day === 0) {
+        toPush.cumulative = toPush.daily
+      } else {
+        toPush.cumulative = toPush.daily + ret[day-1].cumulative
       }
+      largestValue = Math.max(largestValue, toPush.cumulative, toPush.daily)
       ret.push(toPush)
     }
     return [ret, largestValue]
-  }, [goal])
+  }, [progress])
   const duration = useMemo(() => {
-    const startDateObj = dayjs(goal.start_date)
-    const endDateObj = dayjs(goal.end_date)
+    const dates = Object.keys(progress).sort()
+    const startDateObj = dayjs(dates[0])
+    const endDateObj = dayjs(dates[dates.length-1])
     return endDateObj.diff(startDateObj, 'd') + 1
-  }, [goal])
-  const topValue = Math.max(parseFloat(goal.goal), largestValue)
+  }, [progress])
+  const topValue = largestValue
   const orderOfMagnitude = 10 ** getOrderOfMagnitude(topValue)
   const yAxisLimit = Math.ceil(topValue / orderOfMagnitude) * orderOfMagnitude
   let numYAxisTicks = Math.floor(yAxisLimit / orderOfMagnitude) // Floor should never actually be needed
@@ -203,18 +247,19 @@ export default function ProgressChart({goal}) {
     numYAxisTicks = Math.floor(yAxisLimit / tickWidth)
   }
   numYAxisTicks = numYAxisTicks + 1
+  console.log(data)
   return <ChartContainer>
     <ResponsiveContainer width='100%' height={500} debounce={250}>
       <LineChart data={data} margin={{left: 30, bottom: 20, right: 30, top: 20}}>
         <CartesianGrid stroke="#f6f6f6" />
-        <Line
+        {/*<Line
           type="monotone"
           stroke="#8cc66d"
           strokeWidth={1}
           dataKey="dailyGoal"
           dot={{r: 0, fill: '#8cc66d'}}
           activeDot={{r: 3}}
-        />
+        />*/}
         <Line
           type="monotone"
           stroke="#b83a14"
@@ -232,15 +277,15 @@ export default function ProgressChart({goal}) {
           domain={[1, duration]}
           interval={0}
           tickSize={4}
-          tick={<XAxisTick goal={goal} />}
+          tick={<XAxisTick progress={progress} />}
         />
         <YAxis
           domain={[0, yAxisLimit]}
           tickCount={numYAxisTicks}
           allowDecimals={false}
-          label={{value: (goal.units || 'words').toUpperCase(), position: 'left', angle: -90, ...axisLabelStyle}}
+          label={{value: (units || 'words').toUpperCase(), position: 'left', angle: -90, ...axisLabelStyle}}
           tick={{fill: '#333'}}
-          tickFormatter={yAxisTickFormatter.bind(this, goal)}
+          tickFormatter={yAxisTickFormatter}
           tickSize={4}
           minTickGap={1}
         />
@@ -248,13 +293,73 @@ export default function ProgressChart({goal}) {
           cursor={false}
           isAnimationActive={false}
           allowEscapeViewBox={{y: true}}
-          content={<TooltipContent goal={goal} />}
+          content={<TooltipContent progress={progress} units={units} />}
           coordinate={{ x: 100, y: 140 }}
         />
       </LineChart>
     </ResponsiveContainer>
   </ChartContainer>
 }
+ProgressChartSingle.propTypes = {
+  progress: PropTypes.object.isRequired,
+  type: PropTypes.string.isRequired,
+  units: PropTypes.string.isRequired,
+}
+
+export default function ProgressChart({project}) {
+  const [data, setData] = useState()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState()
+  const [graphIndex, setGraphIndex] = useState(0)
+  const fetchProject = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const resp = await api.get(`/project/${project.code}/progress`)
+      setData(resp.data?.['hydra:member'] || [])
+    } catch (e) {
+      setError(e)
+    } finally {
+      setLoading(false)
+    }
+  }, [project.code])
+  useEffect(() => {
+    fetchProject()
+  }, [project, fetchProject])
+  const [progressData, types] = useMemo(() => {
+    const summary = {}
+    const typesSet = new Set()
+    if(!data) { return [null, null] }
+    for(const record of data) {
+      typesSet.add(JSON.stringify({type: record.type, units: record.units}))
+      const entryType = ((summary[record.type] ??= {})[record.units] ??= {})
+      const day = record.entry_date.substring(0, DATE_LENGTH)
+      entryType[day] ??= 0
+      entryType[day] += Number(record.value)
+    }
+    const types = Array.from(typesSet).map(el => JSON.parse(el))
+    return [summary, types]
+  }, [data])
+  function makeTabClickHandler(i) {
+    return (e) => {
+      e.preventDefault()
+      setGraphIndex(i)
+    }
+  }
+  return <div>
+    {loading && <Loading />}
+    {(error && !data) && <ErrorContainer>ERROR: {JSON.stringify(error)}</ErrorContainer>}
+    {progressData && types.length > 1 && <TabContainer>
+      {types.map((t, i) =>
+        <Tab key={i} href='#' onClick={makeTabClickHandler(i)} data-selected={i === graphIndex}>
+          <strong>{t.type}</strong><br /><small>{t.units}</small>
+        </Tab>
+      )}
+    </TabContainer>}
+    {progressData && <ProgressChartSingle progress={progressData[types[graphIndex].type][types[graphIndex].units]} type={types[graphIndex].type} units={types[graphIndex].units} />}
+  </div>
+}
 ProgressChart.propTypes = {
-  goal: PropTypes.object.isRequired,
+  //goal: PropTypes.object.isRequired,
+  project: PropTypes.object.isRequired,
 }

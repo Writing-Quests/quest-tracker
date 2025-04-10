@@ -302,13 +302,14 @@ function ProjectsList({username,setUpModal}) {
   const [data, setData] = useState()
   const {isMyProfile} = useContext(ProfileContext)
   const loggedIn = (useContext(LoggedInUserContext) !== null)
+  const [refetchProjects, setRefetchProjects] = useState(0)
   useEffect(() => {
     if(!username) {
       setError("Need username to load projects")
       return
     }
     (async () => {
-      setLoading(true)
+      if(!data) { setLoading(true) }
       try {
         const resp = await api.get(`users/${username}/projects`)
         setData(resp.data['hydra:member'])
@@ -318,9 +319,11 @@ function ProjectsList({username,setUpModal}) {
         setLoading(false)
       }
     })()
-  }, [username])
+  }, [username, refetchProjects])
   const { activeProjects, pastProjects, futureProjects } = useMemo(() => {
     if(!data) { return {} }
+    // TODO: incorporate goals
+    return { activeProjects: data, pastProjects: [], futureProjects: [] }
     const activeProjects = []
     const pastProjects = []
     const futureProjects = []
@@ -357,12 +360,12 @@ function ProjectsList({username,setUpModal}) {
   return <>
     {Boolean(activeProjects.length) && <AnimatedContainer>
       <ContentBlock>
-      {activeProjects.map((p, i) => <>
-        <div key={p.code}>
+      {activeProjects.map((p, i) => <div key={p.code}>
+        <div>
           <h2 style={{fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', marginBottom: 0}}>{p.title ? p.title : <em>untitled project</em>}
+            {isMyProfile && <span style={{fontSize: '0.9rem', fontWeight: 'bold', fontFamily: '"Poppins", sans-serif', display: 'inline-block', marginLeft: '10px'}}>&nbsp;<Link to={`/project/${p.code}`}>Edit</Link></span>}
           </h2>
-          {isMyProfile && <>&nbsp;<small><Link to={`/project/${p.code}`}>Edit</Link></small></>}
-          {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} />}
+          {Boolean(p.goals?.length) && <Progress project={p} allowEditing={isMyProfile} refetch={() => setRefetchProjects(refetchProjects+1)} />}
           {(!isMyProfile && loggedIn) && 
             <InteractionHolder>
               <div style={{'flexGrow': 2, 'textAlign': 'right', 'width': '100%'}}><ReportLink onClick={() => { setUpModal('project',p.code)}} color="#ffffff"><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 256 
@@ -371,7 +374,7 @@ function ProjectsList({username,setUpModal}) {
           }
         </div>
         {(activeProjects.length - 1) !== i && <hr />}
-      </>)}
+      </div>)}
       </ContentBlock>
     </AnimatedContainer>}
     {isMyProfile && <ContentBlock>
@@ -380,8 +383,8 @@ function ProjectsList({username,setUpModal}) {
     {Boolean(futureProjects.length) && <AnimatedContainer color='#5B504E'>
       <h2>Upcoming Projects</h2>
       <ul>
-        {futureProjects.map(p =>
-          <li key={p.code}>
+        {futureProjects.map((p, i) =>
+          <li key={i}>
             <strong>{p.title ? p.title : <em>untitled project</em>}</strong>
             &nbsp;
             {p.goals?.[0] && <>

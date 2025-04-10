@@ -22,6 +22,12 @@ Symfony isn't connected to the Vite dev server. You can build the frontend webap
 **How do I access emails?**    
 For development, a "Mail Catcher" SMTP server runs with Docker/Lando and is automatically configured in Symfony. It will catch all emails and output them at http://localhost:1080. You can configure your own SMTP server in your `.env.local` file.
 
+**How do I make a new entity and migrate?**    
+`php bin/console make:entity`
+`php bin/console make:migration --formatted`
+`php bin/console doctrine:migrations:migrate`
+`php bin/console doctrine:migrations:migrate prev` // Undo the last migration
+
 # Deploy Instructions
 
 ## Locally:
