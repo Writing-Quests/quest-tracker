@@ -83,6 +83,7 @@ const Beta = styled.a`
   }
 `
 
+// TODO: 2025-04-04 - I think we may need to reconsider navigation when user is signed in, as we add complexity with user connections and groups
 function UserControls() {
   async function handleLogout(e) {
     e.preventDefault()
@@ -113,6 +114,7 @@ function StaticPages ({header=true}) {
     <Link to='/about'>{header ? 'About Questy' : 'About the Questy Tracker'}</Link><Spacer />
     <Link to='/privacy'>{ header ? 'Privacy' : 'Privacy Policy'}</Link>
     {!header && <><Spacer /><Link to='/terms'>Terms of Use</Link></>}
+    {!header && <><br /><Link to='/profiles/public'>View Public Users</Link></>}
     {user ? <><Spacer /><ProfileLink username={user.username} /></> : <><Spacer /><Link to ='/login'>Login</Link></>}
   </UserControlsLinks>
 }
@@ -121,13 +123,13 @@ StaticPages.propTypes = {
 }
 
 export default function Page({children}) {
-  // TODO: we should have some sort of "Hey, we use cookies" alert in the nearish future.
+  // TODO: we should have some sort of "Hey, we use cookies" alert. 
   const user = useContext(LoggedInUserContext)
   return <>
       <LogoContainer>
         <InvisibleLink to='/'><img src='/logo.svg' style={{maxWidth: '75px'}} /></InvisibleLink>
         <div style={{position: 'relative'}}>
-          <SiteTitle to='/'>Writing Quests</SiteTitle>
+          <SiteTitle to='/'>Questy Tracker</SiteTitle>
           <Beta href='/feedback' target='_blank' rel='noopener noreferrer'>Beta!</Beta>
           {user ? <UserControls /> : <StaticPages />}
         </div>

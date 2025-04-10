@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use App\Entity\Connection;
-use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -55,6 +54,19 @@ class ConnectionRepository extends ServiceEntityRepository
           FROM connection c 
           LEFT JOIN user u2 ON u2.id = c.connected_user_id
           WHERE c.initiating_user_id = :user_id AND c.status = "blocked";
+          ';
+          $resultSet = $conn->executeQuery($sql, ['user_id' => $user_id]);
+          return $resultSet->fetchAllAssociative();
+        }
+
+        public function getBlockedEitherDirection ($user_id): array {
+          $conn = $this->getEntityManager()->getConnection();
+          $sql = '
+          SELECT c.*, u1.username AS initiating_username, u2.username AS connected_username 
+          FROM connection c 
+          LEFT JOIN user u1 ON u1.id = c.initiating_user_id
+          LEFT JOIN user u2 ON u2.id = c.connected_user_id
+          WHERE (c.initiating_user_id = :user_id OR c.connected_user_id = :user_id) AND c.status = "blocked";
           ';
           $resultSet = $conn->executeQuery($sql, ['user_id' => $user_id]);
           return $resultSet->fetchAllAssociative();

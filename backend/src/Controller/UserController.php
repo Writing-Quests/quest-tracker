@@ -5,6 +5,7 @@ namespace App\Controller;
 use Exception;
 
 use App\Entity\User;
+use App\Entity\Connection;
 use App\Entity\LoginToken;
 use App\Service\MailerService;
 use DateTimeImmutable;
@@ -24,8 +25,15 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserController extends AbstractController
 {
+  public $entityManager;
+  public $mailer;
+  public function __construct(EntityManagerInterface $entityManager,MailerInterface $mailer)
+  {
+    $this->entityManager = $entityManager;
+    $this->mailer = $mailer;
+  }
   #[Route('/api/user/$create/', name: 'register_user', methods: ['POST'])]
-  public function create_user (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer, ValidatorInterface $validator): JsonResponse
+  public function create_user (Request $request, UserPasswordHasherInterface $passwordHasher, ValidatorInterface $validator): JsonResponse
   {
       $resp = [
         'errors' => []
@@ -33,14 +41,14 @@ class UserController extends AbstractController
       $POST = $request->getPayload();
       $email = $POST->get('email');
       $username = $POST->get('username');
-      $find_username = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+      $find_username = $this->entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
       if ($find_username) {
         $username_available = false;
         array_push($resp['errors'],['id'=>'usernameTaken', 'text'=>'Username is already in use.']);
       } else {
         $username_available = true;
       }
-      $find_email = $entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+      $find_email = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
       if ($find_email) {
         $email_available = false;
         array_push($resp['errors'],['id'=>'emailTaken', 'text'=>'Email address is already in use.']);
@@ -82,12 +90,12 @@ class UserController extends AbstractController
           if (0 !== count($violations)) {
             throw new Exception($violations);
           }
-          $entityManager->persist($verifyEmailToken);
-          $entityManager->persist($newUser);
-          $entityManager->flush();
+          $this->entityManager->persist($verifyEmailToken);
+          $this->entityManager->persist($newUser);
+          $this->entityManager->flush();
           $created = true;
           $newUserMsg = (new MailerService)->sendEmailVerification($newUser, $email, $verifyEmailURL, $expiresAt, true);
-          $mailer->send($newUserMsg);
+          $this->mailer->send($newUserMsg);
           $resp['sentVerificationEmail'] = true;
         } catch (\Exception $err) {
           array_push($resp['errors'],['id'=> 'phpError', 'text'=>$err->getMessage()]);
@@ -100,7 +108,7 @@ class UserController extends AbstractController
   }
 
   #[Route('/api/password/$reset/', name: 'request_reset', methods: ['POST'])]
-  public function requestReset (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse 
+  public function requestReset (Request $request, ): JsonResponse 
   {
     try {
       $resp = [
@@ -109,18 +117,18 @@ class UserController extends AbstractController
       ];
       $POST = $request->getPayload();
       $email = $POST->get('email');
-      $user = $entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
+      $user = $this->entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
       if (!$user) {
         array_push($resp['errors'],['id'=>'notFound', 'text'=>'Email address not found.']);
       } else if ($user->getEmailVerifiedAt() == null) {
         array_push($resp['errors'],['id'=>'notFound', 'text'=>'Email address not verified.']);
       } else {
         // email address is valid and has been verified
-        $tokenRepository = $entityManager->getRepository(LoginToken::class);
+        $tokenRepository = $this->entityManager->getRepository(LoginToken::class);
         $pending_reset = $tokenRepository->findOneBy(['payload'=>$email, 'type'=>'reset-password']);
         $current_datetime = new \DateTimeImmutable();
         if ($pending_reset) { // there is a current 'reset-password' token -- delete it so we don't have multiples hanging out
-          $entityManager->remove($pending_reset);
+          $this->entityManager->remove($pending_reset);
         }
         $token = bin2hex(random_bytes(32));
         $resetPasswordToken = new LoginToken();
@@ -133,22 +141,22 @@ class UserController extends AbstractController
           ->setPayload($email);
         // TODO: Have this autodetect or grab from consts
         $resetURL = 'http://questy.writingquests.org/resetform?e='.$email.'&t='.$token;
-        $entityManager->persist($resetPasswordToken);
+        $this->entityManager->persist($resetPasswordToken);
         $resetPasswordMsg = (new MailerService)->createPasswordReset($user, $email, $resetURL);
-        $mailer->send($resetPasswordMsg);
+        $this->mailer->send($resetPasswordMsg);
         $resp['emailSent'] = true;
       }
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'emailFailed', 'text'=>'An error occurred while sending this email. Please try again.']);
       array_push($resp['errors'],['id'=>'phpErr', 'text'=>$err->getMessage()]);
     } finally {
-      $entityManager->flush();
+      $this->entityManager->flush();
       return $this->json($resp);
     }
   }
 
   #[Route('api/password/$submit', name: 'finish_reset', methods: ['POST'])]
-  public function finishReset (Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
+  public function finishReset (Request $request,  UserPasswordHasherInterface $passwordHasher): JsonResponse
   {
     $resp = [
       'errors' => []
@@ -157,8 +165,8 @@ class UserController extends AbstractController
       $POST = $request->getPayload();
       $email = $POST->get('email');
       $username = $POST->get('username');
-      $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
-      $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload'=>$email, 'type'=>'reset-password']);
+      $user = $this->entityManager->getRepository(User::class)->findOneBy(['username' => $username]);
+      $tokenEntry = $this->entityManager->getRepository(LoginToken::class)->findOneBy(['payload'=>$email, 'type'=>'reset-password']);
       $hashedPassword = $passwordHasher->hashPassword(
         $user,
         $POST->get('password')
@@ -166,11 +174,11 @@ class UserController extends AbstractController
       ($user)
         ->setPassword($hashedPassword)
         ->setEditedAt(new \DateTimeImmutable());
-      $entityManager->remove($tokenEntry);
-      $entityManager->flush();
+      $this->entityManager->remove($tokenEntry);
+      $this->entityManager->flush();
       $passwordChanged = true;
       $confirmMsg = (new MailerService)->notificationPasswordChange($email);
-      $mailer->send($confirmMsg);
+      $this->mailer->send($confirmMsg);
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'phpError','text'=>$err->getMessage()]);
       $passwordChanged = false;
@@ -180,12 +188,12 @@ class UserController extends AbstractController
   }
 
   #[Route('api/profile/$edit', name: 'edit_profile', methods: ['POST'])]
-  public function updateUserProfile(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, MailerInterface $mailer): JsonResponse
+  public function updateUserProfile(Request $request,  UserPasswordHasherInterface $passwordHasher): JsonResponse
   {
     try{
       $resp = ['errors'=>[]];
       $POST = $request->getPayload()->all();
-      $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
+      $user = $this->entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
       $user->setEditedAt(new DateTimeImmutable());
       foreach ($POST as $key=>$value) {
         switch ($key) {
@@ -203,7 +211,7 @@ class UserController extends AbstractController
 
           case 'emailChange':
             $email = $POST['unverified_email'];
-            $emailInUse = $entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
+            $emailInUse = $this->entityManager->getRepository(User::class)->findOneBy(['email'=>$email]);
             if (!$emailInUse) {
               $oldEmail = $POST['email'];
               $user->setUnverifiedEmail($email);
@@ -219,9 +227,9 @@ class UserController extends AbstractController
                 ->setPayload($email);
               // TODO: Have this auto-detect or grab from consts
               $verifyEmailURL = 'http://questy.writingquests.org/verify?e='.$email.'&t='.$token;
-              $entityManager->persist($verifyEmailToken);
+              $this->entityManager->persist($verifyEmailToken);
               $newVerificationMsg = (new MailerService)->changedEmailVerification($POST['username'], $email, $oldEmail, $verifyEmailURL, $expiresAt);
-              $mailer->send($newVerificationMsg);
+              $this->mailer->send($newVerificationMsg);
             } else {
               $resp['revertEmail'] = $user->getUnverifiedEmail();
               throw new \Exception('Email address not changed; ' . $email . ' already in use.');
@@ -237,9 +245,9 @@ class UserController extends AbstractController
             $resp['sendLogout'] = true;
           break;
         }
-        $entityManager->persist($user);
+        $this->entityManager->persist($user);
       }
-      $entityManager->flush();
+      $this->entityManager->flush();
       $resp['updated'] = true;
     } catch (\Exception $err) {
       $resp['updated'] = false;
@@ -249,7 +257,7 @@ class UserController extends AbstractController
   }
 
   #[Route('/api/user/$resend', name: 'resend_verification', methods: ['POST'])]
-  public function resendVerification (Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse {
+  public function resendVerification (Request $request, ): JsonResponse {
     $resp = ['errors'=>[]];
     $verifyEmailURL = null;
     try {
@@ -257,9 +265,9 @@ class UserController extends AbstractController
       $unverifiedEmail = $request->getPayload()->get('unverified_email');
       $username = $request->getPayload()->get('username');
       $resp['userInfo'] = ['vEmail'=>$verifiedEmail, 'uEmail'=>$unverifiedEmail, 'username'=>$username];
-      $tokenEntry = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload' => $unverifiedEmail, 'type' => 'verify-email']);
+      $tokenEntry = $this->entityManager->getRepository(LoginToken::class)->findOneBy(['payload' => $unverifiedEmail, 'type' => 'verify-email']);
       $currentTime = new \DateTimeImmutable();
-      $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$username]);
+      $user = $this->entityManager->getRepository(User::class)->findOneBy(['username'=>$username]);
       $resp['time'] = $currentTime;
       if (!$tokenEntry) { // there is no existing verification token; create a new one
         $resp['tokenStatus'] = 'null';
@@ -273,8 +281,8 @@ class UserController extends AbstractController
           ->setExpiresAt($expiresAt)
           ->setType('verify-email')
           ->setPayload($unverifiedEmail);
-          $entityManager->persist($tokenEntry);
-          $entityManager->flush();
+          $this->entityManager->persist($tokenEntry);
+          $this->entityManager->flush();
        } else if ($currentTime > $tokenEntry->getExpiresAt()) { // a token exists but is expired; create a new one on existing row
         $resp['tokenStatus'] = 'expired';
         $token = bin2hex(random_bytes(32));
@@ -286,8 +294,8 @@ class UserController extends AbstractController
           ->setExpiresAt($expiresAt)
           ->setType('verify-email')
           ->setPayload($unverifiedEmail);
-          $entityManager->persist($tokenEntry);
-          $entityManager->flush();
+          $this->entityManager->persist($tokenEntry);
+          $this->entityManager->flush();
        } else {
         $resp['tokenStatus'] = 'exists';
         $token = $tokenEntry->getSecret();
@@ -303,7 +311,7 @@ class UserController extends AbstractController
         $verificationMsg = (new MailerService)->sendEmailVerification($user, $unverifiedEmail, $verifyEmailURL, $expiresAt);
       }
       if ($verificationMsg) {
-        $mailer->send($verificationMsg);
+        $this->mailer->send($verificationMsg);
         $resp['sent'] = true;
       } else {
         $resp['sent'] = false;
@@ -318,24 +326,57 @@ class UserController extends AbstractController
   }
 
   #[Route('api/user/$revert', name: 'revert_email', methods: ['POST'])]
-  public function revertVerifiedEmail(Request $request, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse
+  public function revertVerifiedEmail(Request $request, ): JsonResponse
   {
     // TODO: maybe: email user when their email is reverted to the old verified address?
     try{
       $resp = ['errors'=>[]];
       $POST = $request->getPayload()->all();
-      $user = $entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
-      $pendingToken = $entityManager->getRepository(LoginToken::class)->findOneBy(['payload'=>$POST['unverified_email'], 'type'=>'verify-email']);
+      $user = $this->entityManager->getRepository(User::class)->findOneBy(['username'=>$POST['username']]);
+      $pendingToken = $this->entityManager->getRepository(LoginToken::class)->findOneBy(['payload'=>$POST['unverified_email'], 'type'=>'verify-email']);
       $resp['token'] = $pendingToken->getSecret();
       if ($pendingToken) {
-        $entityManager->remove($pendingToken);
+        $this->entityManager->remove($pendingToken);
       }
       $user->setUnverifiedEmail(null);
-      $entityManager->persist($user);
-      $entityManager->flush();
+      $this->entityManager->persist($user);
+      $this->entityManager->flush();
       $resp['changed'] = true;
     } catch (\Exception $err) {
       array_push($resp['errors'],['id'=>'phpErr', 'text'=>$err->getMessage()]);
+    } finally {
+      return $this->json($resp);
+    }
+  }
+
+  # TODO: 2025-04-08 - this should REALLY be via APIPlatform filters, but went this route for now for ease of getting it out the door because I was stumped
+  # TODO: this could be a problem if we blow up as it has no pagination to it. Again, should be APIPlatform'd
+  #[Route('api/user/$public', name: 'all_public_users', methods: ['GET'])]
+  public function getPublicUsers(#[CurrentUser] ?User $user): JsonResponse {
+    try {
+      $resp = ['errors'=>[], 'users'=>[]];
+      if ($user) {
+        $user_id = $user->getId();
+        $all_public_users = $this->entityManager->getRepository(User::class)->getAllPublicUsersAndConnections($user_id);
+      } else {
+        $all_public_users = $this->entityManager->getRepository(User::class)->getAllPublicUsers();
+      }
+      $updated_users = [];
+      foreach ($all_public_users as $u) {
+        $user = $u;
+        $url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $user['email']))) . '?d=404&s=100&r=pg';
+        $headers = @get_headers($url);
+        if(!$headers || $headers[0] == 'HTTP/1.1 404 Not Found') {
+          $user['gravatar'] = null;
+        } else {
+          $user['gravatar'] = $url;
+        }
+        unset($user['email']);
+        array_push($updated_users,$user);
+      }
+      $resp['users'] = $updated_users;
+    } catch (\Exception $err) {
+      array_push($resp['errors'],$err->getMessage());
     } finally {
       return $this->json($resp);
     }

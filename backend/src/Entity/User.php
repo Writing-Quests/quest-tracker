@@ -36,15 +36,15 @@ use Doctrine\Persistence\ManagerRegistry;
 #[ApiResource(
     operations: [
       new Get(),
-        new Get(
-            uriTemplate: '/me',
-            provider: UserMeProvider::class,
-            output: NotLoggedInRepresentation::class,
-            openapi: new Model\Operation(
-                summary: 'Retrieves the current User',
-                description: 'Retrieves the currently-logged-in User resource. If not logged in, it will return `"anonymous_user": true`.',
-            ),
-        ),
+      new Get(
+          uriTemplate: '/me',
+          provider: UserMeProvider::class,
+          output: NotLoggedInRepresentation::class,
+          openapi: new Model\Operation(
+              summary: 'Retrieves the current User',
+              description: 'Retrieves the currently-logged-in User resource. If not logged in, it will return `"anonymous_user": true`.',
+          ),
+      ),
     ],
     security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user",
 )]
@@ -103,6 +103,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $last_login_at = null;
 
+    # TODO: should we have a shorter length limit for this? 
     #[ORM\Column(type: Types::TEXT, nullable: true, length: 65535)]
     private $description = null;
 
@@ -437,7 +438,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @return Collection<int, Report>
      */
     #[Ignore]
-    // TODO: this should have some level of security so that the user or an admin can see it, but it's not just given out with the API 
+    // TODO: this should have some level of security so that the user or an admin can see it, but it's not just given out with the API. Right now set to ignore.
     public function getReports(): Collection
     {
         return $this->reports;

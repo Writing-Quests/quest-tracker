@@ -135,13 +135,12 @@ export default function Settings () {
     try {
       setLoading(true)
       const resp = await api.post('user/$resend',{...profile})
-      console.log(resp)
-      console.log(resp.data.sent)
       if (resp.data.sent === true) {
         setNotice('Sent new verification email to ' + profile.unverified_email + '.')
         setVerificationHidden(true)
       }
     } catch (err) {
+      console.error(err)
       setFormError('An error has occurred; unable to send email')
     } finally {
       setLoading(false)
@@ -159,6 +158,7 @@ export default function Settings () {
         setError(resp.data.errors[0].text)
       }
     } catch (err) {
+      console.error(err)
       setFormError('An error has occurred; unable to revert email')
     } finally {
       setLoading(false)
