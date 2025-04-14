@@ -174,8 +174,6 @@ export function Connections () {
         connection.status = userAction
         // moves the connection from the array it was in, to the new one it occupies
         removeConnectionEntry(oldStatus,connection.id)
-        console.log(oldStatus)
-        console.log(userAction)
         connections[userAction].push(connection)
         setConnections(connections)
       }
