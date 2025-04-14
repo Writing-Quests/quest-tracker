@@ -74,9 +74,9 @@ export function Connections () {
       const resp = await api.get('connection/all')
       setConnections(resp.data)
     } catch (err) {
-      console.error(err);
+      console.error(err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
   useEffect(() => {
@@ -88,8 +88,8 @@ export function Connections () {
     }
   },[user])
 
-  function makeConnectionMap (array) {
-    return array.map(u => <li key={u.id}><ProfileLink href={"/profile/"+ ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} /></li>)
+  function makeConnectionMap (array, section) {
+    return array.map(u => <li key={u.id}><ProfileLink href={"/profile/"+ ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section={section} /></li>)
   }
 
   function TemporaryNoticeContainer () {
@@ -107,25 +107,25 @@ export function Connections () {
         return <NeutralContainer>{tempContainerContent}</NeutralContainer>
     }
   }
-  function UserActions ({connection}) {
-    switch (connection.status) {
+  function UserActions ({connection, section}) {
+    switch (section) {
       case 'blocked':
-        return <Button onClick={() => { manageConnection(connection, 'delete') }}>Unblock</Button>;
+        return <Button onClick={() => { manageConnection(connection, 'delete') }}>Unblock</Button>
   
       case 'waiting':
-        return <><Button onClick={() => { manageConnection(connection, 'ignored') }}>Ignore Request</Button><Button onClick={() => { manageConnection(connection, 'mutual') }}>Accept Request</Button></>;
+        return <><Button onClick={() => { manageConnection(connection, 'ignored') }}>Ignore Request</Button><Button onClick={() => { manageConnection(connection, 'mutual') }}>Accept Request</Button></>
 
       case 'ignored':
-        return <Button onClick={() => { manageConnection(connection, 'mutual') }}>Accept Request</Button>;
+        return <Button onClick={() => { manageConnection(connection, 'mutual') }}>Accept Request</Button>
       
       case 'following':
-        return <Button onClick={() => { manageConnection(connection, 'delete') }}>Unfollow</Button>;
+        return <Button onClick={() => { manageConnection(connection, 'delete') }}>Unfollow</Button>
   
       case 'pending':
-        return <Button onClick={() => { manageConnection(connection, 'delete') }}>Cancel Request</Button>;
+        return <Button onClick={() => { manageConnection(connection, 'delete') }}>Cancel Request</Button>
   
       case 'mutual':
-        return <Button onClick={() => { manageConnection(connection, 'delete') }}>Remove</Button>;
+        return <Button onClick={() => { manageConnection(connection, 'delete') }}>Remove</Button>
     }
   }
 
@@ -145,14 +145,14 @@ export function Connections () {
   }
 
   function removeConnectionEntry (status,id) {
-    let entries = connections[status].filter(conn => { return conn.id !== id });
-    connections[status] = entries;
-    let keys = Object.keys(connections);
+    let entries = connections[status].filter(conn => { return conn.id !== id })
+    connections[status] = entries
+    let keys = Object.keys(connections)
     let updatedConnections = {}
     keys.forEach((k) => {
       updatedConnections[k] = connections[k]
     })
-    setConnections(updatedConnections);
+    setConnections(updatedConnections)
   }
 
   async function manageConnection (connection,userAction) {
@@ -160,20 +160,22 @@ export function Connections () {
     setTempContainerContent(false)
     setTempContainerType(null)
     setWaitingText('Updating Connections')
-    let otherUser = (connection.initiating_user_id === user.id) ? connection.connected_username : connection.initiating_username;
-    let tempContainer = 'success';
+    let otherUser = (connection.initiating_user_id === user.id) ? connection.connected_username : connection.initiating_username
+    let tempContainer = 'success'
     try {
       if (userAction == 'delete') {
-        removeConnectionEntry(connection.status,connection.id);
+        removeConnectionEntry(connection.status,connection.id)
         await api.delete(`/connection/${connection.id}`)
       } else {
         await api.patch(`/connection/${connection.id}`,{
           'status': userAction
-        });
-        const oldStatus = connection.status
+        })
+        const oldStatus = userAction == 'ignored' ? 'waiting' : 'pending'
         connection.status = userAction
         // moves the connection from the array it was in, to the new one it occupies
         removeConnectionEntry(oldStatus,connection.id)
+        console.log(oldStatus)
+        console.log(userAction)
         connections[userAction].push(connection)
         setConnections(connections)
       }
@@ -203,12 +205,12 @@ export function Connections () {
       <ErrorContainer><strong>Error:</strong> {msg}</ErrorContainer>
     </Page>
   } else {
-    let waitingRequests = makeConnectionMap(connections.waiting)
-    let pendingRequests = makeConnectionMap(connections.pending)
-    let ignoredRequests = makeConnectionMap(connections.ignored)
-    let following = makeConnectionMap(connections.following)
-    let mutuals = makeConnectionMap(connections.mutual)
-    let blocked = makeConnectionMap(connections.blocked)
+    let waitingRequests = makeConnectionMap(connections.waiting, 'waiting')
+    let pendingRequests = makeConnectionMap(connections.pending, 'pending')
+    let ignoredRequests = makeConnectionMap(connections.ignored, 'ignored')
+    let following = makeConnectionMap(connections.following, 'following')
+    let mutuals = makeConnectionMap(connections.mutual, 'mutual')
+    let blocked = makeConnectionMap(connections.blocked, 'blocked')
     return <Page>
       <ContentContainer>
         <ContentBlock>

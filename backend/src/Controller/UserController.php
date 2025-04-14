@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Entity\Connection;
 use App\Entity\LoginToken;
 use App\Service\MailerService;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,10 +28,13 @@ class UserController extends AbstractController
 {
   public $entityManager;
   public $mailer;
-  public function __construct(EntityManagerInterface $entityManager,MailerInterface $mailer)
+  private $token_storage;
+
+  public function __construct(EntityManagerInterface $entityManager,MailerInterface $mailer,TokenStorageInterface $token_storage)
   {
     $this->entityManager = $entityManager;
     $this->mailer = $mailer;
+    $this->token_storage = $token_storage;
   }
   #[Route('/api/user/$create/', name: 'register_user', methods: ['POST'])]
   public function create_user (Request $request, UserPasswordHasherInterface $passwordHasher, ValidatorInterface $validator): JsonResponse
@@ -352,10 +356,11 @@ class UserController extends AbstractController
   # TODO: 2025-04-08 - this should REALLY be via APIPlatform filters, but went this route for now for ease of getting it out the door because I was stumped
   # TODO: this could be a problem if we blow up as it has no pagination to it. Again, should be APIPlatform'd
   #[Route('api/user/$public', name: 'all_public_users', methods: ['GET'])]
-  public function getPublicUsers(#[CurrentUser] ?User $user): JsonResponse {
+  public function getPublicUsers(Request $request): JsonResponse {
     try {
       $resp = ['errors'=>[], 'users'=>[]];
-      if ($user) {
+      if ($this->token_storage->getToken()) {
+        $user = $this->token_storage->getToken()->getUser();
         $user_id = $user->getId();
         $all_public_users = $this->entityManager->getRepository(User::class)->getAllPublicUsersAndConnections($user_id);
       } else {

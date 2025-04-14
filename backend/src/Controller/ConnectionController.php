@@ -15,24 +15,31 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 #[AsController]
 class ConnectionController extends AbstractController
 {
   public $entityManager;
   public $mailer;
-  public function __construct(EntityManagerInterface $entityManager,MailerInterface $mailer)
+  private $user;
+  public function __construct(EntityManagerInterface $entityManager,MailerInterface $mailer,TokenStorageInterface $token_storage)
   {
     $this->entityManager = $entityManager;
     $this->mailer = $mailer;
+    if ($token_storage->getToken()) {
+      $this->user = $token_storage->getToken()->getUser();
+    } else {
+      $this->user = null;
+    }
   }
 
   #[Route('/api/connection/all', name: 'all_user_connections', methods: ['GET'])]
-  public function all_user_connections (#[CurrentUser] ?User $user): JsonResponse {
-    if (!$user) {
+  public function all_user_connections (): JsonResponse {
+    if (!$this->user) {
       return $this->json(null);
     } else {
-      $user_id = $user->getId();
+      $user_id = $this->user->getId();
       $all_connections = $this->entityManager->getRepository(Connection::class)->getAllUserConnections($user_id);
       $blocked = $this->entityManager->getRepository(Connection::class)->getBlockedUsers($user_id);
       $sorted_connections = [
@@ -63,22 +70,25 @@ class ConnectionController extends AbstractController
   }
 
   #[Route('/api/connection/feed', name: 'all_feed_connections', methods: ['GET'])]
-  public function all_feed_connections (#[CurrentUser] ?User $user): JsonResponse {
-    if (!$user) {
+  public function all_feed_connections (): JsonResponse {
+    if (!$this->user) {
       return $this->json(null);
     } else {
-      $mutuals = $this->entityManager->getRepository(Connection::class)->getUserMutuals($user->getId());
-      $following = $this->entityManager->getRepository(Connection::class)->getUserFollowing($user->getId());
+      $user_id = $this->user->getId();
+      $mutuals = $this->entityManager->getRepository(Connection::class)->getUserMutuals($user_id);
+      $following = $this->entityManager->getRepository(Connection::class)->getUserFollowing($user_id);
       return $this->json(['mutuals'=>$mutuals,'following'=>$following]);
     }
   }
 
   #[Route('/api/connection/status/{user1}/{user2}',name: 'user_connection_status', methods: ['GET'])]
-  public function user_connection_status (#[CurrentUser] ?User $user, Int $user1, Int $user2): JsonResponse {
-    if (!$user) {
+  public function user_connection_status (String $user1, String $user2): JsonResponse {
+    if (!$this->user) {
       return $this->json(null);
     } else {
-      $connection = $this->entityManager->getRepository(Connection::class)->getUserConnectionStatus($user1,$user2);
+      $user1id = $this->entityManager->getRepository(User::class)->findOneBy(['username'=>$user1])->getId();
+      $user2id = $this->entityManager->getRepository(User::class)->findOneBy(['username'=>$user2])->getId();
+      $connection = $this->entityManager->getRepository(Connection::class)->getUserConnectionStatus($user1id,$user2id);
       if (!$connection) {
         return $this->json(null);
       } else {

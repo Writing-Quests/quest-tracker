@@ -20,7 +20,7 @@ final class Version20250324174036 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE connection ADD notify_initiating_user TINYINT(1) DEFAULT NULL, ADD notify_connected_user TINYINT(1) DEFAULT NULL');
+        #$this->addSql('ALTER TABLE connection ADD notify_initiating_user TINYINT(1) DEFAULT NULL, ADD notify_connected_user TINYINT(1) DEFAULT NULL');
     }
 
     public function down(Schema $schema): void

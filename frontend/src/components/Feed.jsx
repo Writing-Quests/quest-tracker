@@ -26,6 +26,7 @@ const ProfileDataContainer = styled.div`
 const IndividualProfile = styled.div`
   position: relative;
   border: 1px solid #ccc;
+  background-color: #fff;
   border-radius: 10px;
   padding: 0.5rem;
   margin: 1rem 0;
@@ -50,12 +51,12 @@ const IndividualProfile = styled.div`
     bottom: -0.5rem;
     font-size: 0.8rem;
     font-style: italic;
-    color: #ffae9c;
+    color:rgb(255, 155, 105);
   }
 `
 
 function DisplayUserInfo ({buddyInfo,user}) {
-  const buddyUsername = (buddyInfo.initiating_user_id === user.id) ? buddyInfo.connected_username : buddyInfo.initiating_username;
+  const buddyUsername = (buddyInfo.initiating_user_id === user.id) ? buddyInfo.connected_username : buddyInfo.initiating_username
   return (
     <>
     <strong><a href={`/profile/${buddyUsername}`} title={`${buddyUsername}'s profile`}>{buddyUsername}</a></strong>
@@ -64,15 +65,15 @@ function DisplayUserInfo ({buddyInfo,user}) {
 }
 
 function UserMiniDisplay ({user}) {
-  let describeConnection = null;
+  let describeConnection = null
   switch (user.connection) {
     case 'following':
-      describeConnection = `You follow ${user.username}.`;
-    break;
+      describeConnection = `You follow ${user.username}.`
+    break
 
     case 'mutual':
       describeConnection = `You & ${user.username} are buddies.`
-    break;
+    break
   }
   return (
     <IndividualProfile onClick={()=> { window.location.href = `/profile/${user.username}`}}>
@@ -86,12 +87,13 @@ function UserMiniDisplay ({user}) {
 
 export function PublicFeed () {
   const user = useContext(LoggedInUserContext)
-  const [publicUsers,setPublicUsers] = useState([]);
+  const [publicUsers,setPublicUsers] = useState([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     async function getConnections () {
-      const resp = await api.get("user/$public");
-      setPublicUsers(resp.data.users);
+      const resp = await api.get("user/$public")
+      console.log(resp.data)
+      setPublicUsers(resp.data.users)
       setLoading(false)
     }
     getConnections()
@@ -124,7 +126,7 @@ export function HomeFeed() {
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     async function getConnections () {
-      const resp = await api.get("connection/feed");
+      const resp = await api.get("connection/feed")
       setFollowing(resp.data.following)
       setBuddies(resp.data.mutuals)
       setLoading(false)

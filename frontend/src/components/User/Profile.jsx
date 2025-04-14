@@ -133,7 +133,7 @@ function ReportProfileContent ({reportType, reportedIdentifier, closeModal, moda
   const [reportContext,setReportContext] = useState(null)
   const [reportSubmitted,setReportSubmitted] = useState(false)
   function setWordcount (e) {
-    let count = e.target.value.length;
+    let count = e.target.value.length
     if (count > 0) {
       setCharacterCountLabel(count)
       if (count > 1000) {
@@ -159,7 +159,7 @@ function ReportProfileContent ({reportType, reportedIdentifier, closeModal, moda
         setReportSubmitted(true)
       }
     } catch (err) {
-      console.error(err);
+      console.error(err)
       setReportError(JSON.stringify(err))
       
     } finally {
@@ -189,19 +189,19 @@ function ReportProfileContent ({reportType, reportedIdentifier, closeModal, moda
 
 async function manageConnection ({status,connected_user_id,initiating_user_id,connection,updateConnectionInfo,updateSubmitWait}) {
   try {
-    let resp,expectedStatus;
+    let resp,expectedStatus
     updateSubmitWait({
       waitStatus: true,
       text: 'Please Wait'
-    });
+    })
     switch (status) {
       case 'delete':
-        expectedStatus = 204;
+        expectedStatus = 204
         resp = await api.delete(`/connection/${connection.id}`)
-      break;
+      break
 
       default:
-        expectedStatus = 201;
+        expectedStatus = 201
         if (connection) { // these is an existing connection between these two users
           resp = await api.patch(`/connection/${connection.id}`,{
             'status': status
@@ -215,15 +215,15 @@ async function manageConnection ({status,connected_user_id,initiating_user_id,co
           resp = await api.post('/connection/new', connection)
           connection.id = resp.data.id
         }
-      break;
+      break
     }
     if (resp) {
       if (status == 'delete') {
-        connection = null;
+        connection = null
       } else {
-        connection.status = status;
+        connection.status = status
       }
-      updateConnectionInfo(connection);
+      updateConnectionInfo(connection)
       if (status == 'blocked') {
         window.location.href = '/'
       } else {
@@ -242,7 +242,7 @@ async function manageConnection ({status,connected_user_id,initiating_user_id,co
       text: 'Please Wait',
       tcType: 'error',
       tcContent: 'An error has occurred.'
-    });
+    })
   }
 }
 
@@ -474,13 +474,13 @@ export default function Profile() {
         setModalTitle('Report User Profile Content')
         setModalForm('Profile')
         setReportedIdentifier(profile?.username)
-      break;
+      break
 
       case 'project':
         setModalTitle('Report User Project Content')
         setModalForm('Project')
         setReportedIdentifier(projectCode)
-      break;
+      break
     }
     setIsModalOpen(true)
   }
@@ -511,7 +511,7 @@ export default function Profile() {
         const resp = await api.get(`users/${lookupUser}`)
         setProfile(resp.data)
         if (user && lookupUser !== user.username) {
-          const respConnection = await api.get(`connection/status/${resp.data.id}/${user.id}`)
+          const respConnection = await api.get(`connection/status/${resp.data.username}/${user.username}`)
           setConnection(respConnection.data)
           if (respConnection.data !== null) {
             if (respConnection.data.status == 'blocked') {
