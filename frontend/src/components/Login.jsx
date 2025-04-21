@@ -8,7 +8,8 @@ import Input, { Button } from './Forms/Input'
 import InputGroup from './Forms/InputGroup'
 import Page from './Page'
 import { getUserTZName } from '../timezones.js'
-import { AnimatedContainer, CenteredContainer, ErrorContainer, SuccessContainer, ContentBlock } from './Containers'
+import { useSearchParams } from 'react-router-dom'
+import { AnimatedContainer, ErrorContainer, SuccessContainer, ContentBlock } from './Containers'
 import Notices from './Notices'
 
 const { GetLoggedInUserContext } = Context
@@ -38,7 +39,6 @@ function PasswordResetForm() {
     setError(null)
     try {
       const apiResult = await api.post('password/$reset/', {email})
-      console.log(apiResult)
       if (!apiResult.data?.emailSent) { // email not sent
         const errorMessage = apiResult.data.errors?.[0]?.text || "password reset request wasn't processed"
         setError(`Error: ${errorMessage}`)
@@ -127,7 +127,8 @@ function LoginForm() {
   const getLoggedInUser = useContext(GetLoggedInUserContext)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
-
+  const [queryParameters] = useSearchParams()
+  const ref = queryParameters.get('ref')
   const formProps = {isLoading: loading}
 
   function handleSubmit(e) {
@@ -137,7 +138,7 @@ function LoginForm() {
       try {
         const resp = await api.post('auth/login', { username, password })
         if(resp.data?.loggedIn) {
-          getLoggedInUser()
+          getLoggedInUser(ref)
         }
       } catch (e) {
         setError(e)

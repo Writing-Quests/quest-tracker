@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Repository;
-
+use Exception;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -49,6 +49,31 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->getOneOrNullResult();
     }
 
+    public function getAllPublicUsersAndConnections($user_id): array|Exception
+    # relative to a signed-in user, finds all public users who are not blocked or blocking the signed in user
+    {
+      try { 
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT u.email, u.username, u.description, (SELECT status FROM connection WHERE (initiating_user_id = :user_id OR connected_user_id = :user_id) AND (initiating_user_id = u.id OR connected_user_id = u.id)) AS connection FROM user u WHERE public = 1 AND id != :user_id AND NOT EXISTS (SELECT status FROM connection WHERE (initiating_user_id = :user_id OR connected_user_id = :user_id) AND (initiating_user_id = u.id OR connected_user_id = u.id) AND status = "blocked")';
+        $resultSet = $conn->executeQuery($sql, ['user_id' => $user_id]);
+        return $resultSet->fetchAllAssociative();
+      } catch (Exception $err) {
+        return $err;
+      }
+    }
+
+    public function getAllPublicUsers (): array|Exception
+    # all public users, if no user is signed in
+    {
+      try { 
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT u.email, u.username, u.description FROM user u WHERE public = 1;';
+        $resultSet = $conn->executeQuery($sql);
+        return $resultSet->fetchAllAssociative();
+      } catch (Exception $err) {
+        return $err;
+      }
+    }
     //    /**
     //     * @return User[] Returns an array of User objects
     //     */

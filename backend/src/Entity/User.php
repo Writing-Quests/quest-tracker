@@ -2,12 +2,18 @@
 
 namespace App\Entity;
 
+use ApiPlatform\GraphQl\Resolver\Stage\WriteStage;
+use App\Repository\ConnectionRepository;
+
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model;
+
+use Doctrine\ORM\EntityManagerInterface;
 
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -21,21 +27,24 @@ use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 use App\State\UserMeProvider;
 use App\State\NotLoggedInRepresentation;
+use Doctrine\ORM\EntityManager;
+
+use Doctrine\Persistence\ManagerRegistry;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
 #[ApiResource(
     operations: [
-        new Get(),
-        new Get(
-            uriTemplate: '/me',
-            provider: UserMeProvider::class,
-            output: NotLoggedInRepresentation::class,
-            openapi: new Model\Operation(
-                summary: 'Retrieves the current User',
-                description: 'Retrieves the currently-logged-in User resource. If not logged in, it will return `"anonymous_user": true`.',
-            ),
-        ),
+      new Get(),
+      new Get(
+          uriTemplate: '/me',
+          provider: UserMeProvider::class,
+          output: NotLoggedInRepresentation::class,
+          openapi: new Model\Operation(
+              summary: 'Retrieves the current User',
+              description: 'Retrieves the currently-logged-in User resource. If not logged in, it will return `"anonymous_user": true`.',
+          ),
+      ),
     ],
     security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user",
 )]
@@ -74,7 +83,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    #[ApiProperty(readable: true, writable: false)]
+    #[ApiProperty(readable: true, writable: false, security: "object == user")]
     private ?string $email = null;
 
     #[ORM\Column(length: 255,nullable: true)]
@@ -94,6 +103,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $last_login_at = null;
 
+    # TODO: should we have a shorter length limit for this? 
     #[ORM\Column(type: Types::TEXT, nullable: true, length: 65535)]
     private $description = null;
 
@@ -125,11 +135,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'reported_by_user')]
     private Collection $reports;
 
+    /**
+     * @var Collection<int, Post>
+     */
+    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'owner_id', orphanRemoval: true)]
+    private Collection $posts;
+
+    /**
+     * @var Collection<int, Interaction>
+     */
+    #[ORM\OneToMany(targetEntity: Interaction::class, mappedBy: 'user_id', orphanRemoval: true)]
+    private Collection $interactions;
+
     public function __construct()
     {
         $this->loginTokens = new ArrayCollection();
         $this->projects = new ArrayCollection();
         $this->reports = new ArrayCollection();
+        $this->posts = new ArrayCollection();
+        $this->interactions = new ArrayCollection();
     }
 
     #[ApiResource (writable: false)]
@@ -414,7 +438,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @return Collection<int, Report>
      */
     #[Ignore]
-    // TODO: this should have some level of security so that the user or an admin can see it, but it's not just given out with the API 
+    // TODO: this should have some level of security so that the user or an admin can see it, but it's not just given out with the API. Right now set to ignore.
     public function getReports(): Collection
     {
         return $this->reports;
@@ -453,5 +477,65 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         'gravatar'=>$this->getGravatarUrl(),
         'description'=>$this->getDescription()
       ];
+    }
+
+    /**
+     * @return Collection<int, Post>
+     */
+    public function getPosts(): Collection
+    {
+        return $this->posts;
+    }
+
+    public function addPost(Post $post): static
+    {
+        if (!$this->posts->contains($post)) {
+            $this->posts->add($post);
+            $post->setOwnerId($this);
+        }
+
+        return $this;
+    }
+
+    public function removePost(Post $post): static
+    {
+        if ($this->posts->removeElement($post)) {
+            // set the owning side to null (unless already changed)
+            if ($post->getOwnerId() === $this) {
+                $post->setOwnerId(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Interaction>
+     */
+    public function getInteractions(): Collection
+    {
+        return $this->interactions;
+    }
+
+    public function addInteraction(Interaction $interaction): static
+    {
+        if (!$this->interactions->contains($interaction)) {
+            $this->interactions->add($interaction);
+            $interaction->setUserId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInteraction(Interaction $interaction): static
+    {
+        if ($this->interactions->removeElement($interaction)) {
+            // set the owning side to null (unless already changed)
+            if ($interaction->getUserId() === $this) {
+                $interaction->setUserId(null);
+            }
+        }
+
+        return $this;
     }
 }

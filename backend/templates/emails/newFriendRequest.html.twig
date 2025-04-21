@@ -1,0 +1,16 @@
+
+{% extends "base.email.html" %}
+{% block content %}
+
+<p><b><a href="https://questy.writingquests.org/profile/{{ username }}/" target="_blank" title="{{username}}'s Questy Profile Page">{{ username }}</a></b> has sent you a friend request on Questy. If you accept this request you will be able to see each other's project updates and send direct messages via Questy.</p>
+
+<p>Review and manage your buddies at <a href="https://questy.writingquests.org/connections/">https://questy.writingquests.org/connections/</a>.</p>
+
+{# 
+<div style="width: 100%;display:flex;justify-content: space-evenly; align-items: center;">
+  <a style="text-decoration: none; display: inline-block; padding: 15px 20px; margin-top: 6px; background-color: transparent; color: #fff; border: none; background-color: #069768; border-radius: 3px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 2px;" href="https://questy.writingquests.org/connections/manage/?conn={{ connectionId }}&status=accept/">Accept Buddy Request</a>
+  <a style="text-decoration: none; display: inline-block; padding: 15px 20px; margin-top: 6px; background-color: transparent; color: #333; border: none; background-color: #e5e5e5; border-radius: 3px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 2px;" href="https://questy.writingquests.org/connections/manage/?conn={{ connectionId }}&status=ignore/">Ignore Buddy Request</a>
+</div>
+#}
+
+{% endblock %}

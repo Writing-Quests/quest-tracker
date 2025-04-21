@@ -1,0 +1,12 @@
+{% extends "base.email.txt" %}
+{% block content %}
+{{ username }} has sent you a friend request on Questy. You can view their profile at https://questy.writingquests.org/profile/{{ username }}/. If you accept this request you will be able to see each other's project updates and send direct messages via Questy.
+
+Review and manage your buddies at https://questy.writingquests.org/connections/.
+
+{# 
+Accept this request: https://questy.writingquests.org/connections/manage/?conn={{ connectionId }}&status=accept/
+Ignore this request: https://questy.writingquests.org/connections/manage/?conn={{ connectionId }}&status=ignore/
+#}
+
+{% endblock %}

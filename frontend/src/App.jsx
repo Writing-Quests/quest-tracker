@@ -5,9 +5,10 @@ import {
 } from './components/User'
 import EditProject from './components/EditProject'
 import Profile from './components/User/Profile'
+import {Connections } from './components/User/Connections'
 import Login from './components/Login'
 import Settings from './components/Settings'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import api from './services/api'
 import Context from './services/context'
 import useTitle from './services/useTitle'
@@ -17,9 +18,18 @@ import { PrivacyPolicy } from './components/Static/Privacy'
 import { TermsOfUse } from './components/Static/Terms'
 import { AboutQuesty } from './components/Static/About'
 import { ReviewReport } from './components/Admin/Report'
+import { HomeFeed, PublicFeed } from './components/Feed'
 import Modal from 'react-modal'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
+
+function NavigateWithPath () {
+  const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    navigate(`/login?ref=${encodeURIComponent(location.pathname)}`)
+  }, [navigate, location])
+}
 
 export function App() {
   const [loading, setLoading] = useState(true)
@@ -33,7 +43,9 @@ export function App() {
   if(loading) { title = 'Loading...' }
   useTitle(title)
 
-  async function getLoggedInUser() {
+  // eslint-disable-next-line no-unused-vars
+  async function getLoggedInUser(ref=null) {
+    /* TODO: 2024-04-02 - I got as far as passing the reference, re: where the user was trying to go, here (if it exists.) But then I'm stumped as to how best/effectively reroute the user data with it */
     setLoading(true)
     try {
       const resp = await api('me')
@@ -64,12 +76,15 @@ export function App() {
       <LoggedInUserContext.Provider value={data}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Profile />} />
+            <Route path="/" element={<HomeFeed />} />
+            <Route path="/profiles/public" element={<PublicFeed />} />
             <Route path="/profile/:username?" element={<Profile />} />
             <Route path="/project/new" element={<EditProject />} />
             <Route path="/project/:projectCode" element={<EditProject />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/connections" element={<Connections />} />
+            {/* <Route path="/connections/manage" element={<ConnectionLink />} /> */}
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -81,10 +96,11 @@ export function App() {
     )
   } else {
     return (
-      <GetLoggedInUserContext.Provider value={getLoggedInUser}>
+      <GetLoggedInUserContext.Provider value={getLoggedInUser} path={window.location.href}>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login form='login' />} />
+            <Route path="/profiles/public" element={<PublicFeed />} />
             <Route path="/register" element={<Login form='register'/>} />
             <Route path="/reset" element={<Login form='reset' />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
@@ -94,7 +110,8 @@ export function App() {
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="*" element={<Navigate to='/' replace />} />
+            {/*<Route path="*" element={<Navigate to='/' replace />} />*/}
+            <Route path="*" element={<NavigateWithPath />} />
           </Routes>
         </BrowserRouter>
       </GetLoggedInUserContext.Provider>
