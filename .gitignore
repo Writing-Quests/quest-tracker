@@ -1,0 +1,5 @@
+# ignore files used to hunt down the DB schema
+SchemaDump_* 
+
+# ignore local database dumps used for import/export
+*.sql.gz 
