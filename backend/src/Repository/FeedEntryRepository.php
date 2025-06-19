@@ -2,22 +2,22 @@
 
 namespace App\Repository;
 
-use App\Entity\Post;
+use App\Entity\FeedEntry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Post>
+ * @extends ServiceEntityRepository<FeedEntry>
  */
-class PostRepository extends ServiceEntityRepository
+class FeedEntryRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Post::class);
+        parent::__construct($registry, FeedEntry::class);
     }
 
     //    /**
-    //     * @return Post[] Returns an array of Post objects
+    //     * @return FeedEntry[] Returns an array of FeedEntry objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class PostRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Post
+    //    public function findOneBySomeField($value): ?FeedEntry
     //    {
     //        return $this->createQueryBuilder('p')
     //            ->andWhere('p.exampleField = :val')

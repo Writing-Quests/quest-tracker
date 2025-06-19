@@ -9,8 +9,10 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\QueryParameter;
 use ApiPlatform\OpenApi\Model;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,6 +29,7 @@ use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 use App\State\UserMeProvider;
 use App\State\NotLoggedInRepresentation;
+use App\State\AvailableProfilesProvider;
 use Doctrine\ORM\EntityManager;
 
 use Doctrine\Persistence\ManagerRegistry;
@@ -35,7 +38,10 @@ use Doctrine\Persistence\ManagerRegistry;
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
 #[ApiResource(
     operations: [
-      new Get(),
+      new Get(
+        uriTemplate: '/user',
+        security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user"
+      ),
       new Get(
           uriTemplate: '/me',
           provider: UserMeProvider::class,
@@ -44,9 +50,17 @@ use Doctrine\Persistence\ManagerRegistry;
               summary: 'Retrieves the current User',
               description: 'Retrieves the currently-logged-in User resource. If not logged in, it will return `"anonymous_user": true`.',
           ),
+          security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user"
       ),
-    ],
-    security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user",
+      new GetCollection(
+        uriTemplate: '/profiles/public',
+        provider: AvailableProfilesProvider::class
+      ),
+      new Post(
+        uriTemplate: '/users/{id}',
+        security: "object == user"
+      )
+    ]
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -101,7 +115,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $email_verified_at = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $last_login_at = null;
+    private ?\DateTimeImmutable $last_activity_timestamp = null;
 
     # TODO: should we have a shorter length limit for this? 
     #[ORM\Column(type: Types::TEXT, nullable: true, length: 65535)]
@@ -127,6 +141,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, Project>
      */
     #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user', fetch: 'EAGER')]
+    #[ORM\OrderBy(["edited_at" => "DESC"])]
     private Collection $projects;
 
     /**
@@ -136,15 +151,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $reports;
 
     /**
-     * @var Collection<int, Post>
+     * @var Collection<int, FeedEntry>
      */
-    #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'owner_id', orphanRemoval: true)]
-    private Collection $posts;
+    #[ORM\OneToMany(targetEntity: FeedEntry::class, mappedBy: 'user', orphanRemoval: true)]
+    #[ORM\OrderBy(["edited_at" => "DESC"])]
+    private Collection $feedEntries;
 
     /**
      * @var Collection<int, Interaction>
      */
-    #[ORM\OneToMany(targetEntity: Interaction::class, mappedBy: 'user_id', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Interaction::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $interactions;
 
     public function __construct()
@@ -152,7 +168,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->loginTokens = new ArrayCollection();
         $this->projects = new ArrayCollection();
         $this->reports = new ArrayCollection();
-        $this->posts = new ArrayCollection();
+        $this->feedEntries = new ArrayCollection();
         $this->interactions = new ArrayCollection();
     }
 
@@ -308,14 +324,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getLastLoginAt(): ?\DateTimeImmutable
+    public function getLastActivityTimestamp(): ?\DateTimeImmutable
     {
-        return $this->last_login_at;
+        return $this->last_activity_timestamp;
     }
 
-    public function setLastLoginAt(?\DateTimeImmutable $last_login_at): static
+    public function setLastActivityTimestamp(?\DateTimeImmutable $last_activity_timestamp): static
     {
-        $this->last_login_at = $last_login_at;
+        $this->last_activity_timestamp = $last_activity_timestamp;
 
         return $this;
     }
@@ -480,29 +496,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, Post>
+     * @return Collection<int, FeedEntry>
      */
-    public function getPosts(): Collection
+    public function getFeedEntrys(): Collection
     {
-        return $this->posts;
+        return $this->feedEntries;
     }
 
-    public function addPost(Post $post): static
+    public function addFeedEntry(FeedEntry $feedEntry): static
     {
-        if (!$this->posts->contains($post)) {
-            $this->posts->add($post);
-            $post->setOwnerId($this);
+        if (!$this->feedEntries->contains($feedEntry)) {
+            $this->feedEntries->add($feedEntry);
+            $feedEntry->setUser($this);
         }
 
         return $this;
     }
 
-    public function removePost(Post $post): static
+    public function removeFeedEntry(FeedEntry $feedEntry): static
     {
-        if ($this->posts->removeElement($post)) {
+        if ($this->feedEntries->removeElement($feedEntry)) {
             // set the owning side to null (unless already changed)
-            if ($post->getOwnerId() === $this) {
-                $post->setOwnerId(null);
+            if ($feedEntry->user() === $this) {
+                $feedEntry->setUser(null);
             }
         }
 

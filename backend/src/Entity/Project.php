@@ -29,7 +29,7 @@ use Symfony\Component\Uid\Ulid;
           uriTemplate: '/project/{code}',
           security: "is_granted('ROLE_ADMIN') or object.getUser() == user or object.getUser().isPublic()",
         ),
-        new GetCollection(
+         new GetCollection(
             uriTemplate: '/users/{id}/projects',
             uriVariables: [
                 'id' => new Link(
@@ -94,12 +94,20 @@ class Project
      * @var Collection<int, ProgressEntry>
      */
     #[ORM\OneToMany(targetEntity: ProgressEntry::class, mappedBy: 'project', orphanRemoval: true)]
+    #[ORM\OrderBy(["created_at" => "DESC"])]
     private Collection $progressEntries;
+
+    /**
+     * @var Collection<int, FeedEntry>
+     */
+    #[ORM\OneToMany(targetEntity: FeedEntry::class, mappedBy: 'project')]
+    private Collection $updates;
 
     public function __construct()
     {
         $this->projectGoals = new ArrayCollection();
         $this->progressEntries = new ArrayCollection();
+        $this->updates = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -293,6 +301,36 @@ class Project
             // set the owning side to null (unless already changed)
             if ($progressEntry->getProject() === $this) {
                 $progressEntry->setProject(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FeedEntry>
+     */
+    public function getUpdates(): Collection
+    {
+        return $this->updates;
+    }
+
+    public function addUpdate(FeedEntry $update): static
+    {
+        if (!$this->updates->contains($update)) {
+            $this->updates->add($update);
+            $update->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUpdate(FeedEntry $update): static
+    {
+        if ($this->updates->removeElement($update)) {
+            // set the owning side to null (unless already changed)
+            if ($update->getProject() === $this) {
+                $update->setProject(null);
             }
         }
 

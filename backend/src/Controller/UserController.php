@@ -352,38 +352,4 @@ class UserController extends AbstractController
       return $this->json($resp);
     }
   }
-
-  # TODO: 2025-04-08 - this should REALLY be via APIPlatform filters, but went this route for now for ease of getting it out the door because I was stumped
-  # TODO: this could be a problem if we blow up as it has no pagination to it. Again, should be APIPlatform'd
-  #[Route('api/user/$public', name: 'all_public_users', methods: ['GET'])]
-  public function getPublicUsers(Request $request): JsonResponse {
-    try {
-      $resp = ['errors'=>[], 'users'=>[]];
-      if ($this->token_storage->getToken()) {
-        $user = $this->token_storage->getToken()->getUser();
-        $user_id = $user->getId();
-        $all_public_users = $this->entityManager->getRepository(User::class)->getAllPublicUsersAndConnections($user_id);
-      } else {
-        $all_public_users = $this->entityManager->getRepository(User::class)->getAllPublicUsers();
-      }
-      $updated_users = [];
-      foreach ($all_public_users as $u) {
-        $user = $u;
-        $url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $user['email']))) . '?d=404&s=100&r=pg';
-        $headers = @get_headers($url);
-        if(!$headers || $headers[0] == 'HTTP/1.1 404 Not Found') {
-          $user['gravatar'] = null;
-        } else {
-          $user['gravatar'] = $url;
-        }
-        unset($user['email']);
-        array_push($updated_users,$user);
-      }
-      $resp['users'] = $updated_users;
-    } catch (\Exception $err) {
-      array_push($resp['errors'],$err->getMessage());
-    } finally {
-      return $this->json($resp);
-    }
-  }
 }

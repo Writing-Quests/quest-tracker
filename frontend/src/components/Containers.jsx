@@ -80,6 +80,48 @@ const ErrorContainerDiv = styled.div`
   overflow: hidden;
 `
 
+const PaginationDiv = styled.div`
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  max-height: 200px;
+  max-width: 100%;
+  color: #333;
+  text-align: center;
+  overflow: hidden;
+  .arrowButton, ul.pageNumbers li {
+    user-select: none;
+    display: inline-block;
+    text-align: center;
+    height: 2rem;
+    line-height: 2rem;
+    width: 2rem;
+    border: 1px solid #ccc;
+    &:not([data-current-page=true]):hover {
+      cursor: pointer;
+      background-color: #b83a14;
+      color: #fff;
+    }
+  }
+  ul.pageNumbers {
+    flex-grow: 2;
+    list-type: none;
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+    li {
+      margin: 0 0.25rem;
+      &[data-current-page=true] {
+        background-color: #f7b284;
+        border: 1px solid #b83a14;
+        font-weight: bold;
+      }
+    }
+  }
+`
+
 export function ErrorContainer({error, children}) {
   if(!error) {
     if(!children) {
@@ -94,6 +136,40 @@ export function ErrorContainer({error, children}) {
 ErrorContainer.propTypes = {
   error: PropTypes.object,
   children: PropTypes.node,
+}
+
+export function PaginationContainer({hydraPageInfo, pageFlip, children}) { 
+  // pageFlip only has one parameter: url for the flip
+  // hydra pagination gives us the first page [hydra:first], last page [hydra:last], and next page [hydra:next]
+  // current page is @id
+  // it DOESN'T give us total pages in a simple way I'd hope so. my solution to keep this pagination container general is stupid
+  // and that solution is regex
+  // the smarter solution that i'd like to revisit later is an eventlistener to serialize/manage the page data so it just comes to just nicer
+  const currentApiUrl = hydraPageInfo['@id'].match(/\/api\/(.*)\?page=\d*/)[1];
+  const currentPage = Number(hydraPageInfo['@id'].match(/.*\?page=(\d*)/)[1]);
+  const allPages = []
+  const lastPageNumber = (hydraPageInfo['hydra:last'].match(/.*\?page=(\d*)/)[1]);
+  for (var i = 0; i < lastPageNumber; i++) {
+    allPages.push(i+1)
+  }
+  const pageButtons = allPages.map((pg) => { return <li key={`pageButton${pg}`} onClick={() => { if (pg !== currentPage) { pageFlip(`${currentApiUrl}?page=${pg}`) }}} data-current-page={pg === currentPage}>{pg}</li>})
+  // the other problem to solve: hydra gives us back our API URLs with the /api in them, which we've already accounted for. 
+  return (
+    <>
+    <PaginationDiv>
+    {hydraPageInfo['hydra:previous'] ? <span className="arrowButton" onClick={() => {pageFlip(hydraPageInfo['hydra:previous'].replace('/api/',''))}}>&lt;</span> : <i>&nbsp;</i> }
+    <ul className="pageNumbers">
+    {pageButtons}
+    </ul>
+    {hydraPageInfo['hydra:next'] ? <span className="arrowButton" onClick={() => {pageFlip(hydraPageInfo['hydra:next'].replace('/api/',''))}}>&gt;</span> : <i>&nbsp;</i> }
+    </PaginationDiv>
+    {children}
+    </>
+  )
+}
+ErrorContainer.propTypes = {
+  hydraPageInfo: PropTypes.object,
+  pageFlip: PropTypes.function
 }
 
 export const SuccessContainer = styled.div`
@@ -129,7 +205,7 @@ export const ContentContainer = styled.div`
   background-color: #FAFAFA;
   border-top: 1px solid #EBEBEB;
   border-bottom: 1px solid #EBEBEB;
-  width: 100vw;
+  min-width: 100vw;
   padding: 10px 0 10px 0;
   display: grid;
   grid-template-rows: auto;

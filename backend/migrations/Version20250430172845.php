@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20250315181959 extends AbstractMigration
+final class Version20250430172845 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -20,12 +20,12 @@ final class Version20250315181959 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE connection ADD notify_initiating_user TINYINT(1) DEFAULT NULL, ADD notify_connected_user TINYINT(1) DEFAULT NULL');
+        $this->addSql('ALTER TABLE user_update ADD details JSON NOT NULL');
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE connection DROP notify_initiating_user, DROP notify_connected_user');
+        $this->addSql('ALTER TABLE user_update DROP details');
     }
 }

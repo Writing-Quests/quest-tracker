@@ -16,6 +16,7 @@ use DateTimeImmutable;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 
 #[ORM\Entity(repositoryClass: ProgressEntryRepository::class)]
+#[ORM\EntityListeners(["App\Listener\ProgressEntryListener"])]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [

@@ -5,6 +5,7 @@ use Exception;
 
 use App\Entity\User;
 use App\Entity\Connection;
+use App\Entity\FeedEntry;
 use App\Service\MailerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -75,9 +76,27 @@ class ConnectionController extends AbstractController
       return $this->json(null);
     } else {
       $user_id = $this->user->getId();
-      $mutuals = $this->entityManager->getRepository(Connection::class)->getUserMutuals($user_id);
+      $mutual = $this->entityManager->getRepository(Connection::class)->getUserMutuals($user_id);
       $following = $this->entityManager->getRepository(Connection::class)->getUserFollowing($user_id);
-      return $this->json(['mutuals'=>$mutuals,'following'=>$following]);
+      $feed_connections = [...$mutual,...$following];
+      $enriched_connections = [
+        'mutual'=>[],
+        'following'=>[],
+      ];
+      foreach ($feed_connections as $buddy) {
+        $this_user_data = [];
+        if ($buddy["initiating_user_id"] != $user_id) {
+          $buddy_id = $buddy["initiating_user_id"];
+         } else {
+          $buddy_id = $buddy["connected_user_id"];
+         }
+        $this_user_data['buddy_id'] = $buddy_id;
+        $user_info = $this->entityManager->getRepository(User::class)->findOneBy(['id'=>$buddy_id]);
+        $this_user_data['updates'] = $user_info->getFeedEntrys();
+        $this_user_data += $buddy;
+        array_push($enriched_connections[$buddy['status']],$this_user_data);
+      }
+      return $this->json($enriched_connections);
     }
   }
 

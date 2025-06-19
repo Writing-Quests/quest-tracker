@@ -437,7 +437,7 @@ export default function Profile() {
   const url = useMemo(() => {
     if(!profile?.link?.length) { return }
     let l = profile.link
-    if(l.slice(0,4) !== 'http') {
+    if(l && l.slice(0,4) !== 'http') {
       l = 'https://' + l
     }
     try {
@@ -510,7 +510,7 @@ export default function Profile() {
       try {
         const resp = await api.get(`users/${lookupUser}`)
         setProfile(resp.data)
-        if (user && lookupUser !== user.username) {
+        if (user && lookupUser !== user.username && profile) {
           const respConnection = await api.get(`connection/status/${resp.data.username}/${user.username}`)
           setConnection(respConnection.data)
           if (respConnection.data !== null) {
