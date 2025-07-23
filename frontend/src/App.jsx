@@ -20,6 +20,7 @@ import { AboutQuesty } from './components/Static/About'
 import { ReviewReport } from './components/Admin/Report'
 import { HomeFeed, PublicFeed } from './components/Feed'
 import Modal from 'react-modal'
+import {UserProjects, ViewProject} from './components/User/Projects'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
 
@@ -79,8 +80,10 @@ export function App() {
             <Route path="/" element={<HomeFeed />} />
             <Route path="/profiles/public" element={<PublicFeed />} />
             <Route path="/profile/:username?" element={<Profile />} />
+            <Route path="/projects" element={<UserProjects />} />
             <Route path="/project/new" element={<EditProject />} />
-            <Route path="/project/:projectCode" element={<EditProject />} />
+            <Route path="/project/view/:projectCode" element={<ViewProject />} />
+            <Route path="/project/edit/:projectCode" element={<EditProject />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/connections" element={<Connections />} />

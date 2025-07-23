@@ -59,6 +59,74 @@ export function ConnectionLink () {
 }
 */}
 
+export function BuddyList () {
+  const user = useContext(LoggedInUserContext)
+  const [loading,setLoading] = useState(true)
+  const [error,setError] = useState(null)
+  const [tempContainerContent, setTempContainerContent] = useState('')
+  const [tempContainerType, setTempContainerType] = useState(null)
+  const [connections,setConnections] = useState([])
+  const [section, setSection] = useState('buddies')
+  const [submitWait,setSubmitWait] = useState(false)
+  const [waitingText,setWaitingText] = useState('')
+  async function getUserConnections () {
+    try {
+      const resp = await api.get('connection/all')
+      setConnections(resp.data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+  useEffect(() => {
+    try {
+      getUserConnections(user.username)
+    } catch (err) {
+      console.error(err)
+      setError(err)
+    }
+  },[user])
+
+  function makeConnectionMap (array, section) {
+    return array.map(u => <li key={u.id}><ProfileLink href={"/profile/"+ ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section={section} /></li>)
+  }
+  if(loading) {
+    return <Page>
+      <Notices />
+      <Loading />
+    </Page>
+  } else if (error !== null) {
+    let msg = 'An unknown error occured.'
+    if (error.status === 404) { 
+      msg = `Unable to find any connection information for ${user.username}.`
+    }
+    return <Page>
+      <ErrorContainer><strong>Error:</strong> {msg}</ErrorContainer>
+    </Page>
+  } else {
+    let waitingRequests = makeConnectionMap(connections.waiting, 'waiting')
+    let pendingRequests = makeConnectionMap(connections.pending, 'pending')
+    let ignoredRequests = makeConnectionMap(connections.ignored, 'ignored')
+    let following = makeConnectionMap(connections.following, 'following')
+    let mutuals = makeConnectionMap(connections.mutual, 'mutual')
+    let blocked = makeConnectionMap(connections.blocked, 'blocked')
+    return <Page>
+      <ContentContainer>
+        <ContentBlock>
+          {submitWait && 
+            <Loading inline={true} text={waitingText} />
+          }
+          {(tempContainerType) && 
+            <TemporaryNoticeContainer />
+          }
+          {JSON.stringify(connections)}
+        </ContentBlock>
+      </ContentContainer>
+    </Page>
+  }
+}
+
 export function Connections () {
   const user = useContext(LoggedInUserContext)
   const [loading,setLoading] = useState(true)

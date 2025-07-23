@@ -435,21 +435,21 @@ export default function Profile() {
   const { username } = useParams()
   const navigate = useNavigate()
   const url = useMemo(() => {
-    if(!profile?.link?.length) { return }
-    let l = profile.link
-    if(l && l.slice(0,4) !== 'http') {
-      l = 'https://' + l
-    }
-    try {
-      const u = new URL(l)
-      if(!(u.protocol === 'http:' || u.protocol === 'https:')) {
-        throw new Error('Invalid URL')
+      try {
+        if(!profile?.link?.length) { return }
+        let l = profile.link
+        if(l && l.slice(0,4) !== 'http') {
+          l = 'https://' + l
+        }
+        const u = new URL(l)
+        if(!(u.protocol === 'http:' || u.protocol === 'https:')) {
+          throw new Error('Invalid URL')
+        }
+        return u
+      } catch(e) {
+        console.error(e)
+        return
       }
-      return u
-    } catch(e) {
-      console.error(e)
-      return
-    }
   }, [profile])
   function updateSubmitWait ({waitStatus,text,tcType,tcContent}) {
     setSubmitWait(waitStatus)
@@ -538,6 +538,7 @@ export default function Profile() {
       <ErrorContainer>Profile not found.</ErrorContainer>
     </Page>
   }
+  console.log(profile)
   const isMyProfile = user && (profile?.username === user?.username)
   return <ProfileContext.Provider value={{isMyProfile}}>
     <Page>

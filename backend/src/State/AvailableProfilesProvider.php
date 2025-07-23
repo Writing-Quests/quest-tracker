@@ -28,7 +28,7 @@ class AvailableProfilesProvider implements ProviderInterface
     [$page, , $limit] = $this->pagination->getPagination($operation, $context);
     if($user) {
       $user_id = $user->getId();
-      return new Paginator($this->entityManager->getRepository(User::class)->getAllPublicUsersAndConnections($user_id));
+      return new Paginator($this->entityManager->getRepository(User::class)->getAllPublicUsersAndConnections($user_id, $page, $limit));
     } else {
       return new Paginator($this->entityManager->getRepository(User::class)->getAllPublicUsers($page, $limit));
     }

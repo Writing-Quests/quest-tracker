@@ -1,9 +1,12 @@
 <?php
 
 namespace App\Repository;
-
+use Exception;
+use App\Entity\User;
 use App\Entity\FeedEntry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -14,6 +17,22 @@ class FeedEntryRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, FeedEntry::class);
+    }
+
+    public function getFullUserFeed(array $buddy_ids, int $page = 1, int $itemsPerPage = 30): DoctrinePaginator
+    {
+      return new DoctrinePaginator(
+        $this->createQueryBuilder('f')
+          ->addSelect('f.code, f.details, f.edited_at')
+          ->andWhere('f.user IN (:user_ids)')
+          ->setParameter('user_ids', $buddy_ids)
+          ->orderBy('f.edited_at', 'DESC')
+          ->addCriteria(
+              Criteria::create()
+                ->setFirstResult(($page - 1) * $itemsPerPage)
+                ->setMaxResults($itemsPerPage)
+          )
+      );
     }
 
     //    /**

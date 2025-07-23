@@ -52,7 +52,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->getOneOrNullResult();
     }
 
-    public function getAllPublicUsersAndConnections($user_id,int $page = 1, int $itemsPerPage = 10): DoctrinePaginator
+    public function getAllPublicUsersAndConnections($user_id,int $page = 1, int $itemsPerPage = 30): DoctrinePaginator
     # relative to a signed-in user, finds all public users who are not blocked or blocking the signed in user
     {
         return new DoctrinePaginator(
@@ -73,7 +73,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         );
     }
 
-    public function getAllPublicUsers (int $page = 1, int $itemsPerPage = 10): DoctrinePaginator
+    public function getAllPublicUsers (int $page = 1, int $itemsPerPage = 30): DoctrinePaginator
     # all public users, if no user is signed in
     {
       try { 

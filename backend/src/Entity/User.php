@@ -39,7 +39,7 @@ use Doctrine\Persistence\ManagerRegistry;
 #[ApiResource(
     operations: [
       new Get(
-        uriTemplate: '/user',
+        uriTemplate: '/users/{username}',
         security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user"
       ),
       new Get(
@@ -154,7 +154,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, FeedEntry>
      */
     #[ORM\OneToMany(targetEntity: FeedEntry::class, mappedBy: 'user', orphanRemoval: true)]
-    #[ORM\OrderBy(["edited_at" => "DESC"])]
+    //#[ORM\OrderBy(["edited_at" => "DESC"])]
     private Collection $feedEntries;
 
     /**
@@ -171,6 +171,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->feedEntries = new ArrayCollection();
         $this->interactions = new ArrayCollection();
     }
+
+    #[ApiResource (writable: false)]
+    public function getMostRecentUpdate() {
+      return $this->getFeedEntries()[0];
+    }
+
 
     #[ApiResource (writable: false)]
     public function getGravatarUrl(): ?string
@@ -498,7 +504,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, FeedEntry>
      */
-    public function getFeedEntrys(): Collection
+    public function getFeedEntries(): Collection
     {
         return $this->feedEntries;
     }

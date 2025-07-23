@@ -3,11 +3,12 @@ import { useContext, useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import styled from 'styled-components'
 import context from '../services/context'
+import TextTimestamp from './TextTransforms'
 import Page from './Page'
 import api from '../services/api'
 import Loading from './Loading'
 import Input, { Button } from './Forms/Input'
-import { ContentContainer, ContentBlock,PaginationContainer } from './Containers'
+import { ContentContainer, ContentBlock, PaginationContainer } from './Containers'
 
 const { LoggedInUserContext } = context
 
@@ -56,18 +57,16 @@ const IndividualProfile = styled.div`
   }
 `
 
-function DisplayUserInfo ({buddyInfo,user}) {
+function DisplayFeedEntry ({buddyInfo,user}) {
   /*
   {"id":6,"user":"/api/users/amanda","created_at":"2025-05-17T17:37:52+00:00","edited_at":"2025-05-17T17:37:52+00:00","interactions":[],"title":null,"details":{"unit":"pages","verb":"removed","value":"4","project_title":"This Crazy Building Life"},"update_type":"progress"}
   */
   const buddyUsername = (buddyInfo.initiating_user_id === user.id) ? buddyInfo.connected_username : buddyInfo.initiating_username
-  const buddyUpdates = buddyInfo.updates.map((update) => <li key={update.details.id}>Updated <i>{update.details.project_title}</i>: {update.details.verb} {update.details.value} {update.details.unit}</li>)
+  const buddyUpdates = buddyInfo.updates.map((update) => <>{projectUpdateText(update,buddyUsername)}</>)
   return (
     <>
     <strong><a href={`/profile/${buddyUsername}`} title={`${buddyUsername}'s profile`}>{buddyUsername}</a></strong>
-    <ul>
       {buddyUpdates}
-    </ul>
     </>
   )
 }
@@ -94,16 +93,39 @@ function UserMiniDisplay ({user}) {
   )
 }
 
+function ProjectInfo({project}) {
+  let updateText = projectUpdateText(project.most_recent_update, 'You', project.code)
+  return (
+    <div style={{padding: '5px'}}>
+      <b onClick={(e) => {console.log(project.code)}}>{project.title}</b>
+      {updateText}
+    </div>
+  )
+}
+
+function projectUpdateText (update, username, project_code) {
+  function ProjectLink({title,code,text}) {
+    return <>
+      {text} "<b><a href={`/project/view/${code}`}>{title}</a></b>"
+    </>
+  }
+  if (update.update_type == 'project') { // the most recent entry is that the project was created
+    return <TextTimestamp datetime={update.created_at} label={<ProjectLink text={`${username} created`} title={update.current_project_title} code={project_code} />} />
+  } else {
+    return <TextTimestamp datetime={update.created_at} label={<ProjectLink text={`${username} ${update.details.verb} ${update.details.value} ${update.details.unit}`} title={update.current_project_title} code={project_code} />} />
+  }
+}
+
 export function PublicFeed () {
   const user = useContext(LoggedInUserContext)
   const [currentPageUsers,setCurrentPageUsers] = useState([])
   const [totalUsers,setTotalUsers] = useState([])
   const [pages,setPages] = useState([])
   const [loading, setLoading] = useState(true)
+  // TODO: the paging wasn't working again? Need to check this out.
   async function getPageConnections (pageUrl=`profiles/public?page=1`) {
     setLoading(true)
     const resp = await api.get(pageUrl)
-    console.log(resp.data)
     setCurrentPageUsers(resp.data['hydra:member'])
     setTotalUsers(resp?.data['hydra:totalItems'])
     setPages(resp.data['hydra:view'] || null) // if there are fewer than 10 results, no page information returned
@@ -145,28 +167,27 @@ export function HomeFeed() {
   const [projects,setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   useEffect(() => {
+    console.log(user)
     async function getConnections () {
       const resp = await api.get("connection/feed")
-      setFollowing(resp.data.following)
-      setBuddies(resp.data.mutual)
+      console.log(resp.data)
+      if (resp.data) {
+        setBuddies(resp.data['hydra:member'])
+      }
     }
     async function getProjects () {
         const resp = await api.get(`users/${user.username}/projects`)
-        console.log(resp)
         setProjects(resp.data['hydra:member'])
     }
     try {
+      getProjects()
       getConnections()
-      //getProjects()
     } catch (err) {
       console.log(err)
     } finally {
       setLoading(false)
     }
   },[user])
-  const buddy_blocks = buddies.map((buddy) => <div key={buddy.id} style={{padding: '5px'}}><DisplayUserInfo buddyInfo={buddy} user={user} /></div>)
-  const follow_blocks = following.map((follow) => <div key={follow.id} style={{padding: '5px'}}><DisplayUserInfo buddyInfo={follow} user={user} /></div>)
- // const project_blocks = projects.map((pr) => <div key={pr.id} style={{padding: '5px'}}><p>{pr.title}</p></div>)
   if (loading) {
     return <Page>
       <Loading />
@@ -176,32 +197,27 @@ export function HomeFeed() {
       <Page>
         <ContentContainer>
           <ContentBlock>
-            <div style={{'border': '1px solid red', 'position': 'relative'}}>
+            <div style={{'position': 'relative'}}>
               <h1>Projects</h1>
               <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto', 'position': 'absolute', 'top': '1rem', 'right': '1rem'}}>+ New Project</Button>
-              {/*project_blocks*/}
+              {projects.length > 0 && projects.map((pr) => <ProjectInfo project={pr} key={pr.code} />)}
             </div>
-            <div style={{'float': 'right','width': '50%', 'border': '1px dotted rebeccapurple'}}>
+            {(buddies.length > 0 || following.length > 0) &&
+            <div style={{'borderTop': '1px solid #ccc', 'marginTop': '1rem'}}>
               {buddies.length > 0 && 
               <>
                 <h1>Friends</h1>
-                {buddy_blocks}
+                {buddies.map((buddy) => <div key={buddy.id} style={{padding: '5px'}}><DisplayFeedEntry buddyInfo={buddy} user={user} /></div>)}
               </>
               }
               {following.length > 0 &&
               <>
                 <h1>Following</h1>
-                {follow_blocks}
-              </>
-              }
-              {(buddies.length === 0 && following.length === 0) &&
-              <>
-                <h1>Welcome to Questy!</h1>
-                <p>Once you&apos;ve connected to other writers, you&apos;ll see your friends lists here!</p>
-                <p>Looking to connect with other writers? Invite your friends, or check out <a href="/profiles/public" title="Public Questy Profiles">public users</a>.</p>
+                {following.map((follow) => <div key={follow.id} style={{padding: '5px'}}><DisplayFeedEntry buddyInfo={follow} user={user} /></div>)}
               </>
               }
             </div>
+            }
           </ContentBlock>
         </ContentContainer>
       </Page>

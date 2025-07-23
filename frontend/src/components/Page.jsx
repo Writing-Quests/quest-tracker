@@ -135,7 +135,7 @@ const DropdownMenu = styled.div`
   font-family: 'Poppins', sans-serif;
   z-index: 99;
   position: fixed;
-  display: ${(props) => (props.visible == true && 'block') || 'none'};
+  display: ${(props) => (props.visible == 'true' && 'block') || 'none'};
   top: ${(props) => (props.top)};
   right: ${(props) => (props.right)};
   max-height: 80%;
@@ -143,8 +143,8 @@ const DropdownMenu = styled.div`
   border: 2px solid #ccc;
   margin: 0;
   padding: 0;
-  overflow-y: ${(props) => (props.scrollContent == true && 'scroll') || 'hidden'};
-  text-align: ${(props) => (props.menuType == 'notifications' && 'right') || 'center'};
+  overflow-y: ${(props) => (props.scrollContent == 'true' && 'scroll') || 'hidden'};
+  text-align: ${(props) => (props.menutype == 'notifications' && 'right') || 'center'};
   padding: 10px;
   background-color: #fff;
   > * {
@@ -206,6 +206,32 @@ const Beta = styled.a`
   }
 `
 
+function childInParentClassBranch (target,parentClass) {
+  let foundParent = null
+  let start = target;
+  do {
+    let currentParent = start;
+    if (currentParent) {
+      switch (true) {
+        case currentParent.classList.contains(parentClass):
+          foundParent = true;
+        break;
+
+        case currentParent.id === 'root': // hit the root element, clearly the branch is not here
+          foundParent = false;
+        break;
+
+        default:
+          start = start.parentElement
+        break;
+      }
+    } else { // usually this is an error on closing the menu currentParent is null, but toss 'em out anyway
+      foundParent = false
+    }
+  } while (foundParent === null)
+  return foundParent
+}
+
 function Notification ({children}) {
   return <NotificationItem>{children}</NotificationItem>
 }
@@ -259,10 +285,22 @@ function UserControls() {
   function closeNotifications () {
     if (showingNotifications === 'show') { setShowingNotifications('hide') }
   }
-  document.addEventListener('keydown', () => {
-    closeUserMenu();
-    closeNotifications();
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeUserMenu();
+      closeNotifications();
+    }
   } , false)
+  document.addEventListener('click', (e) => {
+    if (showingNotifications === 'show' || showingUserMenu === 'show') {
+      if (!e.target.classList.contains('dropdownToggle') && !e.target.classList.contains('dropdownParent')) {
+        if (!childInParentClassBranch(e.target,'dropdownParent')) {
+          closeUserMenu();
+          closeNotifications();
+        }
+      }
+    }
+  }, false)
   const fakeNotifications = [
     {
       'id': 1,
@@ -284,11 +322,13 @@ function UserControls() {
   ]
   const notifications = fakeNotifications.map((n) => {return <Notification key={n.id} details={n}>{n.notice}</Notification>})
   return <>
-    <UserMenuToggle onClick={() => {toggleDropdown({'which':'user'})}}><span>{user.username}</span> <MenuIcon show={(showingUserMenu === 'show')} /></UserMenuToggle>
-    <NotificationCount count={notificationCount} data-dropdown-open={(showingNotifications === 'show')} onClick={() => {toggleDropdown({'which':'notifications'})}}>
+    <UserMenuToggle className="dropdownToggle" onClick={() => {toggleDropdown({'which':'user'})}}><span className="dropdownToggle">{user.username}</span> <MenuIcon className="dropdownToggle" show={(showingUserMenu === 'show' ? "true" : undefined)} /></UserMenuToggle>
+    {/*
+    <NotificationCount className="dropdownToggle" count={notificationCount} data-dropdown-open={(showingNotifications === 'show')} onClick={() => {toggleDropdown({'which':'notifications'})}}>
       <span>{notificationCount}</span>
     </NotificationCount>
-    <DropdownMenu menuType="user" top={`${menuPosition[0] + 8}px`} right={`${menuPosition[1]}px`} visible={(showingUserMenu === 'show')}>
+    */}
+    <DropdownMenu className="dropdownParent" menutype="user" top={`${menuPosition[0] + 8}px`} right={`${menuPosition[1]}px`} visible={(showingUserMenu === 'show' ? "true" : undefined)}>
       <Link to={`/profile/${user.username}`}>Your Profile</Link>
       <hr />
       <Link to='/connections'>Connections</Link>
@@ -296,9 +336,11 @@ function UserControls() {
       <hr />
       <a href='#' onClick={handleLogout}>Logout</a>
     </DropdownMenu>
-    <DropdownMenu menuType="notifications" top={`${menuPosition[0] + 8}px`} right={`${menuPosition[1]}px`} scrollContent={true} visible={(showingNotifications === 'show')}>
+    {/*
+    <DropdownMenu className="dropdownParent" menutype="notifications" top={`${menuPosition[0] + 8}px`} right={`${menuPosition[1]}px`} scrollcontent="true" visible={(showingNotifications === 'show' ? "true" : undefined)}>
       {notifications}
     </DropdownMenu>
+    */}
   </>
 }
 

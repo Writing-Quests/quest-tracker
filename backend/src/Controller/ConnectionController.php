@@ -69,7 +69,7 @@ class ConnectionController extends AbstractController
       return $this->json($sorted_connections);
     }
   }
-
+  /*
   #[Route('/api/connection/feed', name: 'all_feed_connections', methods: ['GET'])]
   public function all_feed_connections (): JsonResponse {
     if (!$this->user) {
@@ -92,13 +92,14 @@ class ConnectionController extends AbstractController
          }
         $this_user_data['buddy_id'] = $buddy_id;
         $user_info = $this->entityManager->getRepository(User::class)->findOneBy(['id'=>$buddy_id]);
-        $this_user_data['updates'] = $user_info->getFeedEntrys();
+        $this_user_data['updates'] = $user_info->getFeedEntries();
         $this_user_data += $buddy;
         array_push($enriched_connections[$buddy['status']],$this_user_data);
       }
       return $this->json($enriched_connections);
     }
   }
+  */
 
   #[Route('/api/connection/status/{user1}/{user2}',name: 'user_connection_status', methods: ['GET'])]
   public function user_connection_status (String $user1, String $user2): JsonResponse {
