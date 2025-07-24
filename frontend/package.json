@@ -25,6 +25,9 @@
     "recharts": "^2.12.7",
     "styled-components": "^6.1.13"
   },
+  "overrides": {
+    "form-data": "4.0.4" 
+  },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "@types/react": "^18.3.3",
