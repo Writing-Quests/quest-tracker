@@ -7,14 +7,15 @@ import styled from 'styled-components'
 import context from '../../services/context'
 import Page from '../Page'
 import api from '../../services/api'
+import userConnection from '../../services/connectionStatus'
 import Input, { Button } from '../Forms/Input'
 import Notices from '../Notices'
-import Loading from '../Loading'
+import Loading, { SectionLoading } from '../Loading'
 import Progress from '../Progress'
-import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer, SuccessContainer, NeutralContainer } from '../Containers'
+import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer, SuccessContainer, NeutralContainer, ProjectUpdateContainer } from '../Containers'
 import { ModalStyle, ModalCloseButton } from '../Modal'
 import Modal from 'react-modal'
-import {CountdownBar} from '../Forms/Countdown'
+import { CountdownBar } from '../Forms/Countdown'
 
 const { LoggedInUserContext } = context
 
@@ -45,23 +46,40 @@ const TitleHeader = styled.h2`
 }
 `
 
-function ProjectsList({username}) {
+const ByLineHeader = styled.span`
+  display: block;
+  font-family: "Playfair Display", serif;
+  font-size: 1.5rem;
+  position: relative;
+  margin-bottom: 0;
+  .titleText {
+    color: #fff;
+    text-decoration: none;
+    &:hover {
+      color: #ccc;
+      text-decoration: underline;
+    }
+  }
+}
+`
+
+function ProjectsList({ username }) {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
   const [data, setData] = useState()
   const [refetchProjects, setRefetchProjects] = useState(0)
   useEffect(() => {
-    if(!username) {
+    if (!username) {
       setError("Need username to load projects")
       return
     }
     (async () => {
-      if(!data) { setLoading(true) }
+      if (!data) { setLoading(true) }
       try {
         const resp = await api.get(`users/${username}/projects`)
         setData(resp.data['hydra:member'])
-      } catch(e) {
+      } catch (e) {
         setError(e)
       } finally {
         setLoading(false)
@@ -69,7 +87,7 @@ function ProjectsList({username}) {
     })()
   }, [username, refetchProjects])
   const { activeProjects, pastProjects, futureProjects } = useMemo(() => {
-    if(!data) { return {} }
+    if (!data) { return {} }
     // TODO: incorporate goals
     return { activeProjects: data, pastProjects: [], futureProjects: [] }
     const activeProjects = []
@@ -78,8 +96,8 @@ function ProjectsList({username}) {
     for (const d of data) {
       const hasActiveGoal = (d.goals || []).some(goal => {
         //if(d.id === 11) { debugger }
-        if(!goal.end_date || !goal.start_date) { return false }
-        if(
+        if (!goal.end_date || !goal.start_date) { return false }
+        if (
           dayjs(goal.end_date).isAfter(dayjs().subtract(7, 'day'))
           &&
           dayjs(goal.start_date).isBefore(dayjs().add(2, 'day'))
@@ -87,15 +105,15 @@ function ProjectsList({username}) {
           return true
         }
       })
-      if(hasActiveGoal) {
+      if (hasActiveGoal) {
         activeProjects.push(d)
         continue
       }
       const hasPastGoal = (d.goals || []).some(goal => {
-        if(!goal.end_date) { return false }
-        if(dayjs(goal.end_date).isBefore(dayjs())) { return true }
+        if (!goal.end_date) { return false }
+        if (dayjs(goal.end_date).isBefore(dayjs())) { return true }
       })
-      if(hasPastGoal) {
+      if (hasPastGoal) {
         pastProjects.push(d)
       } else {
         futureProjects.push(d)
@@ -103,24 +121,24 @@ function ProjectsList({username}) {
     }
     return { activeProjects, pastProjects, futureProjects }
   }, [data])
-  if(loading || !data) { return <Loading /> }
-  if(error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
+  if (loading || !data) { return <Loading /> }
+  if (error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
   return <>
     {Boolean(activeProjects.length) && <AnimatedContainer>
       <ContentBlock>
-      {activeProjects.map((p, i) => <div key={p.code}>
-        <div>
-          <TitleHeader><Link className="titleText" to={`/project/view/${p.code}`}>{p.title ? p.title : <em>untitled project</em>}</Link>
-            <span className="editLink">&nbsp;<Link to={`/project/edit/${p.code}`}>Edit</Link></span>
-          </TitleHeader>
-          {Boolean(p.goals?.length) && <Progress project={p} allowEditing={true} refetch={() => setRefetchProjects(refetchProjects+1)} />}
-        </div>
-        {(activeProjects.length - 1) !== i && <hr />}
-      </div>)}
+        {activeProjects.map((p, i) => <div key={p.code}>
+          <div>
+            <TitleHeader><Link className="titleText" to={`/project/view/${p.code}`}>{p.title ? p.title : <em>untitled project</em>}</Link>
+              <span className="editLink">&nbsp;<Link to={`/project/edit/${p.code}`}>Edit</Link></span>
+            </TitleHeader>
+            {Boolean(p.goals?.length) && <Progress project={p} allowEditing={true} refetch={() => setRefetchProjects(refetchProjects + 1)} />}
+          </div>
+          {(activeProjects.length - 1) !== i && <hr />}
+        </div>)}
       </ContentBlock>
     </AnimatedContainer>}
     <ContentBlock>
-      <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
+      <Button type='normal' onClick={() => navigate('/project/new')} style={{ display: 'block', margin: 'auto' }}>+ Start a new project</Button>
     </ContentBlock>
     {Boolean(futureProjects.length) && <AnimatedContainer color='#5B504E'>
       <h2>Upcoming Projects</h2>
@@ -150,7 +168,7 @@ function ProjectsList({username}) {
           </li>
         )}
       </ul>
-      <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto'}}>+ Start a new project</Button>
+      <Button type='normal' onClick={() => navigate('/project/new')} style={{ display: 'block', margin: 'auto' }}>+ Start a new project</Button>
     </ContentBlock>}
   </>
 }
@@ -175,9 +193,9 @@ export function UserProjects() {
           <ProjectsList username={user.username} />
           :
           (<>
-              <p>No projects yet!</p>
-              <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'blocked', margin: 'auto'}}>+ Start a new project</Button>
-            </>
+            <p>No projects yet!</p>
+            <Button type='normal' onClick={() => navigate('/project/new')} style={{ display: 'blocked', margin: 'auto' }}>+ Start a new project</Button>
+          </>
           )
         }
       </ContentContainer>
@@ -188,54 +206,98 @@ export function UserProjects() {
 export function ViewProject() {
   const user = useContext(LoggedInUserContext)
   const navigate = useNavigate()
-  const [loading,setLoading] = useState(true)
-  const [error,setError] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const { projectCode } = useParams()
-  const [project,setProject] = useState()
-  const [projectUpdates,setProjectUpdates] = useState([])
-   useEffect(() => {
-    if(!user) {
+  const [project, setProject] = useState()
+  const [isMyProject, setIsMyProject] = useState()
+  const [isAllowed, setIsAllowed] = useState(false)
+  const [projectUpdates, setProjectUpdates] = useState(null)
+  useEffect(() => {
+    if (!user) {
       setError("Need username to load projects")
       return
     }
     (async () => {
-      if(!project) { setLoading(true) }
+      if (!project) { setLoading(true) }
       try {
         const resp = await api.get(`project/${projectCode}`)
         setProject(resp.data)
-       // TODO: getting feed entry updates is throwing an error. me vs apiplatform
-      } catch(e) {
+        setIsMyProject(resp.data.owner_username == user.username)
+        if (!resp.data.owner_username == user.username) {
+          const userConnectionStatus = await userConnection(resp.data.owner_username, user.username)
+          if (userConnectionStatus) {
+            if (userConnectionStatus == 'blocked') {
+              // if one of you has blocked the other
+              setIsAllowed(false)
+            } else if (!resp.data.public && userConnectionStatus !== 'mutual') {
+              //if the project is not public and y'all aren't buddies
+              setIsAllowed(false)
+            } else {
+              // either the project is public, OR it's not but you're buddies
+              setIsAllowed(true)
+            }
+          } else {
+            setIsAllowed(false)
+          }
+        } else {
+          setIsAllowed(true) // it's your project you can look at it
+        }
+        if (isAllowed) {
+          const respUpdates = await api.get(`project/${projectCode}/feed`)
+          console.log('respUpdates',respUpdates)
+          try {
+            setProjectUpdates(respUpdates.data['hydra:member'])
+          } catch {
+            setProjectUpdates(null)
+          }
+        }
+      } catch (e) {
+        console.log(e)
         setError(e)
       } finally {
         setLoading(false)
       }
     })()
   }, [user, projectCode])
-  // TODO: confirm that "UPdate Progress" isn't available if this isn't my project
-  // TODO: need to redirect if this is unallowed — if the project isn't public or isn't mine.
-  if(loading || !project) { return <Loading /> }
-  if(error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
+  if (loading || !project) { return <Loading /> }
+  if (error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
+  if (!isAllowed) {
+    navigate('/')
+  }
   else {
-    const isMyProject = (project.user == user['@id'])
+    console.log('projectUpdates', projectUpdates)
+    // TODO: report button functionality when it is not your profile
     return <ProfileContext.Provider value={isMyProject}>
       <Page>
         <ContentContainer>
-      <AnimatedContainer>
-        <ContentBlock>
-        <div>
-          <div>
-            <TitleHeader>{project.title ? project.title : <em>untitled project</em>}
-              {isMyProject &&
-                <span className="editLink">&nbsp;<Link style={{'color': '#fff'}} to={`/project/edit/${project.code}`}>Edit</Link></span>
-              }
-            </TitleHeader>
-            {Boolean(project.goals?.length) && <Progress project={project} allowEditing={isMyProject} refetch={() => setRefetchProjects(refetchProjects+1)} />}
-          </div>
-        </div>
-        </ContentBlock>
-      </AnimatedContainer>
-      </ContentContainer>
-    </Page>
+          <AnimatedContainer>
+            <ContentBlock>
+              <div>
+                <div>
+                  <TitleHeader>{project.title ? project.title : <em>untitled project</em>}
+                    {isMyProject ?
+                      <span className="editLink">&nbsp;<Link style={{ 'color': '#fff' }} to={`/project/edit/${project.code}`}>Edit</Link></span>
+                      :
+                      <ByLineHeader>Created by <Link style={{ 'color': '#fff' }} to={`/profile/${project.owner_username}`}>{project.owner_username}</Link></ByLineHeader>
+                    }
+                  </TitleHeader>
+                  {Boolean(project.goals?.length) && <Progress project={project} allowEditing={isMyProject} refetch={() => setRefetchProjects(refetchProjects + 1)} />}
+                </div>
+              </div>
+            </ContentBlock>
+          </AnimatedContainer>
+          <ContentBlock>
+            {/* TODO: test that a project with NO updates comes back as null and doesn't just show as loading forever */}
+            {projectUpdates !== null ?
+              projectUpdates.length > 0 &&
+                projectUpdates.map((update) => <div><ProjectUpdateContainer update={update} isMyProject={isMyProject} key={update.update_code} includeTitle={false} /></div>)
+              :
+              <SectionLoading text={`Loading updates for "${project.title}"`}></SectionLoading>
+            }
+          </ContentBlock>
+        </ContentContainer>
+      </Page>
     </ProfileContext.Provider>
   }
 }

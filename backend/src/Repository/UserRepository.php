@@ -55,6 +55,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     public function getAllPublicUsersAndConnections($user_id,int $page = 1, int $itemsPerPage = 30): DoctrinePaginator
     # relative to a signed-in user, finds all public users who are not blocked or blocking the signed in user
     {
+        // TODO: still need to figure out the describe-connection bit.
         return new DoctrinePaginator(
             $this->createQueryBuilder('u')
               ->addSelect('u.id, u.username, u.created_at, u.description, u.last_activity_timestamp')

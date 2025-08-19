@@ -7,6 +7,7 @@ import styled from 'styled-components'
 import context from '../../services/context'
 import Page from '../Page'
 import api from '../../services/api'
+import userConnection from '../../services/connectionStatus'
 import Input, { Button } from '../Forms/Input'
 import Notices from '../Notices'
 import Loading from '../Loading'
@@ -510,11 +511,11 @@ export default function Profile() {
       try {
         const resp = await api.get(`users/${lookupUser}`)
         setProfile(resp.data)
-        if (user && lookupUser !== user.username && profile) {
-          const respConnection = await api.get(`connection/status/${resp.data.username}/${user.username}`)
-          setConnection(respConnection.data)
-          if (respConnection.data !== null) {
-            if (respConnection.data.status == 'blocked') {
+        if (user && (lookupUser !== user.username) && profile) {
+          const respConnection = await userConnection(profile.username,user.username,true) // true = return full connection detais, not just status
+          setConnection(respConnection)
+          if (respConnection) {
+            if (respConnection == 'blocked') {
               setProfileNotAvailable(true)
             }
           }
@@ -535,10 +536,11 @@ export default function Profile() {
     </Page>
   } else if (profileNotAvailable) {
     return <Page>
-      <ErrorContainer>Profile not found.</ErrorContainer>
+      <ContentContainer>
+        <ErrorContainer>Profile not found.</ErrorContainer>
+      </ContentContainer>
     </Page>
   }
-  console.log(profile)
   const isMyProfile = user && (profile?.username === user?.username)
   return <ProfileContext.Provider value={{isMyProfile}}>
     <Page>

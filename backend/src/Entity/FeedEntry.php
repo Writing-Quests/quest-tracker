@@ -29,6 +29,31 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\EntityListeners(["App\Listener\FeedEntryListener"])]
 #[ApiResource(
   operations: [
+    new Get(),
+    new GetCollection(
+        uriTemplate: '/project/{code}/feed',
+        uriVariables: [
+            'code' => new Link(
+                fromClass: Project::class,
+                fromProperty: 'code',
+                toProperty: 'project',
+                securityObjectName: 'uriProject',
+                // note on security; I check on the frontend that the user is allowed to see these but am concerned about securiging the endpoint - Ashes
+                security: "is_granted('ROLE_USER')"
+            )
+        ],
+        security: "true", // Security is on the Link level
+    ),
+  ],
+  security: "is_granted('ROLE_USER')"
+)]
+/*
+* 2025-08-09 - see notes in ConnectionFeedProvider.php for why I had to knock this one out. T_T
+* For now, /connection/feed is set in FeedEntryRepository to get around the issue.
+* /
+/*
+#[ApiResource(
+  operations: [
       new GetCollection(
         uriTemplate: '/connection/feed',
         provider: ConnectionFeedProvider::class
@@ -36,12 +61,13 @@ use Symfony\Component\Uid\Ulid;
   ],
   security: "is_granted('ROLE_USER')",
 )]
+*/
 class FeedEntry
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[ApiProperty(identifier: false, readable: true, writeable: false)]
+    #[ApiProperty(identifier: false, readable: false, writeable: false)]
     private ?int $id = null;
 
     #[ORM\Column(type: 'ulid')]
@@ -50,7 +76,7 @@ class FeedEntry
 
     #[ORM\ManyToOne(inversedBy: 'feed_entries')]
     #[ORM\JoinColumn(nullable: false)]
-    #[ApiProperty(readable:true)]
+    #[ApiProperty(readable:false)] // I get username elsewere, this return the API 
     private ?User $user = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -74,11 +100,11 @@ class FeedEntry
 
     #[ORM\Column(length: 255)]
     #[ApiProperty(readable:true)]
-    private ?string $updateType = null;
+    private ?string $update_type = null;
 
     #[ORM\ManyToOne(inversedBy: 'updates')]
     #[ORM\JoinColumn(nullable: true)]
-    #[ApiProperty(readable:true)]
+    #[ApiProperty(readable:false)]
     private ?Project $project = null;
 
     public function __construct()
@@ -87,13 +113,18 @@ class FeedEntry
     }
 
     #[ApiResource (writable: false)]
-    public function getCurrentProjectTitle() {
+    public function getProjectTitle() {
       return $this->getProject()->getTitle();
     }
 
     #[ApiResource (writable: false)]
     public function getProjectCode() {
       return $this->getProject()->getCode();
+    }
+
+    #[ApiResource (writable: false)]
+    public function getUsername() {
+      return $this->getUser()->getUsername();
     }
 
     public function getId(): ?int
@@ -181,12 +212,12 @@ class FeedEntry
 
     public function getUpdateType(): ?string
     {
-        return $this->updateType;
+        return $this->update_type;
     }
 
-    public function setUpdateType(string $updateType): static
+    public function setUpdateType(string $update_type): static
     {
-        $this->updateType = $updateType;
+        $this->update_type = $update_type;
 
         return $this;
     }

@@ -22,7 +22,25 @@ const LoadingText = styled.span`
   margin-top: ${({$inline}) => $inline ? '0' : '10px'};
 `
 
-// set the loading container to full width to stop the menu from changing sizes on us during loading - ashley
+const LoadingBox = styled.div`
+  animation: loading01 1.4s infinite alternate;
+  width: 100%;
+  height: 100px;
+  
+  font-style: italic;
+  padding: 10px;
+  @keyframes loading01 {
+    0% {
+      background-color: #cccccc;
+      color: #525252;
+    }
+    100% {
+      background-color: #fafafa;
+      color: #ccc;
+    }
+  }
+`
+
 export default function Loading({inline, text='Loading', fullPage}) {
   const size = inline ? 46 : 96;
   const Container = inline ? InlineLoadingContainer : LoadingContainer;
@@ -31,7 +49,7 @@ export default function Loading({inline, text='Loading', fullPage}) {
       <Loading inline={inline} text={text} />
     </div>
   }
-  return <Container style={{'width': '100dvw'}}>
+  return <Container>
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"><g fill="none" stroke="#aaa" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}><path strokeDasharray={16} strokeDashoffset={16} d="M12 3c4.97 0 9 4.03 9 9"><animate fill="freeze" attributeName="stroke-dashoffset" dur="0.3s" values="16;0"></animate><animateTransform attributeName="transform" dur="1.5s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"></animateTransform></path><path strokeDasharray={64} strokeDashoffset={64} strokeOpacity={0.3} d="M12 3c4.97 0 9 4.03 9 9c0 4.97 -4.03 9 -9 9c-4.97 0 -9 -4.03 -9 -9c0 -4.97 4.03 -9 9 -9Z"><animate fill="freeze" attributeName="stroke-dashoffset" dur="1.2s" values="64;0"></animate></path></g></svg>
     <LoadingText $inline={inline}>{text}&hellip;</LoadingText>
   </Container>
@@ -40,4 +58,8 @@ Loading.propTypes = {
   inline: PropTypes.bool,
   text: PropTypes.string,
   fullPage: PropTypes.bool,
+}
+
+export function SectionLoading({text=' '}) {
+  return <LoadingBox>{text}</LoadingBox>
 }

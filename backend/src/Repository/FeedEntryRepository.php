@@ -4,6 +4,7 @@ namespace App\Repository;
 use Exception;
 use App\Entity\User;
 use App\Entity\FeedEntry;
+use App\Entity\Project;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
@@ -19,11 +20,13 @@ class FeedEntryRepository extends ServiceEntityRepository
         parent::__construct($registry, FeedEntry::class);
     }
 
-    public function getFullUserFeed(array $buddy_ids, int $page = 1, int $itemsPerPage = 30): DoctrinePaginator
+    public function getFullUserFeed(array $buddy_ids, int $page = 1, int $itemsPerPage = 30): Array
     {
-      return new DoctrinePaginator(
+      return (
         $this->createQueryBuilder('f')
-          ->addSelect('f.code, f.details, f.edited_at')
+          ->join('f.user', 'user')
+          ->join ('f.project', 'project')
+          ->select('f.code as update_code, f.created_at, f.update_type, f.details, f.edited_at, project.title as project_title, project.code as project_code, user.username')
           ->andWhere('f.user IN (:user_ids)')
           ->setParameter('user_ids', $buddy_ids)
           ->orderBy('f.edited_at', 'DESC')
@@ -32,7 +35,23 @@ class FeedEntryRepository extends ServiceEntityRepository
                 ->setFirstResult(($page - 1) * $itemsPerPage)
                 ->setMaxResults($itemsPerPage)
           )
+          ->getQuery()
+          ->getResult()
       );
+    }
+
+    public function getManualPageInfo (array $buddy_ids): array
+    {
+      $itemsPerPage = 30;
+      $totalItems = count(
+        $this->createQueryBuilder('f')
+          ->select('f.code')
+          ->andWhere('f.user IN (:user_ids)')
+          ->setParameter('user_ids', $buddy_ids)
+          ->getQuery()
+          ->getResult()
+      );
+      return ['totalItems' => $totalItems, 'pages' => ceil($totalItems / $itemsPerPage)];
     }
 
     //    /**

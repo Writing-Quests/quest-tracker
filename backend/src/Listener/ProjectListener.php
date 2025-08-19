@@ -35,7 +35,7 @@ class ProjectListener
       $user = $this->token_storage->getToken()->getUser();
       ($update_post)
         ->setUser($user)
-        ->setUpdateType('project')
+        ->setUpdateType('new')
         ->setCreatedAt(new DateTime())
         ->setEditedAt(new DateTime())
         ->setProject($project)

@@ -177,7 +177,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
       return $this->getFeedEntries()[0];
     }
 
-
     #[ApiResource (writable: false)]
     public function getGravatarUrl(): ?string
     {

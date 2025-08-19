@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import PropTypes from 'prop-types'
 import wave from '../assets/wave.svg'
 import waveRaw from '../assets/wave.svg?raw'
-
+import {TextTimestamp, numberWithCommas} from './TextTransforms'
 
 const AnimatedContainerDiv = styled.div`
   margin-top: 40px;
@@ -68,7 +68,7 @@ export const CenteredContainer = styled.div`
 `
 
 const ErrorContainerDiv = styled.div`
-  width: 100%;
+  width: 90%;
   background-color: #FFDCD3;
   margin: 10px 0;
   border: 1px solid #EA846A;
@@ -122,55 +122,25 @@ const PaginationDiv = styled.div`
   }
 `
 
-export function ErrorContainer({error, children}) {
-  if(!error) {
-    if(!children) {
-      return <ErrorContainerDiv>Unknown error</ErrorContainerDiv>
-    } else {
-      return <ErrorContainerDiv>{children}</ErrorContainerDiv>
+const FeedEntryBlock = styled.div`
+  width: 100%;
+  .entry_timestamp {
+    font-size: 0.8rem;
+    color: #b83a14;
+    font-style: italic;
+  }
+  p {
+    margin-top: 0;
+  }
+  a {
+    text-decoration: none;
+    color: #4f72c0;
+    &:hover {
+      text-decoration: underline;
+      color: #638ff0;
     }
-  } else {
-    return <ErrorContainerDiv><strong>{error.name ? `Error (${error.name})` : 'Error'}:</strong> {error.message ? error.message : JSON.stringify(error)}</ErrorContainerDiv>
   }
-}
-ErrorContainer.propTypes = {
-  error: PropTypes.object,
-  children: PropTypes.node,
-}
-
-export function PaginationContainer({hydraPageInfo, pageFlip, children}) { 
-  // pageFlip only has one parameter: url for the flip
-  // hydra pagination gives us the first page [hydra:first], last page [hydra:last], and next page [hydra:next]
-  // current page is @id
-  // it DOESN'T give us total pages in a simple way I'd hope so. my solution to keep this pagination container general is stupid
-  // and that solution is regex
-  // the smarter solution that i'd like to revisit later is an eventlistener to serialize/manage the page data so it just comes to just nicer
-  const currentApiUrl = hydraPageInfo['@id'].match(/\/api\/(.*)\?page=\d*/)[1];
-  const currentPage = Number(hydraPageInfo['@id'].match(/.*\?page=(\d*)/)[1]);
-  const allPages = []
-  const lastPageNumber = (hydraPageInfo['hydra:last'].match(/.*\?page=(\d*)/)[1]);
-  for (var i = 0; i < lastPageNumber; i++) {
-    allPages.push(i+1)
-  }
-  const pageButtons = allPages.map((pg) => { return <li key={`pageButton${pg}`} onClick={() => { if (pg !== currentPage) { pageFlip(`${currentApiUrl}?page=${pg}`) }}} data-current-page={pg === currentPage}>{pg}</li>})
-  // the other problem to solve: hydra gives us back our API URLs with the /api in them, which we've already accounted for. 
-  return (
-    <>
-    <PaginationDiv>
-    {hydraPageInfo['hydra:previous'] ? <span className="arrowButton" onClick={() => {pageFlip(hydraPageInfo['hydra:previous'].replace('/api/',''))}}>&lt;</span> : <i>&nbsp;</i> }
-    <ul className="pageNumbers">
-    {pageButtons}
-    </ul>
-    {hydraPageInfo['hydra:next'] ? <span className="arrowButton" onClick={() => {pageFlip(hydraPageInfo['hydra:next'].replace('/api/',''))}}>&gt;</span> : <i>&nbsp;</i> }
-    </PaginationDiv>
-    {children}
-    </>
-  )
-}
-ErrorContainer.propTypes = {
-  hydraPageInfo: PropTypes.object,
-  pageFlip: PropTypes.function
-}
+`
 
 export const SuccessContainer = styled.div`
   width: 100%;
@@ -217,3 +187,83 @@ export const ContentBlock = styled.div`
   max-width: ${props => props.maxWidth ? props.maxWidth : '700px'};
   width: 100%;
 `
+export function ErrorContainer({error, children}) {
+  if(!error) {
+    if(!children) {
+      return <ErrorContainerDiv>Unknown error</ErrorContainerDiv>
+    } else {
+      return <ErrorContainerDiv>{children}</ErrorContainerDiv>
+    }
+  } else {
+    return <ErrorContainerDiv><strong>{error.name ? `Error (${error.name})` : 'Error'}:</strong> {error.message ? error.message : JSON.stringify(error)}</ErrorContainerDiv>
+  }
+}
+ErrorContainer.propTypes = {
+  error: PropTypes.object,
+  children: PropTypes.node,
+}
+
+export function PaginationContainer({hydraPageInfo, getNextPage, children}) { 
+  // getNextPage only has one parameter: url for the flip
+  // hydra pagination gives us the first page [hydra:first], last page [hydra:last], and next page [hydra:next]
+  // current page is @id
+  // it DOESN'T give us total pages in a simple way I'd hope so. my solution to keep this pagination container general is stupid
+  // and that solution is regex
+  // the smarter solution that i'd like to revisit later is an eventlistener to serialize/manage the page data so it just comes to just nicer
+  const currentApiUrl = hydraPageInfo['@id'].match(/\/api\/(.*)\?page=\d*/)[1];
+  const currentPage = Number(hydraPageInfo['@id'].match(/.*\?page=(\d*)/)[1]);
+  const allPages = []
+  const lastPageNumber = (hydraPageInfo['hydra:last'].match(/.*\?page=(\d*)/)[1]);
+  for (var i = 0; i < lastPageNumber; i++) {
+    allPages.push(i+1)
+  }
+  const pageButtons = allPages.map((pg) => { return <li key={`pageButton${pg}`} onClick={() => { if (pg !== currentPage) { getNextPage(`${currentApiUrl}?page=${pg}`) }}} data-current-page={pg === currentPage}>{pg}</li>})
+  // the other problem to solve: hydra gives us back our API URLs with the /api in them, which we've already accounted for. 
+  return (
+    <>
+    <PaginationDiv>
+    {hydraPageInfo['hydra:previous'] ? <span className="arrowButton" onClick={() => {getNextPage(hydraPageInfo['hydra:previous'].replace('/api/',''))}}>&lt;</span> : <i>&nbsp;</i> }
+    <ul className="pageNumbers">
+    {pageButtons}
+    </ul>
+    {hydraPageInfo['hydra:next'] ? <span className="arrowButton" onClick={() => {getNextPage(hydraPageInfo['hydra:next'].replace('/api/',''))}}>&gt;</span> : <i>&nbsp;</i> }
+    </PaginationDiv>
+    {children}
+    </>
+  )
+}
+ErrorContainer.propTypes = {
+  hydraPageInfo: PropTypes.object,
+  getNextPage: PropTypes.func
+}
+
+export function ProjectUpdateContainer ({update,isMyProject,includeTitle=true}) {
+  try {
+    let timestamp = <TextTimestamp datetime={update.created_at} />
+    let label = update.update_type == 'new' ? 'created': `${update.details.verb} ${numberWithCommas(update.details.value)} ${update.details.unit}`;
+    if (includeTitle && label !== 'new') {
+      label += " to"
+    }
+    return <FeedEntryBlock>
+      <span className="entry_timestamp">{timestamp}</span>
+      <p>
+        {isMyProject ? "You" : <a href={`/profile/${update.username}`} title={`${update.username}'s profile`}>{update.username}</a>}
+        &nbsp;{label}
+        {includeTitle ?
+          <>&nbsp; &#8220;<b><a href={`/project/view/${update.project_code}`}>{update.project_title}</a></b>.&#8221;</>
+          :
+          <>.</>
+        }
+      </p>
+    </FeedEntryBlock>
+  } catch (error) {
+    // this is for "huh there's no updates for this project", which is usually an error
+    // since this function doesn't have all the project data, just returning nothing
+    return null;
+  }
+}
+
+ProjectUpdateContainer.propTypes = {
+  update: PropTypes.object,
+  isMyProject: PropTypes.bool
+}

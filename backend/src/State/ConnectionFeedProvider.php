@@ -14,6 +14,13 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use ApiPlatform\State\Pagination\Pagination;
 use ApiPlatform\Doctrine\Orm\Paginator;
 
+/*
+ * 2025-08-09 :
+ *    This same paradigm works for users in AvailableProfilesProvider.php, but it doesn't seem to here. 
+ *    I get the expected number of results listed in hydra:totalItems, bu tthe return array is empty? 
+ *    Leaving this here for when I can figure it out later, I feel like it's something small and obvious I'm not finding
+ *    In the meantime, I am building my own paginator! with blackjack!
+*/
 class ConnectionFeedProvider implements ProviderInterface
 {
   public function __construct(
@@ -23,9 +30,10 @@ class ConnectionFeedProvider implements ProviderInterface
   ) {
   }
 
-  public function provide(Operation $operation, array $uriVariables = [], array $context = []): Paginator
+  public function provide(Operation $operation, array $uriVariables = [], array $context = []): array
   {
-    $user = $this->security->getUser();
+    
+    
     [$page, $limit] = $this->pagination->getPagination($operation, $context);
     if (!$user) {
       return null;

@@ -1,7 +1,12 @@
-export default function TextTimestamp({ datetime, label, ...props }) {
+
+export function TextTimestamp({ datetime, type="prefix" }) {
   const date = new Date(datetime).toLocaleDateString()
   const time = new Date(datetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-  return <div {...props}>{label} at {time} on {date}</div>
+  if (type == 'prefix') {
+    return <>{date} {time}</>
+  } else {
+    return <>{time} on {date}</>
+  }
 }
 
 export function TextTitleCase({ text, ...props }) {
@@ -16,4 +21,8 @@ export function TextTitleCase({ text, ...props }) {
     }
   })
   return <div {...props}>{title.trim()}</div>
+}
+
+export function numberWithCommas (number) {
+  return number.toString().replace(/(\d{1,3})(?=(\d{3})+(?!\d))/g,"$1,")
 }

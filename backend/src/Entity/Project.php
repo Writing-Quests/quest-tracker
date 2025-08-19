@@ -66,6 +66,7 @@ class Project
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
     #[ORM\JoinColumn(nullable: false)]
+    #[ApiProperty(identifier: false, writable: false, readable: false)]
     private ?User $user = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "CURRENT_TIMESTAMP"])]
@@ -121,11 +122,17 @@ class Project
       return $this->getUpdates()[0];
     }
 
+    #[ApiResource (writable: false)]
+    public function getOwnerUsername() {
+      return $this->getUser()->getUsername();
+    }
+
     public function getId(): ?string
     {
         return $this->id;
     }
 
+    #[ApiProperty(identifier: false, writable: false, readable: false)]
     public function getUser(): ?User
     {
         return $this->user;
