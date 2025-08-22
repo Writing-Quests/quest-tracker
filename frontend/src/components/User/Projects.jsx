@@ -210,48 +210,41 @@ export function ViewProject() {
   const [error, setError] = useState(null)
   const { projectCode } = useParams()
   const [project, setProject] = useState()
-  const [isMyProject, setIsMyProject] = useState()
-  const [isAllowed, setIsAllowed] = useState(false)
+  const [isMyProject, setIsMyProject] = useState(false)
   const [projectUpdates, setProjectUpdates] = useState(null)
+
   useEffect(() => {
-    if (!user) {
-      setError("Need username to load projects")
-      return
-    }
     (async () => {
       if (!project) { setLoading(true) }
       try {
         const resp = await api.get(`project/${projectCode}`)
-        setProject(resp.data)
-        setIsMyProject(resp.data.owner_username == user.username)
-        if (!resp.data.owner_username == user.username) {
-          const userConnectionStatus = await userConnection(resp.data.owner_username, user.username)
-          if (userConnectionStatus) {
-            if (userConnectionStatus == 'blocked') {
-              // if one of you has blocked the other
-              setIsAllowed(false)
-            } else if (!resp.data.public && userConnectionStatus !== 'mutual') {
-              //if the project is not public and y'all aren't buddies
-              setIsAllowed(false)
+        if (!user) { // no one is logged in
+          if (!resp.data.public) { //  is this a public project? If not, yeet.
+            navigate('/');
+          } 
+        } else { // someone *is* logged in, so lets make sure they're not blocked and/or they're allowed to see this project.
+          setIsMyProject(resp.data.owner_username == user.username)
+          if (resp.data.owner_username !== user.username) {
+            const userConnectionStatus = await userConnection(resp.data.owner_username, user.username)
+            console.log('userConnectStatus', userConnectionStatus)
+            if (userConnectionStatus) {
+              if (userConnectionStatus == 'blocked') {
+                // if one of you has blocked the other
+                navigate('/')
+              } else if (!resp.data.public && userConnectionStatus !== 'mutual') {
+                //if the project is not public and y'all aren't buddies
+                navigate('/')
+              }
             } else {
-              // either the project is public, OR it's not but you're buddies
-              setIsAllowed(true)
+              // default to "probably can't see" if we can't confirm you're _not_ blocked.
+              navigate('/')
             }
-          } else {
-            setIsAllowed(false)
-          }
-        } else {
-          setIsAllowed(true) // it's your project you can look at it
-        }
-        if (isAllowed) {
-          const respUpdates = await api.get(`project/${projectCode}/feed`)
-          console.log('respUpdates',respUpdates)
-          try {
-            setProjectUpdates(respUpdates.data['hydra:member'])
-          } catch {
-            setProjectUpdates(null)
           }
         }
+        // if you're still on this page, you can see updates
+        setProject(resp.data)
+        const respUpdates = await api.get(`project/${projectCode}/feed`)
+        setProjectUpdates(respUpdates.data['hydra:member'] || null)
       } catch (e) {
         console.log(e)
         setError(e)
@@ -261,12 +254,8 @@ export function ViewProject() {
     })()
   }, [user, projectCode])
   if (loading || !project) { return <Loading /> }
-  if (error) { return <ErrorContainer>Error loading projects.</ErrorContainer> }
-  if (!isAllowed) {
-    navigate('/')
-  }
+  if (error) { return <ErrorContainer>Error loading this project.</ErrorContainer> }
   else {
-    console.log('projectUpdates', projectUpdates)
     // TODO: report button functionality when it is not your profile
     return <ProfileContext.Provider value={isMyProject}>
       <Page>
@@ -291,7 +280,7 @@ export function ViewProject() {
             {/* TODO: test that a project with NO updates comes back as null and doesn't just show as loading forever */}
             {projectUpdates !== null ?
               projectUpdates.length > 0 &&
-                projectUpdates.map((update) => <div><ProjectUpdateContainer update={update} isMyProject={isMyProject} key={update.update_code} includeTitle={false} /></div>)
+              projectUpdates.map((update) => <div><ProjectUpdateContainer update={update} isMyProject={isMyProject} key={update.update_code} includeTitle={false} /></div>)
               :
               <SectionLoading text={`Loading updates for "${project.title}"`}></SectionLoading>
             }

@@ -34,7 +34,8 @@ use Symfony\Component\Uid\Ulid;
                 'id' => new Link(
                     fromClass: Project::class,
                     toProperty: 'project',
-                    security: "project.isPublic() or is_granted('ROLE_ADMIN') or (project.getUser() === user)",
+                    //security: "project.isPublic() or is_granted('ROLE_ADMIN') or (project.getUser() === user) or (project.getUser().isLoggedInUserAllowed())",
+                    // 2025-08-21 - need to check in to see is disabling this causes downstream security issues; when enabled, buddies couldn't see non-public projects
                 )
             ],
             security: "true", // Security is on the Link level
@@ -55,7 +56,7 @@ use Symfony\Component\Uid\Ulid;
             security: "is_granted('ROLE_USER')",
         ),
     ],
-    security: "object.getProject().isPublic() or is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user)",
+    security: "object.getProject().isPublic() or is_granted('ROLE_ADMIN') or (object.getProject().getUser() == user) or (object.getProject().getUser().isLoggedInUserAllowed())",
 )]
 class ProjectGoal
 {

@@ -418,6 +418,7 @@ ProjectsList.propTypes = {
   setUpModal: PropTypes.func
 }
 
+// 2021-08-21 - TODO - when doing DMs, need to address the changes made to connection information when fixing "non-public but buddies"
 export default function Profile() {
   const [profile, setProfile] = useState()
   const [loading, setLoading] = useState(true)
@@ -541,6 +542,7 @@ export default function Profile() {
       </ContentContainer>
     </Page>
   }
+  console.log(profile)
   const isMyProfile = user && (profile?.username === user?.username)
   return <ProfileContext.Provider value={{isMyProfile}}>
     <Page>

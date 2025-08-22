@@ -27,7 +27,7 @@ use Symfony\Component\Uid\Ulid;
     operations: [
         new Get(
           uriTemplate: '/project/{code}',
-          security: "is_granted('ROLE_ADMIN') or object.getUser() == user or object.getUser().isPublic()",
+          security: "is_granted('ROLE_ADMIN') or object.getUser() == user or object.getUser().isPublic() or object.getUser().isLoggedInUserAllowed()",
         ),
         /*
         new GetCollection(
@@ -42,7 +42,7 @@ use Symfony\Component\Uid\Ulid;
                   fromProperty: 'username',
                   toProperty: 'user',
                   securityObjectName: 'uriUser',
-                  security: "uriUser == user or is_granted('ROLE_ADMIN') or uriUser.isPublic()",
+                  security: "uriUser == user or is_granted('ROLE_ADMIN') or uriUser.isPublic() or uriUser.isLoggedInUserAllowed()",
               )
           ],
           security: "true", // Security is on the Link level for now

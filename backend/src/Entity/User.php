@@ -28,6 +28,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Ignore;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 use App\State\UserMeProvider;
+use App\State\UserProfileProvider;
 use App\State\NotLoggedInRepresentation;
 use App\State\AvailableProfilesProvider;
 use Doctrine\ORM\EntityManager;
@@ -40,7 +41,8 @@ use Doctrine\Persistence\ManagerRegistry;
     operations: [
       new Get(
         uriTemplate: '/users/{username}',
-        security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user"
+        provider: UserProfileProvider::class,
+        security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user or object.isLoggedInUserAllowed()"
       ),
       new Get(
           uriTemplate: '/me',
@@ -163,6 +165,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Interaction::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $interactions;
 
+    // this is managed in State/UserProfileProvider.php to get user permissions 
+    private $loggedInUserAllowed;
+    private $loggedInUserConnection;
+
     public function __construct()
     {
         $this->loginTokens = new ArrayCollection();
@@ -170,6 +176,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->reports = new ArrayCollection();
         $this->feedEntries = new ArrayCollection();
         $this->interactions = new ArrayCollection();
+        $this->loggedInUserConnection = array();
+        $this->loggedInUserAllowed = $this->isPublic();
+    }
+
+    #[ApiResource (writable: false)]
+    public function isLoggedInUserAllowed()
+    {
+        return $this->loggedInUserAllowed;
+    }
+
+    public function setLoggedInUserAllowed(bool $allowed): static
+    {
+        $this->loggedInUserAllowed = $allowed;
+        return $this;
+    }
+
+    #[ApiResource (writable: false)]
+    public function getLoggedInUserConnection()
+    {
+        return $this->loggedInUserConnection;
+    }
+
+    public function setLoggedInUserConnection($connection)
+    {
+        $this->loggedInUserConnection = $connection;
+        return $this;
     }
 
     #[ApiResource (writable: false)]

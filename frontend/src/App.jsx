@@ -111,6 +111,7 @@ export function App() {
             <Route path="/resetform" element={<UserResetPasswordFinish />} />
             <Route path="/login" element={<Login />} />
             <Route path="/profile/:username?" element={<Profile />} />
+            <Route path="/project/view/:projectCode" element={<ViewProject />} />
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />

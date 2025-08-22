@@ -134,13 +134,11 @@ export function BuddyFeed() {
   const [totalUpdates,setTotalUpdates] = useState([])
   const [pages,setPages] = useState([])
   async function getFeedPageContent (pageUrl=`/feed?page=1`) {
-    console.log(pageUrl)
     setLoading(true)
     const resp = await api.get(pageUrl)
     setPageBuddyUpdates(resp.data['hydra:member'])
     setTotalUpdates(resp?.data['hydra:totalItems'])
     setPages(resp.data['hydra:view'] || null) // if there are fewer than 30 results, no page information returned
-    console.log(resp.data['hydra:view'])
     setLoading(false)
   }
   useEffect(() => {
@@ -198,7 +196,6 @@ export function HomeFeed() {
     async function getConnectionUpdates () {
       const resp = await api.get("/feed?page=1")
       if (resp.data) {
-        console.log(resp.data)
         setBuddyUpdates(resp.data['hydra:member'])
         if (resp.data['hydra:view']) {
           setMultipleFeedPages(true)

@@ -38,14 +38,12 @@ use Symfony\Component\Uid\Ulid;
                 fromProperty: 'code',
                 toProperty: 'project',
                 securityObjectName: 'uriProject',
-                // note on security; I check on the frontend that the user is allowed to see these but am concerned about securiging the endpoint - Ashes
-                security: "is_granted('ROLE_USER')"
+                security: "is_granted('ROLE_USER') or (uriProject.isPublic())" 
             )
         ],
         security: "true", // Security is on the Link level
     ),
   ],
-  security: "is_granted('ROLE_USER')"
 )]
 /*
 * 2025-08-09 - see notes in ConnectionFeedProvider.php for why I had to knock this one out. T_T
@@ -67,9 +65,10 @@ class FeedEntry
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[ApiProperty(identifier: false, readable: false, writeable: false)]
+    #[ApiProperty(identifier: false, readable: true, writeable: false)]
     private ?int $id = null;
-
+    
+    // need to revisit this; API throws an IRI error if it can't read the ID, even with code as the identifier
     #[ORM\Column(type: 'ulid')]
     #[ApiProperty(identifier: true, readable: true, writable: false)]
     private ?Ulid $code = null;

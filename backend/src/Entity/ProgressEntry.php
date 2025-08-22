@@ -28,13 +28,14 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
                     fromProperty: 'code',
                     toProperty: 'project',
                     securityObjectName: 'uriProject',
-                    security: "uriProject.getUser() == user or is_granted('ROLE_ADMIN') or uriProject.getUser().isPublic()",
+                    //security: "uriProject.getUser() == user or is_granted('ROLE_ADMIN') or uriProject.getUser().isPublic() or uriProject.getUser().isLoggedInUserAllowed()",
+                    // 2025-08-21 - need to check in to see is disabling this causes downstream security issues; when enabled, buddies couldn't see non-public projects
                 )
             ],
             security: "true", // Security is on the Link level
         ),
         new Post(
-            securityPostDenormalize: "object.getProject().getUser() == user or is_granted('ROLE_ADMIN')",
+            securityPostDenormalize: "object.getProject().getUser() == user or is_granted('ROLE_ADMIN') or object.getProject().getUser().isLoggedInUserAllowed()",
         ),
     ]
 )]
