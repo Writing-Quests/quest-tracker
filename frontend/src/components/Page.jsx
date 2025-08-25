@@ -387,8 +387,8 @@ export default function Page({children}) {
         </NavigationHeader>
         {user ? <UserControls /> : <NavigationLink to="/login" color="#000000">Login</NavigationLink>}
       </SiteNavigation>
-      <div id="pageContent">
-      {children}
+      <div id="pageContent" style={{width: '100vw'}}>
+        {children}
       </div>
       <CenteredContainer style={{
         textAlign: 'center',
