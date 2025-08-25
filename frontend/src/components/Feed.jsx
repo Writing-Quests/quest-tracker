@@ -2,6 +2,7 @@
 import { useContext, useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, Link, json } from 'react-router-dom'
 import styled from 'styled-components'
+import dayjs from 'dayjs'
 import context from '../services/context'
 import Page from './Page'
 import api from '../services/api'
@@ -185,6 +186,88 @@ export function BuddyFeed() {
   }
 }
 
+function QuestItem({quest}) {
+  const user = useContext(LoggedInUserContext)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  function dateInterval(date1, date2) {
+    const d1 = dayjs(date1)
+    const d2 = dayjs(date2)
+    return d2.diff(d1, 'days') + 1 // we go through the full last day
+  }
+  function formatNumber(num) {
+    return parseFloat(num).toLocaleString()
+  }
+  function dateFormat(d) {
+    return dayjs(d.split('T')[0]).format('MMMM D, YYYY')
+  }
+  async function joinQuest() {
+    setLoading(true)
+    const questsSet = new Set(user.quests || [])
+    questsSet.add(quest['@id'])
+    try{
+      const res = await api.patch(`/users/${user.username}`, {
+        'quests': Array.from(questsSet)
+      })
+      console.log(res)
+    } catch(e) {
+      setError(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+  async function leaveQuest() {
+    return //stub
+  }
+  return <li key={quest.id}>
+    <strong>{quest.title}</strong> <em>{dateInterval(quest.start_date, quest.end_date)} days<br /></em>
+    {dateFormat(quest.start_date)} through {dateFormat(quest.end_date)}<br />
+    Goal: {quest.goal_type} {formatNumber(quest.goal_amount)} {quest.goal_units}
+    <br />
+    {JSON.stringify(error)}
+    {user.quests.includes(quest['@id']) ?
+      <span>Already part of this quest <button onClick={leaveQuest} disabled={loading}>Leave this quest</button></span>
+      :
+      <button onClick={joinQuest} disabled={loading}>+ Embark on this quest!</button>
+    }
+  </li>
+}
+
+export function QuestsFeed() {
+  const [loading, setLoading] = useState(true)
+  const [quests, setQuests] = useState(null)
+  useEffect(() => {
+    (async () => {
+      const resp = await api.get('/quests')
+      setQuests(resp?.data?.['hydra:member'] || [])
+      setLoading(false)
+    })()
+  }, [])
+  if (loading) {
+    return <Page>
+      <ContentContainer>
+        <ContentBlock>
+        <Loading />
+        </ContentBlock>
+      </ContentContainer>
+    </Page>
+  } else {
+    return (
+      <Page>
+        <ContentContainer>
+          <ContentBlock>
+            <h1>Quests</h1>
+            {!quests.length && <strong>No quests available</strong>}
+            <ul>
+              {quests.map(q => <QuestItem key={q.id} quest={q} />)}
+            </ul>
+          </ContentBlock>
+        </ContentContainer>
+      </Page>
+    )
+  }
+}
+
 export function HomeFeed() {
   const user = useContext(LoggedInUserContext)
   const navigate = useNavigate()
@@ -233,7 +316,6 @@ export function HomeFeed() {
               <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto', 'position': 'absolute', 'top': '1rem', 'right': '1rem'}}>+ New Project</Button>
               {projects.length > 0 && projects.map((pr) => <><p onClick={() => window.location.href = `/project/view/${pr.code}`}style={{'marginBottom': 0, 'fontSize': '1.2rem', 'fontWeight': 'bold'}}>{pr.title}</p><div key={pr.code}><ProjectUpdateContainer update={pr.most_recent_update} isMyProject={true} /></div></>)}
             </div>
-            
             {(buddyUpdates.length > 0) &&
             <div style={{'borderTop': '1px solid #ccc', 'marginTop': '1rem'}}>
                 <h1>Your Writing Network</h1>
@@ -245,7 +327,6 @@ export function HomeFeed() {
                 }
             </div>
             }
-            
           </ContentBlock>
         </ContentContainer>
       </Page>

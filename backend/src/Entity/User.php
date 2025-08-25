@@ -10,6 +10,8 @@ use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\QueryParameter;
@@ -61,7 +63,11 @@ use Doctrine\Persistence\ManagerRegistry;
       new Post(
         uriTemplate: '/users/{id}',
         security: "object == user"
-      )
+      ),
+      new Patch(
+        uriTemplate: '/users/{id}',
+        security: "object == user"
+      ),
     ]
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface

@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20250825175446 extends AbstractMigration
+final class Version20250825203503 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -28,6 +28,7 @@ final class Version20250825175446 extends AbstractMigration
               goal_type VARCHAR(255) DEFAULT NULL,
               goal_units VARCHAR(255) DEFAULT NULL,
               goal_amount NUMERIC(14, 2) DEFAULT NULL,
+              title LONGTEXT NOT NULL,
               PRIMARY KEY(id)
             ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
         SQL);
