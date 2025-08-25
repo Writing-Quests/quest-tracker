@@ -20,7 +20,6 @@ final class Version20250204040737 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        /*
         $this->addSql('CREATE TABLE progress_entry (
           id INT AUTO_INCREMENT NOT NULL,
           project_id INT NOT NULL,
@@ -38,8 +37,7 @@ final class Version20250204040737 extends AbstractMigration
           progress_entry
         ADD
           CONSTRAINT FK_C9996E4B166D1F9C FOREIGN KEY (project_id) REFERENCES project (id)');
-       # $this->addSql('ALTER TABLE report DROP review_notes');
-       */
+       $this->addSql('ALTER TABLE report DROP review_notes');
     }
 
     public function down(Schema $schema): void

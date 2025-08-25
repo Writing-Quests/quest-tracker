@@ -1,0 +1,57 @@
+<?php
+
+namespace App\DataFixtures;
+
+use DateTimeImmutable;
+use DateTimeZone;
+
+use App\Entity\User;
+use App\Entity\Quest;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
+use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Persistence\ObjectManager;
+
+class AppFixtures extends Fixture
+{
+    public $passwordHasher;
+
+    public function __construct()
+    {
+        $passwordHasherFactory = new PasswordHasherFactory([
+            // auto hasher with default options for the User class (and children)
+            User::class => ['algorithm' => 'bcrypt'],
+
+            // auto hasher with custom options for all PasswordAuthenticatedUserInterface instances
+            PasswordAuthenticatedUserInterface::class => [
+                'algorithm' => 'bcrypt',
+                'cost' => 15,
+            ],
+        ]);
+        $this->passwordHasher = new UserPasswordHasher($passwordHasherFactory);
+    }
+
+    public function load(ObjectManager $manager): void
+    {
+        // User
+        $user1 = new User();
+        $user1->setUsername('user1');
+        $hashedPassword = $this->passwordHasher->hashPassword(
+            $user1,
+            'password'
+          );
+        $user1->setPassword($hashedPassword);
+        $user1->setEmail('user1@example.com');
+        $user1->setCreatedAt(new DateTimeImmutable()); // Defaults to now
+        $user1->setTimezone(new DateTimeImmutable('', new DateTimeZone('America/Los_Angeles')));
+        $manager->persist($user1);
+
+        // Quest
+        $quest1 = new Quest();
+        $manager->persist($quest1);
+
+        $manager->flush();
+    }
+}

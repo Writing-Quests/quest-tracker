@@ -169,6 +169,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $loggedInUserAllowed;
     private $loggedInUserConnection;
 
+    /**
+     * @var Collection<int, Quest>
+     */
+    #[ORM\ManyToMany(targetEntity: Quest::class, mappedBy: 'user')]
+    private Collection $quests;
+
     public function __construct()
     {
         $this->loginTokens = new ArrayCollection();
@@ -178,6 +184,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->interactions = new ArrayCollection();
         $this->loggedInUserConnection = array();
         $this->loggedInUserAllowed = $this->isPublic();
+        $this->quests = new ArrayCollection();
     }
 
     #[ApiResource (writable: false)]
@@ -587,6 +594,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             if ($interaction->getUserId() === $this) {
                 $interaction->setUserId(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Quest>
+     */
+    public function getQuests(): Collection
+    {
+        return $this->quests;
+    }
+
+    public function addQuest(Quest $quest): static
+    {
+        if (!$this->quests->contains($quest)) {
+            $this->quests->add($quest);
+            $quest->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeQuest(Quest $quest): static
+    {
+        if ($this->quests->removeElement($quest)) {
+            $quest->removeUser($this);
         }
 
         return $this;
