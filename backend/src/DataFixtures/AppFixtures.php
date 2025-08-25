@@ -6,10 +6,15 @@ use App\Entity\User;
 use App\Entity\Project;
 use App\Entity\ProjectGoal;
 use App\Entity\ProgressEntry;
+use App\Entity\Quest;
 use App\Entity\Connection;
 use App\Entity\Notification;
 use App\Entity\MessageThread;
 use App\Entity\DirectMessage;
+
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
+use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -20,12 +25,28 @@ use DateTimeImmutable;
 
 class AppFixtures extends Fixture
 {
+    public $passwordHasher;
+
+    public function __construct()
+    {
+        $passwordHasherFactory = new PasswordHasherFactory([
+            // auto hasher with default options for the User class (and children)
+            User::class => ['algorithm' => 'bcrypt'],
+
+            // auto hasher with custom options for all PasswordAuthenticatedUserInterface instances
+            PasswordAuthenticatedUserInterface::class => [
+                'algorithm' => 'bcrypt',
+                'cost' => 15,
+            ],
+        ]);
+        $this->passwordHasher = new UserPasswordHasher($passwordHasherFactory);
+    }
+
     public $users = [
       [
         "id" => 1,
         "username" => "Harris",
         "roles" => [],
-        "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
         "email" => "essiemason@quonata.com",
         "unverifiedEmail" => "essiemason@quonata.com",
         "createdAt" => "2024-12-19 07:27:45",
@@ -41,7 +62,6 @@ class AppFixtures extends Fixture
           "id" => 2,
           "username" => "Tasha",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "carrilloscott@gogol.com",
           "unverifiedEmail" => "carrilloscott@gogol.com",
           "createdAt" => "2025-03-11 01:18:44",
@@ -58,7 +78,6 @@ class AppFixtures extends Fixture
           "id" => 3,
           "username" => "Michele",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "marinaworkman@proxsoft.com",
           "unverifiedEmail" => "marinaworkman@proxsoft.com",
           "createdAt" => "2025-04-27 09:44:24",
@@ -75,7 +94,6 @@ class AppFixtures extends Fixture
           "id" => 4,
           "username" => "Patrick",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "suttonchapman@boilcat.com",
           "unverifiedEmail" => "suttonchapman@boilcat.com",
           "createdAt" => "2024-12-09 05:00:15",
@@ -92,7 +110,6 @@ class AppFixtures extends Fixture
           "id" => 5,
           "username" => "Chandra",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "alineburns@flotonic.com",
           "unverifiedEmail" => "alineburns@flotonic.com",
           "createdAt" => "2024-10-15 07:37:57",
@@ -109,7 +126,6 @@ class AppFixtures extends Fixture
           "id" => 6,
           "username" => "Callie",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "jarvisalston@xixan.com",
           "unverifiedEmail" => "jarvisalston@xixan.com",
           "createdAt" => "2025-04-01 06:00:08",
@@ -126,7 +142,6 @@ class AppFixtures extends Fixture
           "id" => 7,
           "username" => "Adkins",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "navarroevans@sealoud.com",
           "unverifiedEmail" => "navarroevans@sealoud.com",
           "createdAt" => "2025-04-09 09:12:49",
@@ -143,7 +158,6 @@ class AppFixtures extends Fixture
           "id" => 8,
           "username" => "Maynard",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "kaylanoble@aquasseur.com",
           "unverifiedEmail" => "kaylanoble@aquasseur.com",
           "createdAt" => "2025-05-28 01:58:49",
@@ -160,7 +174,6 @@ class AppFixtures extends Fixture
           "id" => 9,
           "username" => "Janis",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "mcmahonhenson@corporana.com",
           "unverifiedEmail" => "mcmahonhenson@corporana.com",
           "createdAt" => "2024-12-23 05:43:57",
@@ -177,7 +190,6 @@ class AppFixtures extends Fixture
           "id" => 10,
           "username" => "Holden",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "sandersstout@buzzopia.com",
           "unverifiedEmail" => "sandersstout@buzzopia.com",
           "createdAt" => "2024-11-10 08:43:29",
@@ -194,7 +206,6 @@ class AppFixtures extends Fixture
           "id" => 11,
           "username" => "Chapman",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "danielleleblanc@elpro.com",
           "unverifiedEmail" => "danielleleblanc@elpro.com",
           "createdAt" => "2025-04-29 04:38:41",
@@ -211,7 +222,6 @@ class AppFixtures extends Fixture
           "id" => 12,
           "username" => "Pace",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "trujillovazquez@buzzworks.com",
           "unverifiedEmail" => "trujillovazquez@buzzworks.com",
           "createdAt" => "2025-06-02 08:20:47",
@@ -228,7 +238,6 @@ class AppFixtures extends Fixture
           "id" => 13,
           "username" => "Adela",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "juarezmcneil@kindaloo.com",
           "unverifiedEmail" => "juarezmcneil@kindaloo.com",
           "createdAt" => "2025-06-26 05:10:57",
@@ -245,7 +254,6 @@ class AppFixtures extends Fixture
           "id" => 14,
           "username" => "Natalie",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "macdonaldrose@earthmark.com",
           "unverifiedEmail" => "macdonaldrose@earthmark.com",
           "createdAt" => "2024-10-04 08:38:58",
@@ -262,7 +270,6 @@ class AppFixtures extends Fixture
           "id" => 15,
           "username" => "Graciela",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "valariewiley@uncorp.com",
           "unverifiedEmail" => "valariewiley@uncorp.com",
           "createdAt" => "2024-12-26 11:08:30",
@@ -279,7 +286,6 @@ class AppFixtures extends Fixture
           "id" => 16,
           "username" => "Mariana",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "peggycook@papricut.com",
           "unverifiedEmail" => "peggycook@papricut.com",
           "createdAt" => "2024-12-28 08:42:23",
@@ -296,7 +302,6 @@ class AppFixtures extends Fixture
           "id" => 17,
           "username" => "Caldwell",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "heatherrandall@zanilla.com",
           "unverifiedEmail" => "heatherrandall@zanilla.com",
           "createdAt" => "2025-01-30 03:33:34",
@@ -313,7 +318,6 @@ class AppFixtures extends Fixture
           "id" => 18,
           "username" => "Alexandra",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "fannymoss@extrawear.com",
           "unverifiedEmail" => "fannymoss@extrawear.com",
           "createdAt" => "2025-07-01 10:23:58",
@@ -330,7 +334,6 @@ class AppFixtures extends Fixture
           "id" => 19,
           "username" => "Garrett",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "meyerscabrera@liquidoc.com",
           "unverifiedEmail" => "meyerscabrera@liquidoc.com",
           "createdAt" => "2024-10-19 06:26:47",
@@ -347,7 +350,6 @@ class AppFixtures extends Fixture
           "id" => 20,
           "username" => "Mcconnell",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "cardenasabbott@zentury.com",
           "unverifiedEmail" => "cardenasabbott@zentury.com",
           "createdAt" => "2025-01-24 03:26:17",
@@ -364,7 +366,6 @@ class AppFixtures extends Fixture
           "id" => 21,
           "username" => "Dickerson",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "reesestevens@hivedom.com",
           "unverifiedEmail" => "reesestevens@hivedom.com",
           "createdAt" => "2025-06-25 09:35:09",
@@ -381,7 +382,6 @@ class AppFixtures extends Fixture
           "id" => 22,
           "username" => "Santana",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "leonardhart@comtrail.com",
           "unverifiedEmail" => "leonardhart@comtrail.com",
           "createdAt" => "2024-11-17 05:22:03",
@@ -398,7 +398,6 @@ class AppFixtures extends Fixture
           "id" => 23,
           "username" => "Schwartz",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "barrerarusso@extragene.com",
           "unverifiedEmail" => "barrerarusso@extragene.com",
           "createdAt" => "2025-05-23 08:44:29",
@@ -415,7 +414,6 @@ class AppFixtures extends Fixture
           "id" => 24,
           "username" => "Camacho",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "watkinspeterson@musaphics.com",
           "unverifiedEmail" => "watkinspeterson@musaphics.com",
           "createdAt" => "2025-05-13 02:50:29",
@@ -432,7 +430,6 @@ class AppFixtures extends Fixture
           "id" => 25,
           "username" => "Opal",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "loreneoneal@plutorque.com",
           "unverifiedEmail" => "loreneoneal@plutorque.com",
           "createdAt" => "2025-02-07 07:46:38",
@@ -449,7 +446,6 @@ class AppFixtures extends Fixture
           "id" => 26,
           "username" => "Muriel",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "hughesbuck@qualitern.com",
           "unverifiedEmail" => "hughesbuck@qualitern.com",
           "createdAt" => "2025-04-03 04:12:59",
@@ -466,7 +462,6 @@ class AppFixtures extends Fixture
           "id" => 27,
           "username" => "Hollie",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "susannaking@progenex.com",
           "unverifiedEmail" => "susannaking@progenex.com",
           "createdAt" => "2024-11-18 12:28:54",
@@ -483,7 +478,6 @@ class AppFixtures extends Fixture
           "id" => 28,
           "username" => "Thompson",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "shereecarney@orbalix.com",
           "unverifiedEmail" => "shereecarney@orbalix.com",
           "createdAt" => "2025-02-19 10:13:12",
@@ -500,7 +494,6 @@ class AppFixtures extends Fixture
           "id" => 29,
           "username" => "Winifred",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "parkmorrow@enersol.com",
           "unverifiedEmail" => "parkmorrow@enersol.com",
           "createdAt" => "2025-05-15 04:04:54",
@@ -517,7 +510,6 @@ class AppFixtures extends Fixture
           "id" => 30,
           "username" => "Mccall",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "shawmcmahon@amtas.com",
           "unverifiedEmail" => "shawmcmahon@amtas.com",
           "createdAt" => "2025-02-18 10:51:00",
@@ -534,7 +526,6 @@ class AppFixtures extends Fixture
           "id" => 31,
           "username" => "Joyce",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "schroederburke@plasmox.com",
           "unverifiedEmail" => "schroederburke@plasmox.com",
           "createdAt" => "2025-02-09 06:27:04",
@@ -551,7 +542,6 @@ class AppFixtures extends Fixture
           "id" => 32,
           "username" => "Ashley",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "bradfordprince@zillanet.com",
           "unverifiedEmail" => "bradfordprince@zillanet.com",
           "createdAt" => "2025-06-11 03:49:21",
@@ -568,7 +558,6 @@ class AppFixtures extends Fixture
           "id" => 33,
           "username" => "Horne",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "laceyspencer@diginetic.com",
           "unverifiedEmail" => "laceyspencer@diginetic.com",
           "createdAt" => "2025-03-03 04:54:57",
@@ -585,7 +574,6 @@ class AppFixtures extends Fixture
           "id" => 34,
           "username" => "Francisca",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "davissheppard@soprano.com",
           "unverifiedEmail" => "davissheppard@soprano.com",
           "createdAt" => "2025-06-15 09:34:55",
@@ -602,7 +590,6 @@ class AppFixtures extends Fixture
           "id" => 35,
           "username" => "Jones",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "elbacharles@biotica.com",
           "unverifiedEmail" => "elbacharles@biotica.com",
           "createdAt" => "2025-07-01 06:42:12",
@@ -619,7 +606,6 @@ class AppFixtures extends Fixture
           "id" => 36,
           "username" => "Vicki",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "snowmolina@deminimum.com",
           "unverifiedEmail" => "snowmolina@deminimum.com",
           "createdAt" => "2024-10-17 12:34:50",
@@ -636,7 +622,6 @@ class AppFixtures extends Fixture
           "id" => 37,
           "username" => "Harper",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "pammadden@intradisk.com",
           "unverifiedEmail" => "pammadden@intradisk.com",
           "createdAt" => "2025-06-28 09:18:26",
@@ -653,7 +638,6 @@ class AppFixtures extends Fixture
           "id" => 38,
           "username" => "Shields",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "cobbfernandez@kozgene.com",
           "unverifiedEmail" => "cobbfernandez@kozgene.com",
           "createdAt" => "2025-01-25 06:40:52",
@@ -670,7 +654,6 @@ class AppFixtures extends Fixture
           "id" => 39,
           "username" => "Dora",
           "roles" => [],
-          "password" => "\$2y\$13\$apZ66I6D8b9dkX70zuuJUu8jX4RSK18IwWveBtYJKD7o02wHezTDS",
           "email" => "margueritebrewer@signity.com",
           "unverifiedEmail" => "margueritebrewer@signity.com",
           "createdAt" => "2024-11-09 06:30:09",
@@ -1904,7 +1887,7 @@ class AppFixtures extends Fixture
     ];
     public function load(ObjectManager $manager): void
     {
-        /* Order to run through: 
+        /* Order to run through:
         ** $users
         ** $projects
         **** the ProjectListener creates the code and the initial "created" feed entry
@@ -1917,7 +1900,6 @@ class AppFixtures extends Fixture
         foreach ($this->users as $user) {
           $new_user = (new User())
             ->setUsername($user['username'])
-            ->setPassword($user['password'])
             ->setEmail($user['email'])
             ->setUnverifiedEmail($user['unverifiedEmail'])
             ->setCreatedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$user['createdAt']))
@@ -1928,10 +1910,15 @@ class AppFixtures extends Fixture
             ->setLink($user['link'])
             ->setTimezone(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$user['timezone']))
             ->setPublic($user['public']);
+          $hashedPassword = $this->passwordHasher->hashPassword(
+            $new_user,
+            'password'
+          );
+          $new_user->setPassword($hashedPassword);
           $manager->persist($new_user);
           $this->addReference("user_".$user['id'],$new_user);
         }
-        
+
         $project_count = count($this->projects);
         for ($i = 1; $i < $project_count; $i++) {
           $project = $this->projects[$i];
@@ -2025,7 +2012,7 @@ class AppFixtures extends Fixture
             ->setSenderUserId($user1_id)
             ->setReceivingUserId($user2_id)
             ->setSubject("A thread created in a fixture - $i");
-          
+
           $manager->persist($msg_thread);
           $fake_msg_count = count($this->dm_content) - 1;
           foreach (range(0,8) as $k) {
@@ -2046,7 +2033,7 @@ class AppFixtures extends Fixture
           }
         }
 
-        foreach (range(0,1250) as $i) {
+        foreach (range(0,12) as $i) {
           $user_1_ref = "user_" . rand(1,$user_count+1);
           $msg_user_1 = $this->getReference($user_1_ref, User::class); # this is me!
           $user1_id = $msg_user_1->getId();
@@ -2057,7 +2044,7 @@ class AppFixtures extends Fixture
             ->setSenderUserId($user1_id)
             ->setReceivingUserId($user2_id)
             ->setSubject("A thread created in a fixture - $i");
-          
+
           $manager->persist($msg_thread);
           $fake_msg_count = count($this->dm_content) - 1;
           foreach (range(0,8) as $k) {
@@ -2077,6 +2064,12 @@ class AppFixtures extends Fixture
             $manager->persist($new_dm);
           }
         }
+
+        // Quest
+        $quest1 = new Quest();
+        $manager->persist($quest1);
+
+        $manager->flush();
 
         // all done?!
         $manager->flush();

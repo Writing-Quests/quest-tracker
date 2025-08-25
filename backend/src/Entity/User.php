@@ -219,6 +219,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Notification::class, mappedBy: 'user')]
     private Collection $notifications;
 
+    /**
+     * @var Collection<int, Quest>
+     */
+    #[ORM\ManyToMany(targetEntity: Quest::class, mappedBy: 'user')]
+    private Collection $quests;
+
     public function __construct()
     {
         $this->loginTokens = new ArrayCollection();
@@ -228,6 +234,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->interactions = new ArrayCollection();
         $this->loggedInUserConnection = array();
         $this->loggedInUserAllowed = $this->isPublic();
+        $this->quests = new ArrayCollection();
     }
 
     #[ApiResource (writable: false)]
@@ -749,6 +756,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setAllowDms(bool $allow_dms): static
     {
         $this->allow_dms = $allow_dms;
+        return $this;
+    }
+    /**
+     * @return Collection<int, Quest>
+     */
+    public function getQuests(): Collection
+    {
+        return $this->quests;
+    }
+
+    public function addQuest(Quest $quest): static
+    {
+        if (!$this->quests->contains($quest)) {
+            $this->quests->add($quest);
+            $quest->addUser($this);
+        }
 
         return $this;
     }
@@ -763,6 +786,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setSendEmailNotifications(bool $send_email_notifications): static
     {
         $this->send_email_notifications = $send_email_notifications;
+        return $this;
+    }
+
+    public function removeQuest(Quest $quest): static
+    {
+        if ($this->quests->removeElement($quest)) {
+            $quest->removeUser($this);
+        }
+
         return $this;
     }
 }

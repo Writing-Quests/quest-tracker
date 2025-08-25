@@ -28,6 +28,10 @@ For development, a "Mail Catcher" SMTP server runs with Docker/Lando and is auto
 `php bin/console doctrine:migrations:migrate`
 `php bin/console doctrine:migrations:migrate prev` // Undo the last migration
 
+**How do I load fixtures/seed data?**    
+`php bin/console doctrine:fixtures:load`
+This command **deletes all data from the database** and replaces them with the fixtures.
+
 # Deploy Instructions
 
 ## Locally:
