@@ -16,7 +16,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity(repositoryClass: QuestRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(),
+        new Get(uriTemplate: '/quests/{id}'),
         new GetCollection()
     ]
 )]

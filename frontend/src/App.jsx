@@ -43,7 +43,7 @@ export function App() {
   let title = ''
   if(loading) { title = 'Loading...' }
   useTitle(title)
-  
+
   // eslint-disable-next-line no-unused-vars
   async function getLoggedInUser(ref=null) {
     /* TODO: 2024-04-02 - I got as far as passing the reference, re: where the user was trying to go, here (if it exists.) But then I'm stumped as to how best/effectively reroute the user data with it */
@@ -54,7 +54,10 @@ export function App() {
         setLoggedIn(false)
       } else {
         setLoggedIn(true)
-        setData(resp.data)
+        function set(newUser) {
+          setData({...newUser, _set: (n) => set(n)})
+        }
+        set(resp.data)
       }
     } catch (e) {
       console.log(e)
