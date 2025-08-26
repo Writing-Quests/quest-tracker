@@ -83,7 +83,7 @@ use DateTimeImmutable;
         security: "object == user"
       ),
       new Patch(
-        uriTemplate: '/users/{id}',
+        uriTemplate: '/users/{username}',
         security: "object == user"
       ),
     ]

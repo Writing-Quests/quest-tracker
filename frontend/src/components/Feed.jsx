@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useContext, useState, useEffect } from 'react'
-import { useSearchParams, useNavigate, Link, json } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import styled from 'styled-components'
 import dayjs from 'dayjs'
 import context from '../services/context'
@@ -8,7 +8,7 @@ import Page from './Page'
 import api from '../services/api'
 import Loading, { LoadingInline } from './Loading'
 import Input, { Button } from './Forms/Input'
-import { ContentContainer, ContentBlock, PaginationContainer, ProjectUpdateContainer } from './Containers'
+import { ContentContainer, ContentBlock, PaginationContainer, ProjectUpdateContainer, ErrorContainer } from './Containers'
 
 const { LoggedInUserContext } = context
 
@@ -96,6 +96,7 @@ export function PublicFeed() {
   }
   useEffect(() => {
     if (currentPageUsers.length == 0) { getPageConnections() };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
   if (loading) {
     return <Page>
@@ -150,7 +151,8 @@ export function BuddyFeed() {
     } finally {
       setLoading(false)
     }
-  }, [user])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[user])
   if (loading || pageBuddyUpdates == null) {
     return <Page>
       <ContentContainer>
@@ -205,30 +207,38 @@ function QuestItem({quest}) {
   function dateFormat(d) {
     return dayjs(d.split('T')[0]).format('MMMM D, YYYY')
   }
-  async function joinQuest() {
+  async function setQuests(newQuests) {
     setLoading(true)
-    const questsSet = new Set(user.quests || [])
-    questsSet.add(quest['@id'])
+    setError(null)
     try{
       const res = await api.patch(`/users/${user.username}`, {
-        'quests': Array.from(questsSet)
+        'quests': Array.from(newQuests)
       })
-      console.log(res)
+      if(!res.status === 200) { throw new Error(res.status) }
+      user._set(res.data)
     } catch(e) {
+      console.log(e)
       setError(e)
     } finally {
       setLoading(false)
     }
   }
+  async function joinQuest() {
+    const questsSet = new Set(user.quests || [])
+    questsSet.add(quest['@id'])
+    await setQuests(Array.from(questsSet))
+  }
   async function leaveQuest() {
-    return //stub
+    const questsSet = new Set(user.quests || [])
+    questsSet.delete(quest['@id'])
+    await setQuests(Array.from(questsSet))
   }
   return <li key={quest.id}>
     <strong>{quest.title}</strong> <em>{dateInterval(quest.start_date, quest.end_date)} days<br /></em>
     {dateFormat(quest.start_date)} through {dateFormat(quest.end_date)}<br />
     Goal: {quest.goal_type} {formatNumber(quest.goal_amount)} {quest.goal_units}
     <br />
-    {JSON.stringify(error)}
+    {error && <ErrorContainer error={error} />}
     {user?.quests?.includes(quest['@id']) ?
       <span>Already part of this quest <button onClick={leaveQuest} disabled={loading}>Leave this quest</button></span>
       :
@@ -327,7 +337,7 @@ export function HomeFeed() {
                 {multipleFeedPages ?
                   <p style={{'textAlign': 'right', 'fontStyle': 'italic'}}><Link to="/buddies?page=2">See more updates &rarr;</Link></p>
                   :
-                  <p style={{'textAlign': 'right', 'fontStyle': 'italic'}}>You're all caught up!</p>
+                  <p style={{'textAlign': 'right', 'fontStyle': 'italic'}}>You&rsquo;re all caught up!</p>
                 }
             </div>}
 
