@@ -22,7 +22,8 @@ class FeedEntryListener
     public function prePersist(FeedEntry $feed_entry)
     {
         // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
-        $user = $this->token_storage->getToken()->getUser();
+        //$user = $this->token_storage->getToken()->getUser();
+        $user = $feed_entry->getUser();
         $feed_entry->setCreatedAt(new DateTime());
         $feed_entry->setEditedAt(new DateTime());
         $feed_entry->setCode(new Ulid());

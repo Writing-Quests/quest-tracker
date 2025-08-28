@@ -22,9 +22,10 @@ class ProgressEntryListener
     public function prePersist(ProgressEntry $progress)
     {
         $project = $progress->getProject();
+        $user = $project->getUser();
         $update_post = new FeedEntry();
         ($update_post)
-          ->setUser($this->token_storage->getToken()->getUser())
+          ->setUser($user)
           ->setUpdateType('progress')
           ->setCreatedAt(new DateTime())
           ->setEditedAt(new DateTime())

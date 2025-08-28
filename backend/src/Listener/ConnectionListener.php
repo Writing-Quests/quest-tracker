@@ -34,9 +34,10 @@ class ConnectionListener
 
   public function postPersist(Connection $connection): void
   {
+    
     if ($connection->getStatus() == 'pending') {
+      $initiatingUser =  $this->entityManager->getRepository(User::class)->findOneBy(['id'=>$connection->getInitiatingUserId()]);
       $connectedUser = $this->entityManager->getRepository(User::class)->findOneBy(['id'=>$connection->getConnectedUserId()]);
-      $initiatingUser = $this->token_storage->getToken()->getUser();
       $connection_email = (new MailerService)->newConnectionRequest($connectedUser,$initiatingUser,$connection->getId());
       $this->mailer->send($connection_email);
     }
