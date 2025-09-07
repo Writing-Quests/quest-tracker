@@ -5,6 +5,8 @@ namespace App\Entity;
 use ApiPlatform\GraphQl\Resolver\Stage\WriteStage;
 use App\Repository\ConnectionRepository;
 
+use App\Entity\Quest;
+
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
@@ -37,6 +39,10 @@ use App\State\NotLoggedInRepresentation;
 use App\State\AvailableProfilesProvider;
 use App\State\UserProfileProcessor;
 use DateTimeImmutable;
+use App\State\UserQuestProvider;
+use Doctrine\ORM\EntityManager;
+
+use Doctrine\Persistence\ManagerRegistry;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
@@ -85,6 +91,15 @@ use DateTimeImmutable;
       new Patch(
         uriTemplate: '/users/{username}',
         security: "object == user"
+      ),
+      new Get(
+        uriTemplate: '/users/{username}/quests/{id}',
+        name: 'get_user_quest',
+        provider: UserQuestProvider::class,
+        uriVariables: [
+          'username' => new Link(fromClass: User::class, fromProperty: 'username'),
+          'id' => new Link(fromClass: Quest::class, fromProperty: 'id'),
+        ]
       ),
     ]
 )]
