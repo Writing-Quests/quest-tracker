@@ -5,6 +5,8 @@ namespace App\Entity;
 use ApiPlatform\GraphQl\Resolver\Stage\WriteStage;
 use App\Repository\ConnectionRepository;
 
+use App\Entity\Quest;
+
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
@@ -33,6 +35,7 @@ use App\State\UserMeProvider;
 use App\State\UserProfileProvider;
 use App\State\NotLoggedInRepresentation;
 use App\State\AvailableProfilesProvider;
+use App\State\UserQuestProvider;
 use Doctrine\ORM\EntityManager;
 
 use Doctrine\Persistence\ManagerRegistry;
@@ -67,6 +70,15 @@ use Doctrine\Persistence\ManagerRegistry;
       new Patch(
         uriTemplate: '/users/{username}',
         security: "object == user"
+      ),
+      new Get(
+        uriTemplate: '/users/{username}/quests/{id}',
+        name: 'get_user_quest',
+        provider: UserQuestProvider::class,
+        uriVariables: [
+          'username' => new Link(fromClass: User::class, fromProperty: 'username'),
+          'id' => new Link(fromClass: Quest::class, fromProperty: 'id'),
+        ]
       ),
     ]
 )]

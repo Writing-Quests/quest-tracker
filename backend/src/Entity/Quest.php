@@ -83,12 +83,12 @@ class Quest
 
     public function getEndDate(): ?\DateTimeImmutable
     {
-        return $this->end_date;
+        return $this->end_date->setTime(23, 59, 59);
     }
 
     public function setEndDate(?\DateTimeImmutable $end_date): static
     {
-        $this->end_date = $end_date;
+        $this->end_date = $end_date->setTime(23, 59, 59);
 
         return $this;
     }

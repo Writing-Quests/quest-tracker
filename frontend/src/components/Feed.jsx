@@ -58,6 +58,10 @@ const IndividualProfile = styled.div`
   }
 `
 
+function formatNumber(num) {
+  return parseFloat(num).toLocaleString()
+}
+
 function UserMiniDisplay ({user}) {
   let describeConnection = null
   switch (user.connection) {
@@ -198,9 +202,6 @@ function QuestItem({quest}) {
     const d2 = dayjs(date2)
     return d2.diff(d1, 'days') + 1 // we go through the full last day
   }
-  function formatNumber(num) {
-    return parseFloat(num).toLocaleString()
-  }
   function dateFormat(d) {
     return dayjs(d.split('T')[0]).format('MMMM D, YYYY')
   }
@@ -237,11 +238,30 @@ function QuestItem({quest}) {
     <br />
     {error && <ErrorContainer error={error} />}
     {user.quests.includes(quest['@id']) ?
-      <span>Already part of this quest <button onClick={leaveQuest} disabled={loading}>Leave this quest</button></span>
+      <div>
+        <span>Already part of this quest <button onClick={leaveQuest} disabled={loading}>Leave this quest</button></span>
+        <QuestProgress quest={quest} />
+      </div>
       :
       <button onClick={joinQuest} disabled={loading}>+ Embark on this quest!</button>
     }
   </li>
+}
+
+function QuestProgress({quest}) {
+  const user = useContext(LoggedInUserContext)
+  const [data, setData] = useState()
+  useEffect(() => {
+    api.get(`/users/${user.username}/quests/${quest.id}`)
+      .then(res => setData(res.data))
+  }, [quest, user])
+  console.log(quest)
+  if(!data) { return null }
+  return <div>
+    {formatNumber(data.total)} completed of {formatNumber(quest.goal_amount)}
+    <br />
+    {data.completed && "Completed!"}
+  </div>
 }
 
 export function QuestsFeed() {
