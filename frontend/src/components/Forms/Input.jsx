@@ -198,12 +198,16 @@ const NormalButton = styled.button`
   cursor: pointer;
   transition: all 0.15s;
   margin-bottom: 2px;
+  display: inline-block;
+  text-decoration: none;
   &[disabled]{
     cursor: not-allowed;
     opacity: 0.75;
   }
   &:hover {
     background-color: #d5d5d5;
+    text-decoration: none;
+    color: #333;
   }
 `
 

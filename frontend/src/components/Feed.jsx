@@ -8,7 +8,8 @@ import Page from './Page'
 import api from '../services/api'
 import Loading, { LoadingInline } from './Loading'
 import Input, { Button } from './Forms/Input'
-import { ContentContainer, ContentBlock, PaginationContainer, ProjectUpdateContainer, ErrorContainer } from './Containers'
+import NovelQuest from './NovelQuest'
+import { ErrorContainer, ContentContainer, ContentBlock, PaginationContainer, ProjectUpdateContainer } from './Containers'
 
 const { LoggedInUserContext } = context
 
@@ -343,6 +344,7 @@ export function HomeFeed() {
   } else {
     return (
       <Page>
+        <NovelQuest />
         <ContentContainer>
           <ContentBlock>
             <div style={{ 'position': 'relative' }}>
