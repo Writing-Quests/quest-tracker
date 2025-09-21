@@ -9,6 +9,7 @@ import api from '../services/api'
 import { ErrorContainer } from './Containers'
 import Loading, {SectionLoading} from './Loading'
 import { Button } from './Forms/Input'
+import NovelQuest from './NovelQuest'
 import { ContentContainer, ContentBlock, PaginationContainer, ProjectUpdateContainer } from './Containers'
 
 const { LoggedInUserContext } = context
@@ -340,6 +341,7 @@ export function HomeFeed() {
   } else {
     return (
       <Page>
+        <NovelQuest />
         <ContentContainer>
           <ContentBlock>
             <div style={{'position': 'relative'}}>

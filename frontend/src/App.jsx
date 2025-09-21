@@ -19,6 +19,7 @@ import { TermsOfUse } from './components/Static/Terms'
 import { AboutQuesty } from './components/Static/About'
 import { ReviewReport } from './components/Admin/Report'
 import { HomeFeed, PublicFeed, BuddyFeed, QuestsFeed } from './components/Feed'
+import NovelQuestPage from './components/NovelQuestPage'
 import Modal from 'react-modal'
 import {UserProjects, ViewProject} from './components/User/Projects'
 
@@ -91,6 +92,7 @@ export function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/buddies" element={<BuddyFeed />} />
             <Route path="/quests" element={<QuestsFeed />} />
+            <Route path="/novelquest" element={<NovelQuestPage />} />
             <Route path="/connections" element={<Connections />} />
             {/* <Route path="/connections/manage" element={<ConnectionLink />} /> */}
             <Route path="/about" element={<AboutQuesty />} />

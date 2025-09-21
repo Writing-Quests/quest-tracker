@@ -381,7 +381,8 @@ export default function Page({children}) {
         <NavigationHeader style={{'width': '100%'}}>
           <NavigationLink to="/buddies">Buddies</NavigationLink>
           <NavigationLink to="/projects">Projects</NavigationLink>
-          <NavigationLink to="/quests">Quests</NavigationLink>
+          <NavigationLink to='/novelquest'>Novel Quest</NavigationLink>
+          {/*<NavigationLink to="/quests">Quests</NavigationLink>*/}
           {/*<NavigationLink to="/groups">Groups</NavigationLink>*/}
           {/*<NavigationLink to="/quests">Quests</NavigationLink>*/}
           <NavigationLink to="/profiles/public">Users</NavigationLink>
