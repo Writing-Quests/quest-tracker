@@ -8,9 +8,9 @@ import styled, { keyframes } from 'styled-components'
 
 const { LoggedInUserContext } = context
 
-const NQ_2025 = 'b00cb00c-b00c-4b00-9b00-b00cb00cb00c'
+export const NQ_2025 = 'b00cb00c-b00c-4b00-9b00-b00cb00cb00c'
 
-function formatNumber(num) {
+export function formatNumber(num) {
   return parseFloat(num).toLocaleString()
 }
 
@@ -50,7 +50,7 @@ const ProgressBarProgress = styled.div`
   animation: ${props => loadProgressBar(props.percent)} 1s ease-in-out, ${progressBarAnimation} 4s linear infinite;
 `
 
-function ProgressBar({percent}) {
+export function ProgressBar({percent}) {
   return <ProgressBarContainer>
     <ProgressBarProgress percent={Math.min(percent*100, 100)} />
   </ProgressBarContainer>
