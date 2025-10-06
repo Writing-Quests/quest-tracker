@@ -22,7 +22,8 @@ export default function NovelQuestPage() {
         <h2>All Stats</h2>
         {/* TODO: Note about privacy of your stats */}
         {/* TODO: Overall ranking w/ bar charts for each person */}
-        {/* TODO: Aggregate bar chart */}
+        {/* TODO: Aggregate line graph */}
+        {/* TODO: button to hide the "weird stats" / easter eggs */}
         {/* TODO: By the numbers: # particiapnts, mean, stdev, min, max, median, % winners */}
       </ContentBlock>
     </ContentContainer>

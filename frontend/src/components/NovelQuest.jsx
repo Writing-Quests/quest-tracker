@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react'
+import { useState, useContext, useEffect, useMemo } from 'react'
 import { AnimatedContainer, ErrorContainer, ContentBlock } from './Containers'
 import { Link } from 'react-router-dom'
 import { Button } from './Forms/Input'
@@ -76,6 +76,10 @@ export default function NovelQuest() {
   const user = useContext(LoggedInUserContext)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [refreshHiddenCount, setRefreshHiddenCount] = useState(0)
+  const hidden = useMemo(() =>
+    JSON.parse(localStorage.getItem('nq25_hidden'))
+  , [refreshHiddenCount])
   const joined = user.quests.includes('/api/quests/'+NQ_2025)
   async function setQuests(newQuests) {
     setLoading(true)
@@ -98,13 +102,19 @@ export default function NovelQuest() {
     questsSet.add('/api/quests/'+NQ_2025)
     await setQuests(Array.from(questsSet))
   }
+  function handleHide() {
+    localStorage.setItem('nq25_hidden', true)
+    setRefreshHiddenCount(refreshHiddenCount+1)
+  }
   if(!joined) {
+    if(hidden) { return null }
     return <AnimatedContainer>
       <ContentBlock>
         <h2>Novel Quest</h2>
         {!joined && <>
           <p><strong>Write your novel with us!</strong> Write 50,000 words between November 1-30 to win!</p>
           <Button disabled={loading} onClick={joinQuest}>{loading ? 'Joining...' : 'Join Novel Quest!'}</Button>
+          <Button type='outline' style={{width: 'auto', padding: '14px', marginLeft: '10px'}} onClick={handleHide}>&times; No thanks</Button>
           {error && <ErrorContainer>Error joining quest.</ErrorContainer>}
         </>}
       </ContentBlock>
