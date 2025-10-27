@@ -76,7 +76,7 @@ class MessageThread
     private ?bool $in_sender_inbox = true;
 
     #[ApiProperty(readable: true)]
-    private ?bool $in_my_inbox = true;
+    private ?bool $in_my_inbox = null;
 
     #[ApiProperty(readable: true)]
     private ?bool $unread_for_me = false;

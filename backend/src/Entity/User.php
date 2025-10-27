@@ -177,6 +177,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user', fetch: 'EAGER')]
     #[ORM\OrderBy(["edited_at" => "DESC"])]
+    #[Groups(['user:read'])]
     private Collection $projects;
 
     /**
@@ -190,12 +191,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: FeedEntry::class, mappedBy: 'user', orphanRemoval: true)]
     //#[ORM\OrderBy(["edited_at" => "DESC"])]
+    #[Groups(['user:read'])]
     private Collection $feedEntries;
 
     /**
      * @var Collection<int, Interaction>
      */
     #[ORM\OneToMany(targetEntity: Interaction::class, mappedBy: 'user', orphanRemoval: true)]
+    #[Groups(['user:read'])]
     private Collection $interactions;
 
     // this is managed in State/UserProfileProvider.php to get user permissions 
@@ -228,6 +231,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ApiResource (writable: false)]
+    #[Groups(['user:read'])]
     public function isLoggedInUserAllowed()
     {
         return $this->loggedInUserAllowed;
@@ -240,6 +244,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ApiResource (writable: false)]
+    #[Groups(['user:read'])]
     public function getLoggedInUserConnection()
     {
         return $this->loggedInUserConnection;

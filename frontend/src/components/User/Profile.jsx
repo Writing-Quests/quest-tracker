@@ -424,11 +424,11 @@ export default function Profile() {
             const resp_del = await api.delete(`/connection/${connection.id}`)
           }
           resp = await api.post(`/connection/new`, {
-              'status': newConnectionStatus,
-              'connected_user_id': connected_user_id,
-              'initiating_user_id': initiating_user_id
-            })
-        break;
+            'status': newConnectionStatus,
+            'connected_user_id': connected_user_id,
+            'initiating_user_id': initiating_user_id
+          })
+          break;
 
         default:
           expectedStatus = 201
@@ -502,11 +502,11 @@ export default function Profile() {
       case 'following': // include the send request button.
         return (
           <>
-          <ConnectionButton data-tooltip={"Send " + profile.username + " a friend request"} onClick={() => { manageConnection({ newConnectionStatus: 'pending', connected_user_id: profile.id, initiating_user_id: user.id }) }}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24"><path fill="currentColor" d="M15 14c-2.67 0-8 1.33-8 4v2h16v-2c0-2.67-5.33-4-8-4m-9-4V7H4v3H1v2h3v3h2v-3h3v-2m6 2a4 4 0 0 0 4-4a4 4 0 0 0-4-4a4 4 0 0 0-4 4a4 4 0 0 0 4 4" /></svg></ConnectionButton>
-          <ConnectionButton type="unfollow" data-tooltip={"Stop following " + profile.username} onClick={() => { manageConnection({ newConnectionStatus: 'delete', connected_user_id: profile.id, initiating_user_id: user.id }) }}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M2.5 3.77L3.78 2.5L21.5 20.22l-1.27 1.28l-1.5-1.5h-2c0-.75-.06-1.5-.19-2.19L6.19 7.46C5.5 7.33 4.75 7.27 4 7.27v-2zm3.68 11.87a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 10.1a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93zm5.13-4.79c4.46 1.56 8 5.1 9.56 9.56z" /></svg></ConnectionButton>
+            <ConnectionButton data-tooltip={"Send " + profile.username + " a friend request"} onClick={() => { manageConnection({ newConnectionStatus: 'pending', connected_user_id: profile.id, initiating_user_id: user.id }) }}><svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24"><path fill="currentColor" d="M15 14c-2.67 0-8 1.33-8 4v2h16v-2c0-2.67-5.33-4-8-4m-9-4V7H4v3H1v2h3v3h2v-3h3v-2m6 2a4 4 0 0 0 4-4a4 4 0 0 0-4-4a4 4 0 0 0-4 4a4 4 0 0 0 4 4" /></svg></ConnectionButton>
+            <ConnectionButton type="unfollow" data-tooltip={"Stop following " + profile.username} onClick={() => { manageConnection({ newConnectionStatus: 'delete', connected_user_id: profile.id, initiating_user_id: user.id }) }}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M2.5 3.77L3.78 2.5L21.5 20.22l-1.27 1.28l-1.5-1.5h-2c0-.75-.06-1.5-.19-2.19L6.19 7.46C5.5 7.33 4.75 7.27 4 7.27v-2zm3.68 11.87a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 10.1a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93zm5.13-4.79c4.46 1.56 8 5.1 9.56 9.56z" /></svg></ConnectionButton>
           </>
         )
-    
+
 
       default: // it's probably null, meaning there is no existing connection. 
         return (
@@ -530,7 +530,7 @@ export default function Profile() {
         setProfile(resp.data)
         if (user && (lookupUser !== user.username) && profile && profile.hasOwnProperty('logged_in_user_connection')) {
           // if we have a user AND we have a profile AND the profile isn't *your* profile AND there's a connection described, then:
-          setConnection({...profile.logged_in_user_connection})
+          setConnection({ ...profile.logged_in_user_connection })
           if (profile.logged_in_user_connection.status == 'blocked') {
             setProfileNotAvailable(true)
           }
@@ -609,14 +609,16 @@ export default function Profile() {
           <ReportProfileContent reportedIdentifier={reportedIdentifier} reportType={modalForm} closeModal={closeModal} title={modalTitle} />
         </Modal>
       }
-      <DirectMessageModal toUserId={profile.id} isReply={false} fromUserId={user.id} isDmModalOpen={isDmModalOpen} setIsDmModalOpen={setIsDmModalOpen} doAfterMessageSent={(success, message) => {
-        updateSubmitWait({
-          waitStatus: false,
-          text: null,
-          tcType: (success) ? 'success' : 'error',
-          tcContent: message
-        })
-      }} />
+      {(user) &&
+        <DirectMessageModal toUserId={profile.id} isReply={false} fromUserId={user.id} isDmModalOpen={isDmModalOpen} setIsDmModalOpen={setIsDmModalOpen} doAfterMessageSent={(success, message) => {
+          updateSubmitWait({
+            waitStatus: false,
+            text: null,
+            tcType: (success) ? 'success' : 'error',
+            tcContent: message
+          })
+        }} />
+      }
     </Page>
   </ProfileContext.Provider>
 }

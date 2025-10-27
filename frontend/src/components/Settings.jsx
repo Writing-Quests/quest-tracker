@@ -232,15 +232,14 @@ export default function Settings() {
 
                 {(profile.public && !unverifiedAccount) && <WarningContainer><b>Your profile page and projects will be visible to the public.</b> This includes your username, bio, link, goals, progress, and other project information.</WarningContainer>
                 }
-                {(profile.private && !unverifiedAccount) && <WarningContainer>Your profile is private. Any buddies you have already approved will still be able to see your bio, projects, and other user information.</WarningContainer>
+                {(!profile.public && !unverifiedAccount) && <WarningContainer>Your profile is private. Any buddies you have already approved will still be able to see your bio, projects, and other user information.</WarningContainer>
                 }
 
               </ToggledSection>
 
               <ToggledSection selected={(section === 'communications')}>
-                <Link to='/connections'>View your buddies and accounts you follow</ Link>
+                <p style={{'marginBottom': '1.5rem'}}><Link to='/connections'>View your buddies and accounts you follow</ Link></p>
                 <ConditionalContent hidden={unverifiedAccount}>
-                  {(profile.private && profile.allow_dms) && <VerificationContainer>Your account and projects are private. You can only receive direct messages from users you've mutually befriended. <Link to="/about-dms">More information about direct messaging in Questy.</Link></VerificationContainer>}
                   <StandaloneLabel >Allow Direct Messages</StandaloneLabel>
                   <SectionOptions size='small'>
                     <OptionButton size='small' selected={(profile.allow_dms == true)} value={true} onClick={(e) => { setProfileChanges(e, 'allow_dms') }}>Yes</OptionButton>
@@ -248,7 +247,7 @@ export default function Settings() {
                   </SectionOptions>
                   <WarningContainer>
                     {profile.allow_dms ?
-                      <>Your mutual connections <u>will</u> be able to send you direct messages.</>
+                      <>Your mutual connections <u>will</u> be able to send you direct messages. {!profile.public && <>Your account and projects are private. You can only receive direct messages from users you've mutually befriended. <Link to="/about-dms">More information about direct messaging in Questy.</Link></>}</>
                       :
                       <>Your mutual connections <u>will not</u> be able to send you direct messages.</>
                     }

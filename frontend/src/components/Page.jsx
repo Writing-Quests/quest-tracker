@@ -229,24 +229,24 @@ const DropdownMenu = styled.div`
   font-family: 'Poppins', sans-serif;
   z-index: 99;
   position: fixed;
-  top: ${(props) => (props.top)};
-  right: ${(props) => (props.right)};
+  top: ${(props) => (props.$top)};
+  right: ${(props) => (props.$right)};
   max-height: 80%;
   max-width: 45%;
   border: 2px solid #ccc;
   margin: 0;
   padding: 0;
-  overflow-y: ${(props) => (props.menutype == 'notifications' && 'scroll') || 'hidden'};
-  text-align: ${(props) => (props.menutype == 'notifications' && 'left') || 'center'};
+  overflow-y: ${(props) => (props.$menutype == 'notifications' && 'scroll') || 'hidden'};
+  text-align: ${(props) => (props.$menutype == 'notifications' && 'left') || 'center'};
   padding: 10px;
   background-color: #fff;
   &[data-visible=true] {
-    animation: ${(props) => (dropdownAnimationIn(props.top, props.right))};
+    animation: ${(props) => (dropdownAnimationIn(props.$top, props.$right))};
     animation-duration: 200ms;
     display: block;
   }
   &[data-visible=false] {
-    animation: ${(props) => (dropdownAnimationOut(props.top, props.right))};
+    animation: ${(props) => (dropdownAnimationOut(props.$top, props.$right))};
     animation-duration: 200ms;
   display: none;
   }
@@ -342,7 +342,9 @@ function UserControls() {
         setNotificationCount(theseNewNotifications.length)
         document.querySelector('#notificationBell').dataset.new = "true";
         setTimeout(() => {
-          document.querySelector('#notificationBell').removeAttribute('data-new');
+          if (document.querySelector('#notificationBell')) { // sometimes it tries to do this but the page is refreshing, throws an error
+            document.querySelector('#notificationBell').removeAttribute('data-new');
+          }
         }, 2500); // back to a new new state 
       }
     }
@@ -493,8 +495,8 @@ function UserControls() {
 
   return <>
     <UserMenuToggle ref={userToggle} onClick={toggleDropdown}><span>{user.username}</span> <MenuIcon show={(showingUserMenu)} /></UserMenuToggle>
-    <NotificationCount ref={notificationToggle} id="notificationBell" count={newNotifications} data-dropdown-open={(showingNotifications === 1)} onClick={toggleDropdown}>{notificationCount === 0 ? "" : notificationCount}</NotificationCount>
-    <DropdownMenu ref={userDropdown} id="userDropdown" className="dropdownParent" menutype="user" top={`${menuPosition[0] + 8}px`} right={`${menuPosition[1]}px`} data-visible={(showingUserMenu)}>
+    <NotificationCount ref={notificationToggle} id="notificationBell" data-dropdown-open={(showingNotifications === 1)} onClick={toggleDropdown}>{notificationCount === 0 ? "" : notificationCount}</NotificationCount>
+    <DropdownMenu ref={userDropdown} id="userDropdown" className="dropdownParent" $menutype="user" $top={`${menuPosition[0] + 8}px`} $right={`${menuPosition[1]}px`} data-visible={(showingUserMenu)}>
       <Link to={`/profile/${user.username}`}>Your Profile</Link>
       <hr />
       <Link to='/messages'>Messages</Link>
@@ -503,7 +505,7 @@ function UserControls() {
       <hr />
       <a href='#' onClick={handleLogout}>Logout</a>
     </DropdownMenu>
-    <DropdownMenu ref={notificationDropdown} id="notificationDropdown" className="dropdownParent" menutype="notifications" top={`${menuPosition[0] + 8}px`} right={`${menuPosition[1]}px`} scrollcontent="true" data-visible={(showingNotifications)}>
+    <DropdownMenu ref={notificationDropdown} id="notificationDropdown" className="dropdownParent" $menutype="notifications" $top={`${menuPosition[0] + 8}px`} $right={`${menuPosition[1]}px`} $scrollcontent="true" data-visible={(showingNotifications)}>
       {notifications &&
         notifications.map((n) => { return <Notification details={n} /> })
       }

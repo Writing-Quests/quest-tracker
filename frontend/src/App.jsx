@@ -22,6 +22,7 @@ import { HomeFeed, PublicFeed, BuddyFeed } from './components/Feed'
 import { UserMessageBox, SingleMessageThread } from './components/User/Messages'
 import Modal from 'react-modal'
 import { UserProjects, ViewProject } from './components/User/Projects'
+import { AboutDirectMessages } from './components/Static/DirectMessages'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
 
@@ -96,6 +97,7 @@ export function App() {
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/about-dms" element={<AboutDirectMessages />} />
             <Route path="/admin/report/:code" element={<ReviewReport />} />
             <Route path="*" element={<Navigate to='/' replace />} />
           </Routes>
@@ -119,6 +121,7 @@ export function App() {
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/about-dms" element={<AboutDirectMessages />} />
             {/*<Route path="*" element={<Navigate to='/' replace />} />*/}
             <Route path="*" element={<NavigateWithPath />} />
           </Routes>

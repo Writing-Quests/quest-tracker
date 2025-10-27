@@ -216,6 +216,7 @@ export function ViewProject() {
   const [project, setProject] = useState()
   const [isMyProject, setIsMyProject] = useState(false)
   const [projectUpdates, setProjectUpdates] = useState(null)
+  const [refetchProjects, setRefetchProjects] = useState(0)
 
   useEffect(() => {
     (async () => {

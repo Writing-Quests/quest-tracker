@@ -58,7 +58,7 @@ export function UserVerifyEmail() {
         if (resp.data.verified === true) {
           message = { type: 'success', text: `Your email address (${email}) has been verified!` }
           if (loggedIn) { // update the new user value in the context
-            setUser({...resp.data?.user})
+            setUser({...resp.data.user})
           }
           navigate(goTo, { state: { notices: [message] } })
         } else {

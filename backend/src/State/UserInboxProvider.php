@@ -46,6 +46,7 @@ class UserInboxProvider implements ProviderInterface
       $user_id = $user->getId();
       $threads = new Paginator($this->entityManager->getRepository(MessageThread::class)->getUserMessageThreads($user_id, $page, $limit));
       foreach ($threads as $thread) {
+        $thread[0]->setInMyInbox($user_id);
         $read_status = $this->entityManager->getRepository(DirectMessage::class)->threadHasUnreadForMe($thread[0]->getId(), $user_id);
         $thread[0]->setIsUnreadForMe($read_status);
         if ($thread[0]->getSenderUserId() == $user_id) { // the message was initiated by the logged in user
@@ -58,12 +59,14 @@ class UserInboxProvider implements ProviderInterface
           $connection = $this->entityManager->getRepository(Connection::class)->getUserConnectionStatus($other_user_id, $user_id);
           if ($connection) {
             // two users may have been connected but now are not. how we proceed depends on if the other user is public and if one user blocked the other
-            if ($connection[0]->getStatus() == 'mutual') { // still friends
+            if ($connection->getStatus() == 'mutual') { // still friends
               $thread[0]->setOtherUserDetails($other_user_entity);
               $thread[0]->setReplyAvailable(true);
-            } elseif ($connection[0]->getStatus() != 'blocked' && $other_user_entity->isPublic()) {
+            } elseif ($connection->getStatus() != 'blocked' && $other_user_entity->isPublic()) {
               $thread[0]->setOtherUserDetails($other_user_entity);
             }
+          } elseif ($other_user_entity->isPublic()) {
+            $thread[0]->setOtherUserDetails($other_user_entity);
           }
         }
       }

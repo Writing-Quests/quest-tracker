@@ -2014,36 +2014,68 @@ class AppFixtures extends Fixture
           }
           $manager->persist($new_notification);
         }
-        
-        // TODO: 2025-09-28 - i think message_thread and direct_message both need listeners, before fixtures.
 
-        $msg_user_1 = $this->getReference("user_32", User::class); # this is me!
-        $user1_id = $msg_user_1->getId();
-        $user_2_ref = "user_" . rand(1,$user_count+1);
-        $msg_user_2 = $this->getReference($user_2_ref, User::class);
-        $user2_id = $msg_user_2->getId();
-        $msg_thread = (new MessageThread)
-          ->setSenderUserId($user1_id)
-          ->setToUserId($user2_id)
-          ->setSubject("A thread created in a fixture");
-        
-        $manager->persist($msg_thread);
-        $fake_msg_count = count($this->dm_content) - 1;
-        foreach (range(0,8) as $i) {
-          if (rand(0,1) == 0) {
-            $fromUser = $user1_id;
-            $toUser = $user2_id;
-          } else {
-            $fromUser = $user2_id;
-            $toUser = $user1_id;
+        foreach (range(0,35) as $i) {
+          $msg_user_1 = $this->getReference("user_32", User::class); # this is me!
+          $user1_id = $msg_user_1->getId();
+          $user_2_ref = "user_" . rand(1,$user_count+1);
+          $msg_user_2 = $this->getReference($user_2_ref, User::class);
+          $user2_id = $msg_user_2->getId();
+          $msg_thread = (new MessageThread)
+            ->setSenderUserId($user1_id)
+            ->setReceivingUserId($user2_id)
+            ->setSubject("A thread created in a fixture - $i");
+          
+          $manager->persist($msg_thread);
+          $fake_msg_count = count($this->dm_content) - 1;
+          foreach (range(0,8) as $k) {
+            if (rand(0,1) == 0) {
+              $fromUser = $user1_id;
+              $toUser = $user2_id;
+            } else {
+              $fromUser = $user2_id;
+              $toUser = $user1_id;
+            }
+            $new_dm = (new DirectMessage)
+              ->setToUserId($toUser)
+              ->setFromUserId($fromUser)
+              ->setMessageThread($msg_thread)
+              ->setContent($this->dm_content[rand(0,$fake_msg_count)])
+              ->setSentAt(new DatetimeImmutable());
+            $manager->persist($new_dm);
           }
-          $new_dm = (new DirectMessage)
-            ->setToUserId($toUser)
-            ->setFromUserId($fromUser)
-            ->setMessageThread($msg_thread)
-            ->setContent($this->dm_content[rand(0,$fake_msg_count)])
-            ->setSentAt(new DatetimeImmutable());
-          $manager->persist($new_dm);
+        }
+
+        foreach (range(0,1250) as $i) {
+          $user_1_ref = "user_" . rand(1,$user_count+1);
+          $msg_user_1 = $this->getReference($user_1_ref, User::class); # this is me!
+          $user1_id = $msg_user_1->getId();
+          $user_2_ref = "user_" . rand(1,$user_count+1);
+          $msg_user_2 = $this->getReference($user_2_ref, User::class);
+          $user2_id = $msg_user_2->getId();
+          $msg_thread = (new MessageThread)
+            ->setSenderUserId($user1_id)
+            ->setReceivingUserId($user2_id)
+            ->setSubject("A thread created in a fixture - $i");
+          
+          $manager->persist($msg_thread);
+          $fake_msg_count = count($this->dm_content) - 1;
+          foreach (range(0,8) as $k) {
+            if (rand(0,1) == 0) {
+              $fromUser = $user1_id;
+              $toUser = $user2_id;
+            } else {
+              $fromUser = $user2_id;
+              $toUser = $user1_id;
+            }
+            $new_dm = (new DirectMessage)
+              ->setToUserId($toUser)
+              ->setFromUserId($fromUser)
+              ->setMessageThread($msg_thread)
+              ->setContent($this->dm_content[rand(0,$fake_msg_count)])
+              ->setSentAt(new DatetimeImmutable());
+            $manager->persist($new_dm);
+          }
         }
 
         // all done?!

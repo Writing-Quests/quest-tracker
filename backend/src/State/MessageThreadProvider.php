@@ -38,24 +38,22 @@ class MessageThreadProvider implements ProviderInterface
         $other_user_id = $thread->getSenderUserId();
       }
       $other_user_entity = $this->entityManager->getRepository(User::class)->findOneBy(['id' => $other_user_id]);
-      if ($other_user_entity) {
+      $connection = null;
+      if (!is_null($other_user_entity)) {
         $connection = $this->entityManager->getRepository(Connection::class)->getUserConnectionStatus($other_user_id, $user_id);
         if ($connection) {
           // two users may have been connected but now are not. how we proceed depends on if the other user is public and if one user blocked the other
-          if ($connection[0]->getStatus() == 'mutual') { // still friends
+          if ($connection->getStatus() == 'mutual') { // still friends
             $thread->setOtherUserDetails($other_user_entity);
             $thread->setReplyAvailable(true);
-          } elseif ($connection[0]->getStatus() != 'blocked' && $other_user_entity->isPublic()) {
+          } elseif ($connection->getStatus() != 'blocked' && $other_user_entity->isPublic()) {
             $thread->setOtherUserDetails($other_user_entity);
           }
+        } elseif ($other_user_entity->isPublic()) {
+          $thread->setOtherUserDetails($other_user_entity);
         }
       }
       $messages = $thread->getAllMessages();
-      /*
-      foreach ($messages as $msg) {
-        $msg->setSentByMe($user);
-      }
-        */
       return (object)[
         'connection' => $connection,
         'thread' => $thread,
