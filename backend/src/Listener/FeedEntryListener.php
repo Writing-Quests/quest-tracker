@@ -11,13 +11,10 @@ use App\Entity\FeedEntry;
 
 class FeedEntryListener
 {
-    private $token_storage;
-    private $entityManager;
-    public function __construct(TokenStorageInterface $token_storage, EntityManagerInterface $entityManager)
-    {
-        $this->token_storage = $token_storage;
-        $this->entityManager = $entityManager;
-    }
+    public function __construct(
+      private TokenStorageInterface $token_storage, 
+      private EntityManagerInterface $entityManager)
+    {}
 
     public function prePersist(FeedEntry $feed_entry)
     {

@@ -99,7 +99,7 @@ class ConnectionRepository extends ServiceEntityRepository
           return $resultSet->fetchAllAssociative();
         }
 
-        public function getUserConnectionStatus($user1_id,$user2_id): array {
+        public function getUserConnectionStatus($user1_id,$user2_id): Connection|null {
           // this one doesn't require any username information; right now it runs on a single profile page, so
           // by the time this endpoint is queried, we already know both of our users
           return $this->createQueryBuilder('c')
@@ -108,7 +108,7 @@ class ConnectionRepository extends ServiceEntityRepository
             ->setParameter(':user1_id', $user1_id)
             ->setParameter(':user2_id', $user2_id)
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult();
         }
 
     //    /**

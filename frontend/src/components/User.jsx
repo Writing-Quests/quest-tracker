@@ -11,13 +11,32 @@ import { AnimatedContainer, CenteredContainer, ErrorContainer } from './Containe
 
 const { LoggedInUserContext } = context
 
-function mapFailureArray ({ errors }) {
+function mapFailureArray({ errors }) {
   const errList = errors.map((msg) => <ErrorContainer key={msg.id}>{msg.text}</ErrorContainer>)
   return errList
 }
 
 // TODO: what happens when a user tries to verify while logged into another account?
-export function UserVerifyEmail () {
+
+async function newVerificationLink({ type, email, setGeneratingNewLink, setLinkSent }) {
+  try {
+    let resp = await api.post('/verify/create', {
+      'email': email,
+      'type': type
+    })
+    setGeneratingNewLink(false)
+    setLinkSent(resp.data?.created)
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+export function UserVerifyEmail() {
+  const { user, setUser } = useContext(LoggedInUserContext)
+  const [invalidLink, setInvalidLink] = useState(false)
+  const [reasonLinkInvalid, setReasonLinkInvalid] = useState(null)
+  const [generatingNewLink, setGeneratingNewLink] = useState(false)
+  const [linkSent, setLinkSent] = useState(false)
   const loggedIn = Boolean(useContext(LoggedInUserContext))
   const [queryParameters] = useSearchParams()
   const navigate = useNavigate()
@@ -27,43 +46,60 @@ export function UserVerifyEmail () {
     (async () => {
       let resp
       let message
+      const goTo = (loggedIn) ? '/profile' : '/login'
       try {
-        if(!email || !token) {
+        if (!email || !token) {
           throw new Error("Invalid verification link")
         }
-        resp = await api.get('user/$verify', {params:
-          {e: email, t: token, type: 'verify-email'}
+        resp = await api.get(`verify/${token}`, {
+          params:
+            { email: email, token: token, type: 'verify-email' }
         })
-        // TODO: 2024-01-10: the verification was successful, but threw an error: couldn't read resp.data.verified. need to double-check what comes in on the resp.data?
         if (resp.data.verified === true) {
-          message = {type: 'success', text: `Your email address (${email}) has been verified!`}
+          message = { type: 'success', text: `Your email address (${email}) has been verified!` }
+          if (loggedIn) { // update the new user value in the context
+            setUser({...resp.data?.user})
+          }
+          navigate(goTo, { state: { notices: [message] } })
         } else {
-          message = {type: 'error', text: `Error verifying your email address: ${JSON.stringify(resp.errors)}`}
+          setReasonLinkInvalid(resp.data.message);
+          setInvalidLink(true)
         }
-      } catch (e) {
-        console.log(e)
-        message = {type: 'error', text: `Error verifying your email address`}
-      }
-      if(loggedIn) {
-        navigate('/profile', {state: {notices: [message]}})
-      }
-      else {
-        navigate('/login', {state: {notices: [message]}})
+      } catch (err) {
+        console.log(err)
+        setInvalidLink(true)
       }
     })()
   }, [email, token, loggedIn, navigate])
   return <Page>
     <AnimatedContainer>
       <CenteredContainer>
-        <h1 style={{color: 'white'}}>Verifying your email address&hellip;</h1>
-        <Loading />
+        {!invalidLink ?
+          <>
+            <h1 style={{ color: 'white' }}>Verifying your email address&hellip;</h1>
+            <Loading />
+          </>
+          :
+          <>
+            <h1 style={{ color: 'white' }}>Unable to verify your email address. :(</h1>
+            <p>{!linkSent ? reasonLinkInvalid : "A new verification link has been sent. You can close this window."}</p>
+            <div style={{ 'width': '100%', 'display': 'flex', 'justifyContent': 'space-evenly', 'gap': '10px' }}>
+              <Button disabled={generatingNewLink || linkSent} onClick={() => { newVerificationLink({ 'type': 'verify-email', 'email': email, 'setGeneratingNewLink': setGeneratingNewLink, 'setLinkSent': setLinkSent }) }}>{generatingNewLink ? 'Sending New Link...' : 'Get New Verification Link'}</Button>
+              {loggedIn ?
+                <Button onClick={() => navigate('/')}>Home</Button>
+                :
+                <Button onClick={() => navigate('/login')}>Log In</Button>
+              }
+            </div>
+          </>
+        }
       </CenteredContainer>
     </AnimatedContainer>
   </Page>
 }
 
 // TODO: What happens if someone is already logged in?
-function ResetForm({username, email}) {
+function ResetForm({ username, email, token }) {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [password, setPassword] = useState('')
@@ -72,40 +108,39 @@ function ResetForm({username, email}) {
   const formRef = useRef(null)
   const navigate = useNavigate()
   useEffect(() => {
-    if(!formRef?.current) { return }
+    if (!formRef?.current) { return }
     setFormValidity(formRef.current.checkValidity())
   }, [formRef, password, confirmPassword])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
-    if(loading) { return }
-    if(!formValidity) { return }
-    if(password !== confirmPassword) { return }
+    if (loading) { return }
+    if (!formValidity) { return }
+    if (password !== confirmPassword) { return }
     setLoading(true)
     try {
-      const res = await api.post('password/$submit', {username, email, password})
-      if(res?.data?.passwordChanged) {
-        navigate('/login', {state: {notices: [{type: 'success', text: 'Your password has been updated. Login to continue.'}]}})
+      const resp = await api.patch(`users/${username}/reset`, { 'username': username, 'plainPassword': password, 'resetToken': token})
+      if (resp.status != 200) {
+          setError(`Error: Couldn't change password.`)
       } else {
-        if(res?.data?.errors) {
-          setError(`Error: Couldn't change password. ${JSON.stringify(res.data.errors)}`)
-        }
-      }
-    } catch(e) {
+        navigate('/login', { state: { notices: [{ type: 'success', text: 'Your password has been updated. Login to continue.' }] } })
+      } 
+    } catch (e) {
       console.error(e)
-      setError("Error: Couldn't change password")
+      setError("Error: Couldn't change password.")
     } finally {
       setLoading(false)
     }
   }
 
-  const formProps = {disabled: loading}
+  const formProps = { disabled: loading }
 
   return <>
     {error && <ErrorContainer>{error}</ErrorContainer>}
     <form onSubmit={handleSubmit} ref={formRef}>
       <InputGroup>
+        <Input type='hidden' name="resetToken" readOnly={true} value={token} />
         <Input type='text' readOnly={true} value={username} label='Username' />
         <Input type='email' value={email} readOnly={true} label='Email address' />
       </InputGroup>
@@ -128,8 +163,10 @@ export function UserResetPasswordFinish() {
   const email = queryParameters.get('e')
   const token = queryParameters.get('t')
   const [username, setUsername] = useState('')
-  const [tokenValid,setTokenValid] = useState('')
+  const [tokenValid, setTokenValid] = useState('')
   const [tokenError, setTokenError] = useState('')
+  const [generatingNewLink, setGeneratingNewLink] = useState(false)
+  const [linkSent, setLinkSent] = useState(false)
   const [loading, setLoading] = useState(false)
   useEffect(() => {
     checkTokenData()
@@ -137,13 +174,19 @@ export function UserResetPasswordFinish() {
   async function checkTokenData() {
     setLoading(true)
     try {
-      const resp = await api('user/$verify', {params: {e: email, t: token, type: 'reset-password'}})
-      if (!resp.data.verified) {
-        setTokenValid(false)
-        setTokenError(mapFailureArray(resp.data))
-      } else {
+      if (!email || !token) {
+        throw new Error("Invalid verification link")
+      }
+      let resp = await api.get(`verify/${token}`, {
+        params:
+          { email: email, token: token, type: 'reset-password' }
+      })
+      if (resp.data.verified) {
         setTokenValid(true)
-        setUsername(resp.data.username)
+        setUsername(resp.data.user.username)
+      } else {
+        setTokenValid(false)
+        setTokenError(resp.data.message)
       }
     } catch {
       setTokenValid(false)
@@ -155,8 +198,16 @@ export function UserResetPasswordFinish() {
     <AnimatedContainer>
       <CenteredContainer>
         <Button type='link' as={Link} to='/'>&larr; Log in</Button>
-        <h1 style={{color: 'white'}}>Reset Your Password</h1>
-        {tokenError}
+        <h1 style={{ color: 'white' }}>Reset Your Password</h1>
+        {tokenError &&
+          <>
+            <p>{linkSent ? "Your new password reset link has been sent. You can close this page." : `${tokenError} Your password has not been changed; please request a new password reset link.`}</p>
+            <div style={{ 'width': '100%', 'display': 'flex', 'justifyContent': 'space-evenly', 'gap': '10px' }}>
+              <Button hidden={linkSent} disabled={generatingNewLink || linkSent} onClick={() => { newVerificationLink({ 'type': 'reset-password', 'email': email, 'setGeneratingNewLink': setGeneratingNewLink, 'setLinkSent': setLinkSent }) }}>{generatingNewLink ? 'Sending New Link...' : 'Get New Password Reset Link'}</Button>
+              <Button onClick={() => navigate('/login')}>Log In</Button>
+            </div>
+          </>
+        }
         {loading && <Loading />}
         {tokenValid && <ResetForm token={token} username={username} email={email} />}
       </CenteredContainer>

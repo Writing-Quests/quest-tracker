@@ -95,7 +95,7 @@ class FeedEntry
 
     #[ORM\Column]
     #[ApiProperty(readable:true)]
-    private array $details = [];
+    private array $details;
 
     #[ORM\Column(length: 255)]
     #[ApiProperty(readable:true)]

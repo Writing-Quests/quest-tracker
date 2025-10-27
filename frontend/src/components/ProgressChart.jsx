@@ -247,7 +247,7 @@ function ProgressChartSingle({progress, type, units}) {
     numYAxisTicks = Math.floor(yAxisLimit / tickWidth)
   }
   numYAxisTicks = numYAxisTicks + 1
-  console.log(data)
+  //console.log(data)
   return <ChartContainer>
     <ResponsiveContainer width='100%' height={500} debounce={250}>
       <LineChart data={data} margin={{left: 30, bottom: 20, right: 30, top: 20}}>

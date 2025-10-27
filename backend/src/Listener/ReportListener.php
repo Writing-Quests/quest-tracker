@@ -16,15 +16,12 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 
 class ReportListener
 {
-  private $token_storage;
-  private $mailer;
-  private $entityManager;
-  public function __construct(TokenStorageInterface $token_storage,MailerInterface $mailer,EntityManagerInterface $entityManager) {
-      $this->token_storage = $token_storage;
-      $this->mailer = $mailer;
-      $this->entityManager =$entityManager;
-      return $this;
-  }
+  public function __construct(
+    private TokenStorageInterface $token_storage,
+    private MailerService $sendEmail,
+    private EntityManagerInterface $entityManager
+  ) {}
+
   public function prePersist(Report $report) {
     $report->setCreatedAt(new DateTime());
     $report->setCode(new Ulid());
@@ -48,9 +45,7 @@ class ReportListener
 
   public function postPersist(Report $report): void
   {
-      $report_email = (new MailerService)->reportSubmitted($report);
-      $this->mailer->send($report_email);
-      $receipt_email = (new MailerService)->reportReceipt($report);
-      $this->mailer->send($receipt_email);
+      ($this->sendEmail)->reportSubmitted($report);
+      ($this->sendEmail)->reportReceipt($report);
   }
 }

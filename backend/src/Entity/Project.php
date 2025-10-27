@@ -54,7 +54,7 @@ use Symfony\Component\Uid\Ulid;
             security: "is_granted('ROLE_ADMIN') or (object.getUser() == user)",
         ),
     ],
-    security: "object.isPublic() or is_granted('ROLE_ADMIN') or (object.getUser() == user)",
+    //security: "object.isPublic() or is_granted('ROLE_ADMIN') or (object.getUser() == user)",
 )]
 class Project
 {

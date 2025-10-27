@@ -7,11 +7,16 @@ use App\Entity\Project;
 use App\Entity\ProjectGoal;
 use App\Entity\ProgressEntry;
 use App\Entity\Connection;
+use App\Entity\Notification;
+use App\Entity\MessageThread;
+use App\Entity\DirectMessage;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
 use DateTimeImmutable;
+
+// TODO: I would like to get these grouped, but grouping was a rabbit hole that was taking up more time that it was saving by just reloading everything. - Ashley
 
 class AppFixtures extends Fixture
 {
@@ -1868,6 +1873,35 @@ class AppFixtures extends Fixture
         ],
     ];
 
+    public $notification_options = [
+      ["text" => "sent you a message", "link"=>"/messages"],
+      ["text" => "sent you a buddy request", "link"=>null],
+      ["text" => "is a turtle", "link"=>null],
+      ["text" => "invited you to a group", "link"=>null],
+    ];
+
+    public $dm_content = [
+      "Voluptate cupidatat in amet nulla consectetur enim dolor dolor laboris qui ad. Qui pariatur voluptate pariatur dolore pariatur.",
+      "Voluptate culpa pariatur laboris laborum eu eiusmod adipisicing eiusmod laborum ullamco id sint. Ad occaecat aliquip consequat laboris dolor.",
+      "Enim ipsum ad anim duis do Lorem mollit. Et occaecat esse non esse ut.",
+      "Reprehenderit aliquip ex veniam ex ut. Mollit id amet commodo reprehenderit amet ex magna tempor irure qui eiusmod culpa.",
+      "Reprehenderit mollit ipsum ullamco ex labore. Duis dolor anim adipisicing aliqua voluptate proident do esse.",
+      "Consectetur qui Lorem aliquip laborum reprehenderit tempor ad. Cupidatat minim voluptate adipisicing laborum pariatur cupidatat.",
+      "Culpa commodo reprehenderit amet velit velit incididunt officia culpa sunt excepteur ipsum labore. Consectetur qui sunt quis laborum.",
+      "Dolore labore in esse pariatur magna. Cupidatat laboris velit qui labore pariatur aliquip deserunt laboris. Dolor enim consequat eiusmod enim consectetur laboris do. Fugiat magna incididunt enim nulla. Dolore ullamco tempor elit anim occaecat irure est exercitation ea id. Proident officia laboris mollit nulla in irure quis aute aliquip sint tempor mollit.",
+      "Culpa ad sunt laboris nostrud est sunt sint tempor ut magna voluptate ad proident. Eiusmod et aute do aliqua do cillum et et consequat qui sunt. Aliquip tempor magna ipsum esse eu ipsum id ad. Amet laborum veniam cupidatat deserunt dolore magna eiusmod labore culpa ea occaecat adipisicing sint. Exercitation reprehenderit occaecat laborum aliqua qui ad in duis pariatur laboris ea nisi quis. Lorem nulla duis officia aute culpa exercitation aliquip laboris magna excepteur qui ea veniam.",
+      "Qui aute proident nostrud commodo aliquip dolore qui fugiat eiusmod exercitation eu. Est nisi ullamco Lorem ad nostrud dolor amet. Lorem proident commodo qui aliqua duis elit. Nostrud duis Lorem irure deserunt minim reprehenderit quis laborum cillum duis aute cupidatat. Laborum in et proident exercitation adipisicing deserunt officia ea id in proident adipisicing velit. Nostrud exercitation veniam consectetur incididunt magna nulla dolor consequat ex aliqua pariatur.",
+      "Labore aute proident pariatur non et labore dolore enim. Ut qui aliqua qui veniam culpa. Non aute excepteur Lorem consectetur pariatur qui. Et irure dolore excepteur pariatur excepteur velit qui minim nostrud anim magna. Ad nostrud et consequat qui. Do labore esse amet eu voluptate.",
+      "Consequat commodo deserunt minim aliqua mollit consequat ad sit qui consectetur dolor. Est cillum excepteur incididunt eu cupidatat excepteur eiusmod culpa. Quis aliqua deserunt exercitation id velit dolor proident irure aliquip amet labore. Exercitation deserunt ea velit enim tempor commodo laboris consequat. Elit eiusmod incididunt elit fugiat ut id reprehenderit ex. Cillum veniam officia adipisicing deserunt aliquip.",
+      "Dolore laborum magna id laboris eu tempor irure. Est non in aliqua deserunt pariatur aute officia magna anim est. Ipsum officia elit adipisicing irure et Lorem aliqua do adipisicing qui occaecat aliqua exercitation. Ullamco deserunt elit proident adipisicing magna amet ut do commodo in nisi. Nisi incididunt nostrud minim labore non velit et mollit amet velit consectetur. Sunt aliqua cillum consequat pariatur ullamco deserunt deserunt occaecat.",
+      "Sint consectetur tempor aute dolore irure exercitation et cupidatat adipisicing sit. Sunt adipisicing nulla anim esse consectetur et sint cillum nulla amet sint. Ea quis commodo labore nisi nostrud eiusmod irure veniam irure et anim consectetur. Esse deserunt non dolore ullamco ut ea amet sint enim. Eiusmod incididunt reprehenderit incididunt adipisicing ea reprehenderit adipisicing proident aliqua consequat tempor eu laborum. Dolor aute ullamco enim nisi occaecat officia mollit enim quis tempor est nulla eu.",
+      "Minim id ex ex do nostrud minim aute eiusmod elit. Aute velit exercitation amet tempor voluptate ea dolor elit commodo officia veniam ad. Ex in aliqua nostrud in id voluptate quis eiusmod non minim. Fugiat ut fugiat occaecat eiusmod est dolor ea culpa ea Lorem magna do reprehenderit. Velit cillum irure mollit magna eiusmod veniam ex. Dolore elit duis enim labore incididunt ad cillum dolor.",
+      "Amet ipsum occaecat eu adipisicing eu. Irure consectetur mollit mollit id nostrud officia do laborum velit mollit et voluptate tempor reprehenderit. Aliqua sunt laboris anim minim duis nulla commodo nostrud deserunt sint irure ad. Consectetur labore mollit aliqua voluptate enim. Laborum anim ad id mollit amet aliqua sit Lorem pariatur. Id amet esse pariatur adipisicing non cupidatat.",
+      "Incididunt in duis proident ullamco eu deserunt esse. Ipsum dolore minim sit duis irure tempor est reprehenderit anim nisi sint pariatur veniam. Sit nisi aliqua officia labore. Pariatur veniam et ad laborum cillum. Labore commodo commodo proident nulla cupidatat. Duis qui elit dolore et non. Nulla commodo elit ullamco enim. Et officia amet duis elit mollit aliquip dolor dolore cillum duis minim. In ad non aliquip excepteur. Nostrud proident ea sint quis. Officia do irure quis et. Amet qui excepteur elit anim ut minim magna cillum laboris.",
+      "Ipsum magna nisi qui duis deserunt ullamco irure aute officia dolor excepteur do. Nulla qui dolor aliqua laborum sit. Consequat consectetur tempor esse et aliquip sunt ex laboris. Aliqua eiusmod eu labore ea mollit. Laborum reprehenderit ea sunt sunt enim dolore officia tempor. Dolore culpa ullamco ad ullamco esse. Aliqua elit magna culpa pariatur non aliquip cupidatat ad fugiat proident irure laborum nisi. Ut officia sit laborum sint dolor laboris et consequat mollit laborum duis exercitation veniam incididunt. Qui minim tempor quis eiusmod labore enim irure nisi. Et do labore proident laborum minim pariatur ex duis duis culpa sunt nisi ut. Pariatur eiusmod proident non elit ullamco eiusmod et ullamco laboris anim aliquip excepteur exercitation consectetur. Adipisicing est esse excepteur ut id cupidatat eiusmod elit.",
+      "Aliquip quis quis elit aliqua velit ullamco cillum sit fugiat pariatur consectetur ullamco tempor. Cillum anim exercitation adipisicing cillum officia fugiat non magna ad reprehenderit mollit excepteur eu et. Ea do dolore dolore Lorem nisi quis. Laborum adipisicing aliqua ex pariatur et magna. Ipsum in reprehenderit cillum occaecat voluptate ipsum minim anim culpa deserunt laboris exercitation. Laboris proident ullamco aute ut laboris do. Do sunt anim consequat incididunt commodo id laboris qui consectetur Lorem laborum. Laboris pariatur officia laboris ea et mollit magna officia occaecat velit anim consectetur non. In occaecat anim commodo eiusmod consectetur do. Consectetur magna fugiat ad pariatur reprehenderit tempor velit aliqua. Officia aute magna proident incididunt velit nisi non aliquip labore ullamco. Ullamco deserunt elit officia anim do.",
+      "Proident exercitation deserunt laborum id minim amet magna ut. Anim qui cupidatat anim ex Lorem laborum aute exercitation non. Ea officia non elit exercitation dolore incididunt et duis dolore aliquip dolor fugiat laboris voluptate. Et ullamco quis commodo veniam incididunt. Elit laboris et cupidatat labore. Amet veniam tempor sunt voluptate ullamco ipsum et labore deserunt culpa. Cupidatat duis nisi non proident. Veniam laborum dolore velit aliquip. Nostrud consequat labore est veniam voluptate ex non voluptate velit cupidatat dolor ad irure. Sunt consectetur amet ex pariatur dolor laborum eu aliquip laborum cupidatat id enim occaecat. Ex sit ipsum eu incididunt incididunt duis enim non aliqua id. Adipisicing officia ullamco do sint Lorem nisi laboris veniam minim."
+    ];
     public function load(ObjectManager $manager): void
     {
         /* Order to run through: 
@@ -1880,7 +1914,6 @@ class AppFixtures extends Fixture
         **** the ProjectListener creates the feed entry element
         ** $connections
         */
-        // TODO: confirm that the internal references for IDs still work, even tho those don't match the actual database IDs. 
         foreach ($this->users as $user) {
           $new_user = (new User())
             ->setUsername($user['username'])
@@ -1945,6 +1978,74 @@ class AppFixtures extends Fixture
               ->setConnectedUserId($cuId);
             $manager->persist($new_connection);
         }
+        $user_count = count($this->users) - 1;
+        $notification_text_count = count($this->notification_options) - 1;
+        foreach (range(0,50) as $i) { // Ashley user is the one I've commandeered to test with, giving her a few known notifications
+          $to_user = $this->getReference("user_32", User::class);
+          $random_from_user = $this->users[rand(0,$user_count)]['username'];
+          $notification = $this->notification_options[rand(0,$notification_text_count)];
+          $user_read = rand(0,1) == 0; // randomly read or not read
+          $new_notification = (new Notification())
+            ->setUser($to_user)
+            ->setContent($random_from_user . " " . $notification['text'])
+            ->setCreatedAt(new DateTimeImmutable())
+            ->setUserRead($user_read);
+          if ($user_read) {
+            $new_notification->setReadAt(new DateTimeImmutable());
+          }
+          if ($notification['link']) {
+            $new_notification->setNotificationLink($notification['link']);
+          }
+          $manager->persist($new_notification);
+        }
+        foreach (range(0,1000) as $i) { // just jamming the database full of random notifications
+          $random_to_user = "user_" . rand(1,$user_count + 1);
+          $to_user = $this->getReference($random_to_user, User::class);
+          $random_from_user = $this->users[rand(0,$user_count)]['username'];
+          $notification = $this->notification_options[rand(0,$notification_text_count)];
+          $user_read = rand(0,1) == 0; // randomly read or not read
+          $new_notification = (new Notification())
+            ->setUser($to_user)
+            ->setContent($random_from_user . " " . $notification['text'])
+            ->setCreatedAt(new DateTimeImmutable())
+            ->setUserRead($user_read);
+          if ($notification['link']) {
+            $new_notification->setNotificationLink($notification['link']);
+          }
+          $manager->persist($new_notification);
+        }
+        
+        // TODO: 2025-09-28 - i think message_thread and direct_message both need listeners, before fixtures.
+
+        $msg_user_1 = $this->getReference("user_32", User::class); # this is me!
+        $user1_id = $msg_user_1->getId();
+        $user_2_ref = "user_" . rand(1,$user_count+1);
+        $msg_user_2 = $this->getReference($user_2_ref, User::class);
+        $user2_id = $msg_user_2->getId();
+        $msg_thread = (new MessageThread)
+          ->setSenderUserId($user1_id)
+          ->setToUserId($user2_id)
+          ->setSubject("A thread created in a fixture");
+        
+        $manager->persist($msg_thread);
+        $fake_msg_count = count($this->dm_content) - 1;
+        foreach (range(0,8) as $i) {
+          if (rand(0,1) == 0) {
+            $fromUser = $user1_id;
+            $toUser = $user2_id;
+          } else {
+            $fromUser = $user2_id;
+            $toUser = $user1_id;
+          }
+          $new_dm = (new DirectMessage)
+            ->setToUserId($toUser)
+            ->setFromUserId($fromUser)
+            ->setMessageThread($msg_thread)
+            ->setContent($this->dm_content[rand(0,$fake_msg_count)])
+            ->setSentAt(new DatetimeImmutable());
+          $manager->persist($new_dm);
+        }
+
         // all done?!
         $manager->flush();
   }

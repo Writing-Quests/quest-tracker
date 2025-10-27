@@ -1,11 +1,20 @@
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export function TextTimestamp({ datetime, type="prefix" }) {
   const date = new Date(datetime).toLocaleDateString()
   const time = new Date(datetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-  if (type == 'prefix') {
-    return <>{date} {time}</>
-  } else {
-    return <>{time} on {date}</>
+  switch (type) {
+    case 'prefix':
+      return <>{date} {time}</>
+    
+    case 'short':
+      const shortDate = new Date(datetime).toLocaleDateString([], {'year': '2-digit', 'month': '2-digit', 'day': '2-digit'});
+      return <>{shortDate} {time}</>
+    break;
+
+    default:
+      return <>{time} on {date}</>
   }
 }
 
@@ -25,4 +34,9 @@ export function TextTitleCase({ text, ...props }) {
 
 export function numberWithCommas (number) {
   return number.toString().replace(/(\d{1,3})(?=(\d{3})+(?!\d))/g,"$1,")
+}
+
+export function MarkdownBlock ({children, ...props}) {
+  const disallowedElements = ['img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'script', 'iframe', 'style']
+  return <div {...props}><Markdown disallowedElements={disallowedElements} remarkPlugins={[remarkGfm]} components={{a({ children, ...rest }) { return <a rel="nofollow noopener" href={rest.href}>{children}</a>}}}>{children}</Markdown></div>
 }

@@ -5,7 +5,7 @@ import {
 } from './components/User'
 import EditProject from './components/EditProject'
 import Profile from './components/User/Profile'
-import {Connections } from './components/User/Connections'
+import { Connections } from './components/User/Connections'
 import Login from './components/Login'
 import Settings from './components/Settings'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
@@ -19,12 +19,13 @@ import { TermsOfUse } from './components/Static/Terms'
 import { AboutQuesty } from './components/Static/About'
 import { ReviewReport } from './components/Admin/Report'
 import { HomeFeed, PublicFeed, BuddyFeed } from './components/Feed'
+import { UserMessageBox, SingleMessageThread } from './components/User/Messages'
 import Modal from 'react-modal'
-import {UserProjects, ViewProject} from './components/User/Projects'
+import { UserProjects, ViewProject } from './components/User/Projects'
 
 const { LoggedInUserContext, GetLoggedInUserContext } = Context
 
-function NavigateWithPath () {
+function NavigateWithPath() {
   const navigate = useNavigate();
   const location = useLocation();
   useEffect(() => {
@@ -36,25 +37,26 @@ export function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [loggedIn, setLoggedIn] = useState(null)
-  const [data, setData] = useState(null)
+  const [user, setUser] = useState(null)
   Modal.setAppElement('#root')
   useEffect(() => { getLoggedInUser() }, [])
 
-  let title = ''
-  if(loading) { title = 'Loading...' }
-  useTitle(title)
   
+  let title = ''
+  if (loading) { title = 'Loading...' }
+  useTitle(title)
+
   // eslint-disable-next-line no-unused-vars
-  async function getLoggedInUser(ref=null) {
-    /* TODO: 2024-04-02 - I got as far as passing the reference, re: where the user was trying to go, here (if it exists.) But then I'm stumped as to how best/effectively reroute the user data with it */
+  async function getLoggedInUser(ref = null) {
+    /* TODO: 2024-04-02 - I got as far as passing the reference, re: where the user was trying to go, here (if it exists.) But then I'm stumped as to how best/effectively reroute the user data with it. 2025-09-03 - I think probably context-related tho */
     setLoading(true)
     try {
       const resp = await api('me')
-      if(resp.data?.anonymousUser || !resp.data?.username) {
+      if (resp.data?.anonymousUser || !resp.data?.username) {
         setLoggedIn(false)
       } else {
         setLoggedIn(true)
-        setData(resp.data)
+        setUser(resp.data)
       }
     } catch (e) {
       console.log(e)
@@ -63,18 +65,18 @@ export function App() {
       setLoading(false)
     }
   }
-  if(loading) {
+  if (loading) {
     return <Loading fullPage={true} />
   }
-  if(error) {
-    return <div style={{marginTop: 50}}>
+  if (error) {
+    return <div style={{ marginTop: 50 }}>
       <ErrorContainer error={error} />
     </div>
   }
 
-  if(loggedIn) {
+  if (loggedIn) {
     return (
-      <LoggedInUserContext.Provider value={data}>
+      <LoggedInUserContext.Provider value={{user,setUser}}>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomeFeed />} />
@@ -88,6 +90,8 @@ export function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/buddies" element={<BuddyFeed />} />
             <Route path="/connections" element={<Connections />} />
+            <Route path="/messages" element={<UserMessageBox />} />
+            <Route path="/message/:messageCode" element={<SingleMessageThread />} />
             {/* <Route path="/connections/manage" element={<ConnectionLink />} /> */}
             <Route path="/about" element={<AboutQuesty />} />
             <Route path="/terms" element={<TermsOfUse />} />
@@ -100,12 +104,12 @@ export function App() {
     )
   } else {
     return (
-      <GetLoggedInUserContext.Provider value={getLoggedInUser} path={window.location.href}>
+      <GetLoggedInUserContext.Provider value={getLoggedInUser}>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login form='login' />} />
             <Route path="/profiles/public" element={<PublicFeed />} />
-            <Route path="/register" element={<Login form='register'/>} />
+            <Route path="/register" element={<Login form='register' />} />
             <Route path="/reset" element={<Login form='reset' />} />
             <Route path="/verify" element={<UserVerifyEmail />} />
             <Route path="/resetform" element={<UserResetPasswordFinish />} />
