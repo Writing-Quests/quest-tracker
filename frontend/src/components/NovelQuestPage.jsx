@@ -98,7 +98,7 @@ function Stats() {
       {/* TODO: Badges */}
     </ContentBlock>
     <ContentBlock>
-      <h2>All Stats</h2>
+      {/*<h2>All Stats</h2>*/}
       {/* TODO: Note about privacy of your stats */}
       {/* TODO: Overall ranking w/ bar charts for each person */}
       {/* TODO: Aggregate line graph */}
