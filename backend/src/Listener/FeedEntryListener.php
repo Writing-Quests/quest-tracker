@@ -11,18 +11,16 @@ use App\Entity\FeedEntry;
 
 class FeedEntryListener
 {
-    private $token_storage;
-    private $entityManager;
-    public function __construct(TokenStorageInterface $token_storage, EntityManagerInterface $entityManager)
-    {
-        $this->token_storage = $token_storage;
-        $this->entityManager = $entityManager;
-    }
+    public function __construct(
+      private TokenStorageInterface $token_storage, 
+      private EntityManagerInterface $entityManager)
+    {}
 
     public function prePersist(FeedEntry $feed_entry)
     {
         // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
-        $user = $this->token_storage->getToken()->getUser();
+        //$user = $this->token_storage->getToken()->getUser();
+        $user = $feed_entry->getUser();
         $feed_entry->setCreatedAt(new DateTime());
         $feed_entry->setEditedAt(new DateTime());
         $feed_entry->setCode(new Ulid());

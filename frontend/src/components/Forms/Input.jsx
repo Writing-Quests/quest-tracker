@@ -1,3 +1,6 @@
+import '@mdxeditor/editor/style.css'
+import { forwardRef } from 'react'
+import { MDXEditor, UndoRedo, BoldItalicUnderlineToggles, toolbarPlugin, CreateLink, ListsToggle, linkDialogPlugin, linkPlugin, listsPlugin, quotePlugin, markdownShortcutPlugin } from '@mdxeditor/editor'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 
@@ -208,6 +211,29 @@ const NormalButton = styled.button`
   }
 `
 
+const SmallButton = styled.button`
+  padding: 5px 10px;
+  margin-top: 3px;
+  background-color: transparent;
+  color: #333;
+  border: none;
+  background-color: #e5e5e5;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  &[disabled]{
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
+  &:hover {
+    background-color: #d5d5d5;
+  }
+
+`
+
 const LinkButton = styled.button`
   width: 100%;
   padding: 15px 0;
@@ -229,9 +255,9 @@ const LinkButton = styled.button`
   }
 `
 
-function TextareaInput({elStyle, label, ...props}) {
+function TextareaInput({ elStyle, label, ...props }) {
   return <Label style={elStyle} disabled={props.disabled}>
-    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+    <span style={{ position: 'relative', top: '-4px' }}>{label}</span>
     <StyledTextarea {...props}></StyledTextarea>
   </Label>
 }
@@ -241,9 +267,57 @@ TextareaInput.propTypes = {
   disabled: PropTypes.bool,
 }
 
-function TextInput({elStyle, label, style, inputStyle, ...props}) {
-  return <Label style={{...elStyle, ...style}} disabled={props.disabled} readOnly={props.readOnly}>
-    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+function MarkdownTextarea({ label, elStyle, ...props }) {
+  const divStyle = {
+    'border': '1px solid #C0C0C0',
+    'borderRadius': '3px',
+    'backgroundColor': 'white',
+    'padding': '10px 5px',
+    'display': 'block',
+    'letterSpacing': '0.01rem',
+    'color': '#333'
+  }
+  const style = {
+    'width': '100%',
+    'fontSize': '16px',
+    'fontWeight': 'normal',
+    'padding': 0,
+    'position': 'relative',
+    'background': 'transparent',
+    'border': 'none',
+    'marginTop': '6px',
+    'marginBottom': '2px'
+  }
+  const plugins = [toolbarPlugin({
+    toolbarClassName: 'dmToolbar',
+    toolbarContents: () => (
+      <>
+        <BoldItalicUnderlineToggles />
+        <CreateLink />
+        <ListsToggle />
+        <UndoRedo />
+      </>
+        )
+      }),
+      markdownShortcutPlugin(),
+      linkPlugin(),
+      linkDialogPlugin(),
+      listsPlugin(),
+      quotePlugin()]
+  return <div style={divStyle}>
+    <span style={{ position: 'relative', top: '-4px', 'fontSize': '0.8rem', 'fontWeight': 'bold' }}>{label}</span>
+    <MDXEditor style={style} plugins={plugins} markdown={props.markdown || ''} {...props} />
+  </div>
+}
+TextareaInput.propTypes = {
+  elStyle: PropTypes.object,
+  label: PropTypes.string,
+  disabled: PropTypes.bool,
+}
+
+function TextInput({ elStyle, label, style, inputStyle, ...props }) {
+  return <Label style={{ ...elStyle, ...style }} disabled={props.disabled} readOnly={props.readOnly}>
+    <span style={{ position: 'relative', top: '-4px' }}>{label}</span>
     <StyledTextInput style={inputStyle} {...props} />
   </Label>
 }
@@ -257,9 +331,9 @@ TextInput.propTypes = {
 }
 
 // eslint-disable-next-line no-unused-vars
-function ButtonInput({elStyle, label: _, buttonType='normal', type, ...props}) {
+function ButtonInput({ elStyle, label: _, buttonType = 'normal', type, ...props }) {
   let value = props.value
-  if(props.isLoading) {
+  if (props.isLoading) {
     value = 'Loading…'
   }
   return <Button type={buttonType} inputType={type} as="input" style={elStyle} {...props} value={value} />
@@ -273,9 +347,9 @@ ButtonInput.propTypes = {
   type: PropTypes.string,
 }
 
-function SelectInput({elStyle, label, style, children, ...props}) {
-  return <Label style={{...elStyle, ...style}} disabled={props.disabled} readOnly={props.readOnly}>
-    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+function SelectInput({ elStyle, label, style, children, ...props }) {
+  return <Label style={{ ...elStyle, ...style }} disabled={props.disabled} readOnly={props.readOnly}>
+    <span style={{ position: 'relative', top: '-4px' }}>{label}</span>
     <StyledSelect {...props}>
       {children}
     </StyledSelect>
@@ -290,17 +364,17 @@ SelectInput.propTypes = {
   children: PropTypes.node,
 }
 
-function ButtonSelectInput({elStyle, label, style, disabled, readOnly, options, value, onChange}) {
-  return <Label style={{...elStyle, ...style}} disabled={disabled} readOnly={readOnly}>
-    <span style={{position: 'relative', top: '-4px'}}>{label}</span>
+function ButtonSelectInput({ elStyle, label, style, disabled, readOnly, options, value, onChange }) {
+  return <Label style={{ ...elStyle, ...style }} disabled={disabled} readOnly={readOnly}>
+    <span style={{ position: 'relative', top: '-4px' }}>{label}</span>
     <SectionOptions size='small' {...elStyle}>
       {options.map(o =>
         <OptionButton
           size='small'
           key={o.value}
-          selected={value===o.value}
-          data-selected={value===o.value}
-          onClick={e => {e.preventDefault(); onChange(o.value)}}
+          selected={value === o.value}
+          data-selected={value === o.value}
+          onClick={e => { e.preventDefault(); onChange(o.value) }}
           disabled={o.disabled}
         >{o.label}</OptionButton>
       )}
@@ -318,10 +392,10 @@ ButtonSelectInput.propTypes = {
   onChange: PropTypes.func.isRequired,
 }
 
-export default function Input({grouped, firstInGroup, lastInGroup, isLoading, disabled, ...props}) {
+export default function Input({ grouped, firstInGroup, lastInGroup, isLoading, disabled, ...props }) {
   const elStyle = {}
-  if(grouped) {
-    if(firstInGroup) {
+  if (grouped) {
+    if (firstInGroup) {
       elStyle.borderBottomRightRadius = 0
       elStyle.borderBottomLeftRadius = 0
       elStyle.borderBottom = 'none'
@@ -342,7 +416,11 @@ export default function Input({grouped, firstInGroup, lastInGroup, isLoading, di
     case 'submit':
       return <ButtonInput elStyle={elStyle} isLoading={isLoading} buttonType={props.buttonType || 'cta'} {...props} {...sharedProps} />
     case 'textarea':
-      return <TextareaInput  elStyle={elStyle} {...props} {...sharedProps} />
+      return <TextareaInput elStyle={elStyle} {...props} {...sharedProps} />
+    case 'markdown':
+      return <MarkdownTextarea elStyle={elStyle} {...props} {...sharedProps} />
+    case 'hidden':
+      return <input type="hidden" {...props} {...sharedProps} />
     case 'text':
     case 'password':
     case 'email':
@@ -364,14 +442,16 @@ Input.propTypes = {
 
 // Including isLoading in destructured properties to remove it from being passed to the button DOM element (and making React mad)
 //eslint-disable-next-line react/prop-types, no-unused-vars
-export function Button({type, inputType, isLoading, ...props}) {
-  switch(type) {
+export function Button({ type, inputType, isLoading, ...props }) {
+  switch (type) {
     case 'outline':
       return <OutlineButton type={inputType} {...props} />
     case 'cta':
       return <CTAButton type={inputType} {...props} />
     case 'link':
       return <LinkButton type={inputType} {...props} />
+    case 'small':
+      return <SmallButton type={inputType} {...props} />
     default:
     case 'normal':
       return <NormalButton type={inputType} {...props} />

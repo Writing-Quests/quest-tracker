@@ -16,6 +16,7 @@ use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\OpenApi\Model\Parameter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiSubresource;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -65,7 +66,7 @@ class FeedEntry
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[ApiProperty(identifier: false, readable: true, writeable: false)]
+    #[ApiProperty(identifier: false, readable: true, writable: false)]
     private ?int $id = null;
     
     // need to revisit this; API throws an IRI error if it can't read the ID, even with code as the identifier
@@ -95,7 +96,7 @@ class FeedEntry
 
     #[ORM\Column]
     #[ApiProperty(readable:true)]
-    private array $details = [];
+    private array $details;
 
     #[ORM\Column(length: 255)]
     #[ApiProperty(readable:true)]

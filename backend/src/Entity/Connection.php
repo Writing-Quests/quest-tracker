@@ -14,6 +14,7 @@ use ApiPlatform\OpenApi\Model;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\QueryParameter;
 
+use App\State\MutualsOpenDms;
 
 use App\Repository\ConnectionRepository;
 use App\State\ConnectionFeedProvider;
@@ -27,6 +28,10 @@ use Doctrine\ORM\Mapping as ORM;
 // NOTE: GET endpoints are managed via App\Controller\ConnectionController to account for user column weirdness
 #[ApiResource(
   operations: [
+      new GetCollection (
+        uriTemplate: 'connection/mutual/dm',
+        provider: MutualsOpenDms::class
+      ),
       new Post (
         uriTemplate: 'connection/new',
         security: "is_granted('ROLE_USER')"

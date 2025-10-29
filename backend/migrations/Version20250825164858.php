@@ -20,7 +20,7 @@ final class Version20250825164858 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE feed_entry (
+        $this->addSql('CREATE TABLE IF NOT EXISTS feed_entry (
           id INT AUTO_INCREMENT NOT NULL,
           user_id INT NOT NULL,
           project_id INT DEFAULT NULL,
@@ -35,7 +35,7 @@ final class Version20250825164858 extends AbstractMigration
         ) DEFAULT CHARACTER
         SET
           utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('CREATE TABLE interaction (
+        $this->addSql('CREATE TABLE IF NOT EXISTS interaction (
           id INT AUTO_INCREMENT NOT NULL,
           feed_entry_id_id INT NOT NULL,
           user_id INT NOT NULL,
@@ -62,9 +62,11 @@ final class Version20250825164858 extends AbstractMigration
           interaction
         ADD
           CONSTRAINT FK_378DFDA7A76ED395 FOREIGN KEY (user_id) REFERENCES user (id)');
-        $this->addSql('ALTER TABLE connection_user DROP FOREIGN KEY FK_4B83D173DD03F01');
-        $this->addSql('ALTER TABLE connection_user DROP FOREIGN KEY FK_4B83D173A76ED395');
-        $this->addSql('DROP TABLE connection_user');
+        //$this->addSql('ALTER TABLE IF EXISTS connection_user DROP FOREIGN KEY FK_4B83D173DD03F01');
+        //$this->addSql('ALTER TABLE IF EXISTS  connection_user DROP FOREIGN KEY FK_4B83D173A76ED395');
+        //$this->addSql('DROP TABLE IF EXISTS connection_user');
+        $this->addSql('CREATE TABLE IF NOT EXISTS connection (id INT AUTO_INCREMENT NOT NULL, status VARCHAR(255) NOT NULL, created_at DATETIME NOT NULL, changed_at DATETIME DEFAULT NULL, initiating_user_id INT NOT NULL, connected_user_id INT NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+        /*
         $this->addSql('ALTER TABLE
           connection
         ADD
@@ -74,6 +76,7 @@ final class Version20250825164858 extends AbstractMigration
         CHANGE
           changed_at changed_at DATETIME DEFAULT NULL');
         $this->addSql('ALTER TABLE project CHANGE details details JSON DEFAULT NULL');
+        */
         $this->addSql('ALTER TABLE
           user
         CHANGE
@@ -83,6 +86,7 @@ final class Version20250825164858 extends AbstractMigration
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
+        /*
         $this->addSql('CREATE TABLE connection_user (
           connection_id INT NOT NULL,
           user_id INT NOT NULL,
@@ -104,6 +108,7 @@ final class Version20250825164858 extends AbstractMigration
           CONSTRAINT FK_4B83D173A76ED395 FOREIGN KEY (user_id) REFERENCES user (id) ON
         UPDATE
           NO ACTION ON DELETE CASCADE');
+          */
         $this->addSql('ALTER TABLE feed_entry DROP FOREIGN KEY FK_DEAECECCA76ED395');
         $this->addSql('ALTER TABLE feed_entry DROP FOREIGN KEY FK_DEAECECC166D1F9C');
         $this->addSql('ALTER TABLE interaction DROP FOREIGN KEY FK_378DFDA7EFD08CB2');
@@ -118,7 +123,7 @@ final class Version20250825164858 extends AbstractMigration
           created_at created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
         CHANGE
           changed_at changed_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
-        $this->addSql('ALTER TABLE project CHANGE details details JSON DEFAULT \'json_object()\'');
+        $this->addSql('ALTER TABLE project CHANGE details details JSON DEFAULT \'(json_object())\'');
         $this->addSql('ALTER TABLE
           user
         CHANGE

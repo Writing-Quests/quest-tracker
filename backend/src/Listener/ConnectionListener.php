@@ -6,6 +6,7 @@ use DateTime;
 use App\Entity\User;
 use App\Entity\Connection;
 use App\Service\MailerService;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Symfony\Component\Mailer\MailerInterface;
@@ -16,10 +17,13 @@ class ConnectionListener
   private $token_storage;
   private $mailer;
   private $entityManager;
-  public function __construct(TokenStorageInterface $token_storage,MailerInterface $mailer,EntityManagerInterface $entityManager) {
+  private $notify; 
+
+  public function __construct(TokenStorageInterface $token_storage,MailerInterface $mailer,EntityManagerInterface $entityManager, NotificationService $notify) {
       $this->token_storage = $token_storage;
       $this->mailer = $mailer;
-      $this->entityManager =$entityManager;
+      $this->entityManager = $entityManager;
+      $this->notify = $notify;
       return $this;
   }
   public function prePersist(Connection $connection) {
@@ -35,10 +39,10 @@ class ConnectionListener
   public function postPersist(Connection $connection): void
   {
     if ($connection->getStatus() == 'pending') {
+      $initiatingUser =  $this->entityManager->getRepository(User::class)->findOneBy(['id'=>$connection->getInitiatingUserId()]);
+      $iuUsername = $initiatingUser->getUsername();
       $connectedUser = $this->entityManager->getRepository(User::class)->findOneBy(['id'=>$connection->getConnectedUserId()]);
-      $initiatingUser = $this->token_storage->getToken()->getUser();
-      $connection_email = (new MailerService)->newConnectionRequest($connectedUser,$initiatingUser,$connection->getId());
-      $this->mailer->send($connection_email);
+      $this->notify->sendSocialNotification($connectedUser, $initiatingUser, "$iuUsername has sent you a buddy request.", ['mailerTemplate'=>'connection', 'notificationLink'=> "/profile/$iuUsername", 'connectionId'=>$connection->getId()]);
     }
   }
 }

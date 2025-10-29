@@ -1,7 +1,10 @@
 import { createContext } from 'react'
 
 const context = {
-  LoggedInUserContext: createContext(null),
+  LoggedInUserContext: createContext({
+    user: null,
+    setUser: () => {}
+  }),
   GetLoggedInUserContext: createContext(null),
 }
 

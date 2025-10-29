@@ -112,7 +112,7 @@ class ConnectionController extends AbstractController
       if (!$connection) {
         return $this->json(null);
       } else {
-        return $this->json($connection[0]);
+        return $this->json($connection);
       }
     }
   }

@@ -22,24 +22,6 @@ const LoadingText = styled.span`
   margin-top: ${({$inline}) => $inline ? '0' : '10px'};
 `
 
-const LoadingBox = styled.div`
-  animation: loading01 1.4s infinite alternate;
-  width: 100%;
-  height: 100px;
-  
-  font-style: italic;
-  padding: 10px;
-  @keyframes loading01 {
-    0% {
-      background-color: #cccccc;
-      color: #525252;
-    }
-    100% {
-      background-color: #fafafa;
-      color: #ccc;
-    }
-  }
-`
 
 export default function Loading({inline, text='Loading', fullPage}) {
   const size = inline ? 46 : 96;
@@ -60,6 +42,10 @@ Loading.propTypes = {
   fullPage: PropTypes.bool,
 }
 
-export function SectionLoading({text=' '}) {
-  return <LoadingBox>{text}</LoadingBox>
+export function LoadingInline ({svgWidth=30, svgHeight=30, background='transparent', fill='#aaa',text=null}) {
+  return <div style={{'backgroundColor': background, 'textAlign': 'center', 'width': '100%', 'margin': '10px 0'}}><svg xmlns="http://www.w3.org/2000/svg" width={svgWidth} height={svgHeight} viewBox="0 0 24 24"><circle cx="4" cy="12" r="3" fill={fill}><animate id="SVGKiXXedfO" attributeName="cy" begin="0;SVGgLulOGrw.end+0.25s" calcMode="spline" dur="0.6s" keySplines=".33,.66,.66,1;.33,0,.66,.33" values="12;6;12"/></circle><circle cx="12" cy="12" r="3" fill={fill}><animate attributeName="cy" begin="SVGKiXXedfO.begin+0.1s" calcMode="spline" dur="0.6s" keySplines=".33,.66,.66,1;.33,0,.66,.33" values="12;6;12"/></circle><circle cx="20" cy="12" r="3" fill={fill}><animate id="SVGgLulOGrw" attributeName="cy" begin="SVGKiXXedfO.begin+0.2s" calcMode="spline" dur="0.6s" keySplines=".33,.66,.66,1;.33,0,.66,.33" values="12;6;12"/></circle></svg>
+  {text &&
+    <p style={{'textAlign': 'center'}}>{text}</p>
+  }
+  </div>
 }

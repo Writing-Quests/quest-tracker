@@ -11,13 +11,14 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\QueryParameter;
 use ApiPlatform\OpenApi\Model;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\Ignore;
 
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -29,8 +30,9 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Serializer\Annotation\Ignore;
-use Symfony\Component\Serializer\Annotation\SerializedName;
+
+use App\Controller\NewUserController;
+
 use App\State\UserMeProvider;
 use App\State\UserProfileProvider;
 use App\State\NotLoggedInRepresentation;
@@ -39,6 +41,8 @@ use App\State\UserQuestProvider;
 use Doctrine\ORM\EntityManager;
 
 use Doctrine\Persistence\ManagerRegistry;
+use App\State\UserProfileProcessor;
+use DateTimeImmutable;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
@@ -50,26 +54,24 @@ use Doctrine\Persistence\ManagerRegistry;
         security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user or object.isLoggedInUserAllowed()"
       ),
       new Get(
-          uriTemplate: '/me',
-          provider: UserMeProvider::class,
-          output: NotLoggedInRepresentation::class,
-          openapi: new Model\Operation(
-              summary: 'Retrieves the current User',
-              description: 'Retrieves the currently-logged-in User resource. If not logged in, it will return `"anonymous_user": true`.',
-          ),
-          security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user"
+        uriTemplate: '/me',
+        provider: UserMeProvider::class,
+        normalizationContext: ['groups' => ['user:read']],
+        output: NotLoggedInRepresentation::class,
+        openapi: new Model\Operation(
+            summary: 'Retrieves the current User',
+            description: 'Retrieves the currently-logged-in User resource. If not logged in, it will return `"anonymous_user": true`.',
+        ),
+        security: "is_granted('ROLE_ADMIN') or object.isPublic() or object == user"
       ),
       new GetCollection(
         uriTemplate: '/profiles/public',
         provider: AvailableProfilesProvider::class
       ),
       new Post(
-        uriTemplate: '/users/{id}',
-        security: "object == user"
-      ),
-      new Patch(
         uriTemplate: '/users/{username}',
-        security: "object == user"
+        denormalizationContext: ['groups' => ['user:create', 'user:write']],
+        controller: NewUserController::class
       ),
       new Get(
         uriTemplate: '/users/{username}/quests/{id}',
@@ -80,7 +82,18 @@ use Doctrine\Persistence\ManagerRegistry;
           'id' => new Link(fromClass: Quest::class, fromProperty: 'id'),
         ]
       ),
-    ]
+      new Patch(
+        uriTemplate: '/users/{username}',
+        denormalizationContext: ['groups' => ['user:write']],
+        security: "is_granted('ROLE_ADMIN') or object == user",
+        processor: UserProfileProcessor::class
+      ),
+      new Patch(
+        uriTemplate: '/users/{username}/reset', // needed a version with  lighter permissions, restricted to only changing the password
+        denormalizationContext: ['groups' => ['user:onlypassword']],
+        processor: UserProfileProcessor::class
+      )
+    ],
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -88,6 +101,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\GeneratedValue]
     #[ORM\Column]
     #[ApiProperty(identifier: false, writable: false)]
+    #[Groups(['user:read','user:write'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
@@ -100,6 +114,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         min: 5,
         max: 100,
     )]
+    #[Groups(['user:create','user:read'])]
     private ?string $username = null;
 
     /**
@@ -107,6 +122,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     #[Ignore]
+    #[Groups(['user:read','user:write'])]
     private array $roles = [];
 
     /**
@@ -114,40 +130,56 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     #[Ignore]
+    #[Groups(['user:write','user:onlypassword'])]
+    #[ApiProperty(readable: false, writable: true)]
     private ?string $password = null;
 
+    #[ApiProperty(readable: false, writable: true)]
+    #[Groups(['user:write','user:onlypassword'])]
+    private ?string $plainPassword = null;
+
     #[ORM\Column(length: 255)]
-    #[ApiProperty(readable: true, writable: false, security: "object == user")]
+    #[ApiProperty(readable: true, writable: true, security: "object == user")]
+    #[Groups(['user:read','user:write'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255,nullable: true)]
+    #[ApiProperty(readable: true, writable: true, security: "object == user")]
+    #[Groups(['user:read','user:write'])]
     private ?string $unverified_email = null;
 
     #[ORM\Column]
     #[ApiProperty(writable: false)]
+    #[Groups(['user:create','user:read'])]
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(nullable: true)]
     #[ApiProperty(writable: false)]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $edited_at = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $email_verified_at = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $last_activity_timestamp = null;
 
     # TODO: should we have a shorter length limit for this? 
     #[ORM\Column(type: Types::TEXT, nullable: true, length: 65535)]
+    #[Groups(['user:read','user:write'])]
     private $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user:read','user:write'])]
     private ?string $link = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_MUTABLE)]
     private ?\DateTimeInterface $timezone = null;
 
     #[ORM\Column]
+    #[Groups(['user:read','user:write'])]
     private ?bool $public = false;
 
     /**
@@ -162,6 +194,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'user', fetch: 'EAGER')]
     #[ORM\OrderBy(["edited_at" => "DESC"])]
+    #[Groups(['user:read'])]
     private Collection $projects;
 
     /**
@@ -175,12 +208,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: FeedEntry::class, mappedBy: 'user', orphanRemoval: true)]
     //#[ORM\OrderBy(["edited_at" => "DESC"])]
+    #[Groups(['user:read'])]
     private Collection $feedEntries;
 
     /**
      * @var Collection<int, Interaction>
      */
     #[ORM\OneToMany(targetEntity: Interaction::class, mappedBy: 'user', orphanRemoval: true)]
+    #[Groups(['user:read'])]
     private Collection $interactions;
 
     // this is managed in State/UserProfileProvider.php to get user permissions 
@@ -192,6 +227,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\ManyToMany(targetEntity: Quest::class, mappedBy: 'user')]
     private Collection $quests;
+
+    #[ORM\Column]
+    #[Groups(['user:read','user:write'])]
+    private ?bool $allow_dms = false;
+
+    #[ORM\Column]
+    #[Groups(['user:read','user:write'])]
+    private ?bool $send_email_notifications = true;
+
+    /**
+     * @var Collection<int, Notification>
+     */
+    #[ORM\OneToMany(targetEntity: Notification::class, mappedBy: 'user')]
+    private Collection $notifications;
 
     public function __construct()
     {
@@ -206,6 +255,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ApiResource (writable: false)]
+    #[Groups(['user:read'])]
     public function isLoggedInUserAllowed()
     {
         return $this->loggedInUserAllowed;
@@ -218,6 +268,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ApiResource (writable: false)]
+    #[Groups(['user:read'])]
     public function getLoggedInUserConnection()
     {
         return $this->loggedInUserConnection;
@@ -230,12 +281,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ApiResource (writable: false)]
+    #[Groups(['user:read'])]
     public function getMostRecentUpdate() {
       return $this->getFeedEntries()[0];
     }
 
     #[ApiResource (writable: false)]
-    public function getGravatarUrl(): ?string
+    #[Groups(['user:read'])]
+    public function getGravatarUrl(): string|null
     {
         if($this->email) {
           $url = 'https://www.gravatar.com/avatar/' . hash( 'sha256', strtolower( trim( $this->email))) . '?d=404&s=100&r=pg';
@@ -245,19 +298,63 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
           } else {
             return $url;
           }
+        } else {
+          return null;
         }
     }
 
+    #[ApiResource (writable: false)]
+    #[Groups(['user:read'])]
+    public function getIsATurtle (): ?bool {
+      foreach ($this->getRoles() as $role) {
+        if ($role == 'ROLE_TURTLE') {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    #[Groups(['user:write'])]
+    public function setIsATurtle ($turtleStatus) {
+      $roles = $this->getRoles();
+      if ($turtleStatus) {
+        array_push($roles,'ROLE_TURTLE');
+      } else {
+        $i = array_search('ROLE_TURTLE', $roles);
+        if ($i) {
+          unset($roles[$i]);
+        }
+      }
+      $this->setRoles($roles);
+    }
+
+    #[Groups(['user:write'])]
+    public function setSpecificUserRole ($roleName,$add) {
+      $roles = $this->getRoles();
+      if ($add) {
+        array_push($roles,$roleName);
+      } else {
+        $i = array_search($roleName, $roles);
+        if ($i) {
+          unset($roles[$i]);
+        }
+      }
+      $this->setRoles($roles);
+    }
+
+    #[Groups(['user:read'])]
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    #[Groups(['user:read'])]
     public function getUsername(): ?string
     {
         return $this->username;
     }
 
+    #[Groups(['user:write'])]
     public function setUsername(string $username): static
     {
         $this->username = $username;
@@ -271,6 +368,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @see UserInterface
      */
     #[Ignore]
+    #[Groups(['user:read'])]
     public function getUserIdentifier(): string
     {
         return (string) $this->username;
@@ -281,6 +379,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @return list<string>
      */
+    #[Groups(['user:write'])]
+    #[ApiResource (writable: false,readable:true)]
     public function getRoles(): array
     {
         $roles = $this->roles;
@@ -293,6 +393,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @param list<string> $roles
      */
+    #[ApiResource (writable: false)]
+    #[Groups(['user:write'])]
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
@@ -304,14 +406,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @see PasswordAuthenticatedUserInterface
      */
     #[Ignore]
+    #[Groups(['user:write'])]
+    #[ApiResource (writable: false, readable:false)]
     public function getPassword(): ?string
     {
         return $this->password;
     }
 
+    #[Groups(['user:write'])]
+    #[ApiResource (writable: true, readable:false)]
     public function setPassword(string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    #[Groups(['user:write'])]
+    #[ApiResource (writable: true, readable:false)]
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    #[Groups(['user:write'])]
+    #[ApiResource (writable: true, readable:false)]
+    public function setPlainPassword(?string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -322,14 +444,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+        $this->plainPassword = null;
     }
 
+    #[Groups(['user:read'])]
     public function getEmail(): ?string
     {
         return $this->email;
     }
 
+    #[Groups(['user:write'])]
     public function setEmail(string $email): static
     {
         $this->email = $email;
@@ -337,12 +461,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    #[Ignore]
+    #[Groups(['user:write'])]
     public function getUnverifiedEmail(): ?string
     {
         return $this->unverified_email;
     }
 
+    #[Groups(['user:write'])]
     public function setUnverifiedEmail($unverified_email): static
     {
         $this->unverified_email = $unverified_email;
@@ -350,6 +475,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
@@ -362,11 +488,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getEditedAt(): ?\DateTimeImmutable
     {
         return $this->edited_at;
     }
 
+    #[Groups(['user:write'])]
     public function setEditedAt(\DateTimeImmutable $edited_at): static
     {
         $this->edited_at = $edited_at;
@@ -374,11 +502,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getEmailVerifiedAt(): ?\DateTimeImmutable
     {
         return $this->email_verified_at;
     }
 
+    #[Groups(['user:write'])]
     public function setEmailVerifiedAt(?\DateTimeImmutable $email_verified_at): static
     {
         $this->email_verified_at = $email_verified_at;
@@ -386,11 +516,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getLastActivityTimestamp(): ?\DateTimeImmutable
     {
         return $this->last_activity_timestamp;
     }
 
+    #[Groups(['user:write'])]
     public function setLastActivityTimestamp(?\DateTimeImmutable $last_activity_timestamp): static
     {
         $this->last_activity_timestamp = $last_activity_timestamp;
@@ -398,11 +530,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getDescription()
     {
         return $this->description;
     }
 
+    #[Groups(['user:write'])]
     public function setDescription($description): static
     {
         $this->description = $description;
@@ -410,11 +544,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getLink(): ?string
     {
         return $this->link;
     }
 
+    #[Groups(['user:write'])]
     public function setLink(?string $link): static
     {
         $this->link = $link;
@@ -422,11 +558,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getTimezone(): ?\DateTimeInterface
     {
         return $this->timezone;
     }
 
+    #[Groups(['user:write'])]
     public function setTimezone(\DateTimeInterface $timezone): static
     {
         $this->timezone = $timezone;
@@ -434,11 +572,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function isPublic(): ?bool
     {
         return $this->public;
     }
 
+    #[Groups(['user:write'])]
     public function setPublic(bool $public): static
     {
         $this->public = $public;
@@ -480,6 +620,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @return Collection<int, Project>
      */
     #[ApiProperty(readableLink: false, writableLink: false)]
+    #[Groups(['user:read'])]
     public function getProjects(): ?Collection
     {
         return $this->projects;
@@ -509,7 +650,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\PreUpdate]
     public function preUpdate(): void
     {
-        $this->edited_at = new \DateTime();
+        $this->edited_at = new \DateTimeImmutable();
     }
 
     /**
@@ -544,6 +685,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Ignore]
     public function makeSnapshot () {
       // returns a version of the user data that's compatible with the JSON field in MySQL
       return [
@@ -560,6 +702,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, FeedEntry>
      */
+
+    #[Groups(['user:read'])]
     public function getFeedEntries(): Collection
     {
         return $this->feedEntries;
@@ -579,7 +723,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->feedEntries->removeElement($feedEntry)) {
             // set the owning side to null (unless already changed)
-            if ($feedEntry->user() === $this) {
+            if ($feedEntry->getUser() === $this) {
                 $feedEntry->setUser(null);
             }
         }
@@ -590,6 +734,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Interaction>
      */
+
+    #[Groups(['user:read'])]
     public function getInteractions(): Collection
     {
         return $this->interactions;
@@ -599,7 +745,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->interactions->contains($interaction)) {
             $this->interactions->add($interaction);
-            $interaction->setUserId($this);
+            $interaction->setUser($this);
         }
 
         return $this;
@@ -609,8 +755,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->interactions->removeElement($interaction)) {
             // set the owning side to null (unless already changed)
-            if ($interaction->getUserId() === $this) {
-                $interaction->setUserId(null);
+            if ($interaction->getUser() === $this) {
+                $interaction->setUser(null);
             }
         }
 
@@ -631,6 +777,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $this->quests->add($quest);
             $quest->addUser($this);
         }
+        return $this;
+    }
+    #[Groups(['user:read'])]
+    public function getAllowDms(): ?bool
+    {
+        return $this->allow_dms;
+    }
+
+    #[Groups(['user:write'])]
+    public function setAllowDms(bool $allow_dms): static
+    {
+        $this->allow_dms = $allow_dms;
 
         return $this;
     }
@@ -640,7 +798,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         if ($this->quests->removeElement($quest)) {
             $quest->removeUser($this);
         }
+        return $this;
+    }
 
+    #[Groups(['user:read'])]
+    public function getSendEmailNotifications(): ?bool
+    {
+        return $this->send_email_notifications;
+    }
+
+    #[Groups(['user:write'])]
+    public function setSendEmailNotifications(bool $send_email_notifications): static
+    {
+        $this->send_email_notifications = $send_email_notifications;
         return $this;
     }
 }

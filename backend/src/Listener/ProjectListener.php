@@ -23,16 +23,24 @@ class ProjectListener
     public function prePersist(Project $project)
     {
         // Doctrine is including created_at in the initial INSERT statement, bypassing MySQL's default now :(
-        $user = $this->token_storage->getToken()->getUser();
-        $project->setCreatedAt(new DateTime());
-        $project->setEditedAt(new DateTime());
+        if (!$project->getUser()) {
+          //.2025-08-27 - $user comes back null when the doctrine fixture is running
+          // since these values are already set by the fixture, I think this fixes that.
+          $user = $this->token_storage->getToken()->getUser();
+          $project->setUser($user);
+          $project->setCreatedAt(new DateTime());
+          $project->setEditedAt(new DateTime());
+        }
         $project->setCode(new Ulid());
-        $project->setUser($user);
     }
 
     public function postPersist (Project $project) {
       $update_post = new FeedEntry();
-      $user = $this->token_storage->getToken()->getUser();
+      if (!$project->getUser()) {
+        $user = $this->token_storage->getToken()->getUser();
+      } else {
+        $user = $project->getUser();
+      }
       ($update_post)
         ->setUser($user)
         ->setUpdateType('new')

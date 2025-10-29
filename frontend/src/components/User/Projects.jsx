@@ -10,12 +10,9 @@ import api from '../../services/api'
 import userConnection from '../../services/connectionStatus'
 import Input, { Button } from '../Forms/Input'
 import Notices from '../Notices'
-import Loading, { SectionLoading } from '../Loading'
+import Loading, { LoadingInline } from '../Loading'
 import Progress from '../Progress'
 import { ErrorContainer, ContentContainer, ContentBlock, AnimatedContainer, SuccessContainer, NeutralContainer, ProjectUpdateContainer } from '../Containers'
-import { ModalStyle, ModalCloseButton } from '../Modal'
-import Modal from 'react-modal'
-import { CountdownBar } from '../Forms/Countdown'
 
 const { LoggedInUserContext } = context
 
@@ -181,15 +178,22 @@ ProjectsList.propTypes = {
 * 2025-06-24 - moving projects to their own page (to make a feed/homepage more useable; mostly a copy/paste of Profile, removing the parts about whose profile it is knowing that this page only shows you your projects. - Ashley
 */
 export function UserProjects() {
-  const user = useContext(LoggedInUserContext)
+  const {user} = useContext(LoggedInUserContext) // ope, if i create a project and then come here, the context is from before i made the projects.
+  const [ projectList,setProjectList] = useState()
   const navigate = useNavigate()
+  useEffect(() => {
+    (async () => {
+      const resp = await api.get(`/users/${user.username}/projects`)
+      setProjectList(resp.data['hydra:member'])
+    })()
+  },[user])
   return <ProfileContext.Provider value={true}> {/* this is intended to be a view-your-projects page, not a public page. */}
     <Page>
       <ContentContainer>
         <ContentBlock>
           <Notices />
         </ContentBlock>
-        {(Boolean(user.username) && Boolean(user.projects?.length)) ?
+        {(Boolean(user.username) && Boolean(projectList)) ?
           <ProjectsList username={user.username} />
           :
           (<>
@@ -204,7 +208,7 @@ export function UserProjects() {
 }
 
 export function ViewProject() {
-  const user = useContext(LoggedInUserContext)
+  const {user} = useContext(LoggedInUserContext)
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -212,6 +216,7 @@ export function ViewProject() {
   const [project, setProject] = useState()
   const [isMyProject, setIsMyProject] = useState(false)
   const [projectUpdates, setProjectUpdates] = useState(null)
+  const [refetchProjects, setRefetchProjects] = useState(0)
 
   useEffect(() => {
     (async () => {
@@ -226,7 +231,6 @@ export function ViewProject() {
           setIsMyProject(resp.data.owner_username == user.username)
           if (resp.data.owner_username !== user.username) {
             const userConnectionStatus = await userConnection(resp.data.owner_username, user.username)
-            console.log('userConnectStatus', userConnectionStatus)
             if (userConnectionStatus) {
               if (userConnectionStatus == 'blocked') {
                 // if one of you has blocked the other
@@ -245,9 +249,9 @@ export function ViewProject() {
         setProject(resp.data)
         const respUpdates = await api.get(`project/${projectCode}/feed`)
         setProjectUpdates(respUpdates.data['hydra:member'] || null)
-      } catch (e) {
-        console.log(e)
-        setError(e)
+      } catch (err) {
+        console.log(err)
+        setError(err)
       } finally {
         setLoading(false)
       }
@@ -282,7 +286,7 @@ export function ViewProject() {
               projectUpdates.length > 0 &&
               projectUpdates.map((update) => <div><ProjectUpdateContainer update={update} isMyProject={isMyProject} key={update.update_code} includeTitle={false} /></div>)
               :
-              <SectionLoading text={`Loading updates for "${project.title}"`}></SectionLoading>
+              <LoadingInline text={`Loading updates for "${project.title}"`} />
             }
           </ContentBlock>
         </ContentContainer>

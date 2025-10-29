@@ -35,7 +35,7 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
             security: "true", // Security is on the Link level
         ),
         new Post(
-            securityPostDenormalize: "object.getProject().getUser() == user or is_granted('ROLE_ADMIN') or object.getProject().getUser().isLoggedInUserAllowed()",
+            securityPostDenormalize: "object.getProject().getUser() == user or is_granted('ROLE_ADMIN')",
         ),
     ]
 )]

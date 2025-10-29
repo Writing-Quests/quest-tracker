@@ -1,0 +1,9 @@
+{% extends "base.email.html" %}
+{% block content %}
+<p>You have a new message from <a href="https://quesy.writingquests.org/profile/{{user}}">{{user}}</a>:</p>
+{% apply markdown_to_html %}
+{{ message }}
+{% endapply %}
+<p><a href="{{thread}}">View this thread and reply to this message.</a></p>
+<p><a href="https://questy.writingquests.org/messages">View all your DMs.</a></p>
+{% endblock %}

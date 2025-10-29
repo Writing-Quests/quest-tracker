@@ -7,7 +7,7 @@ import context from '../services/context'
 import Page from './Page'
 import api from '../services/api'
 import { ErrorContainer } from './Containers'
-import Loading, {SectionLoading} from './Loading'
+import Loading, {LoadingInline} from './Loading'
 import { Button } from './Forms/Input'
 import NovelQuest from './NovelQuest'
 import { ContentContainer, ContentBlock, PaginationContainer, ProjectUpdateContainer } from './Containers'
@@ -68,14 +68,14 @@ function UserMiniDisplay ({user}) {
   switch (user.connection) {
     case 'following':
       describeConnection = `You follow ${user.username}.`
-    break
+      break
 
     case 'mutual':
       describeConnection = `You & ${user.username} are buddyUpdates.`
-    break
+      break
   }
   return (
-    <IndividualProfile onClick={()=> { window.location.href = `/profile/${user.username}`}}>
+    <IndividualProfile onClick={() => { window.location.href = `/profile/${user.username}` }}>
       {user.gravatar && <UserAvatar src={user.gravatar} />}
       <p className="username"><a href={`/profile/${user.username}`} title={`${user.username}'s profile`}>{user.username}</a></p>
       {user.description && <p className="description">{user.description}</p>}
@@ -84,15 +84,15 @@ function UserMiniDisplay ({user}) {
   )
 }
 
-export function PublicFeed () {
-  const user = useContext(LoggedInUserContext)
-  const [currentPageUsers,setCurrentPageUsers] = useState([])
-  const [totalUsers,setTotalUsers] = useState([])
-  const [pages,setPages] = useState([])
+export function PublicFeed() {
+  const { user } = useContext(LoggedInUserContext)
+  const [currentPageUsers, setCurrentPageUsers] = useState([])
+  const [totalUsers, setTotalUsers] = useState([])
+  const [pages, setPages] = useState([])
   const [loading, setLoading] = useState(true)
   const [queryParameters] = useSearchParams()
   const pg = queryParameters.get('page') || 1
-  async function getPageConnections (pageUrl=`profiles/public?page=${pg}`) {
+  async function getPageConnections(pageUrl = `profiles/public?page=${pg}`) {
     setLoading(true)
     const resp = await api.get(pageUrl)
     setCurrentPageUsers(resp.data['hydra:member'])
@@ -108,24 +108,24 @@ export function PublicFeed () {
     return <Page>
       <ContentContainer>
         <ContentBlock>
-        <Loading />
+          <Loading />
         </ContentBlock>
       </ContentContainer>
     </Page>
   } else {
-    const users = currentPageUsers.map((u) => { return <UserMiniDisplay key={u.username} user={u} />})
+    const users = currentPageUsers.map((u) => { return <UserMiniDisplay key={u.username} user={u} /> })
     return (
       <Page>
         <ContentContainer>
           <ContentBlock>
-           <ProfileDataContainer>
-            {users}
+            <ProfileDataContainer>
+              {users}
             </ProfileDataContainer>
           </ContentBlock>
         </ContentContainer>
         {pages &&
           <PaginationContainer hydraPageInfo={pages} getNextPage={getPageConnections}>
-            <p style={{'textAlign': 'center'}}>{totalUsers} public users</p>
+            <p style={{ 'textAlign': 'center' }}>{totalUsers} public users</p>
           </PaginationContainer>
         }
       </Page>
@@ -134,14 +134,14 @@ export function PublicFeed () {
 }
 
 export function BuddyFeed() {
-  const user = useContext(LoggedInUserContext)
+  const { user } = useContext(LoggedInUserContext)
   const [queryParameters] = useSearchParams()
   const pg = queryParameters.get('page') || 1
-  const [pageBuddyUpdates,setPageBuddyUpdates] = useState(null)
+  const [pageBuddyUpdates, setPageBuddyUpdates] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [totalUpdates,setTotalUpdates] = useState([])
-  const [pages,setPages] = useState([])
-  async function getFeedPageContent (pageUrl=`/feed?page=1`) {
+  const [totalUpdates, setTotalUpdates] = useState([])
+  const [pages, setPages] = useState([])
+  async function getFeedPageContent(pageUrl = `/feed?page=1`) {
     setLoading(true)
     const resp = await api.get(pageUrl)
     setPageBuddyUpdates(resp.data['hydra:member'])
@@ -163,7 +163,7 @@ export function BuddyFeed() {
     return <Page>
       <ContentContainer>
         <ContentBlock>
-        <Loading />
+          <Loading />
         </ContentBlock>
       </ContentContainer>
     </Page>
@@ -173,20 +173,24 @@ export function BuddyFeed() {
         <ContentContainer>
           <ContentBlock>
             {
-            pageBuddyUpdates !== null ?
-              (pageBuddyUpdates.length > 0) &&
+              !pageBuddyUpdates ?
+                <LoadingInline text="Loading your writing network..." />
+                :
+                (pageBuddyUpdates.length > 0) &&
                 <>
-                <h1>Your Writing Network</h1>
-                {pageBuddyUpdates.map((update) => <div key={update.update_code}><ProjectUpdateContainer update={update} isMyProject={false} /></div>)}
+                  <h1>Your Writing Network</h1>
+                  {pageBuddyUpdates.map((update) => <ProjectUpdateContainer update={update} isMyProject={false} key={update.update_code} />)}
                 </>
-              :
-              <SectionLoading text="Loading your writing network..." />
+            }
+            {
+              (pageBuddyUpdates.length == 0) &&
+              <i>No updates from your writing network yet.</i>
             }
           </ContentBlock>
         </ContentContainer>
         {pages &&
           <PaginationContainer hydraPageInfo={pages} getNextPage={getFeedPageContent}>
-            <p style={{'textAlign': 'center'}}>{totalUpdates} total updates</p>
+            <p style={{ 'textAlign': 'center' }}>{totalUpdates} total updates</p>
           </PaginationContainer>
         }
       </Page>
@@ -195,7 +199,7 @@ export function BuddyFeed() {
 }
 
 function QuestItem({quest}) {
-  const user = useContext(LoggedInUserContext)
+  const { user } = useContext(LoggedInUserContext)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   function dateInterval(date1, date2) {
@@ -250,7 +254,7 @@ function QuestItem({quest}) {
 }
 
 function QuestProgress({quest}) {
-  const user = useContext(LoggedInUserContext)
+  const { user } = useContext(LoggedInUserContext)
   const [data, setData] = useState()
   useEffect(() => {
     api.get(`/users/${user.username}/quests/${quest.id}`)
@@ -301,14 +305,14 @@ export function QuestsFeed() {
 }
 
 export function HomeFeed() {
-  const user = useContext(LoggedInUserContext)
+  const { user } = useContext(LoggedInUserContext)
   const navigate = useNavigate()
-  const [buddyUpdates,setBuddyUpdates] = useState([])
-  const [multipleFeedPages,setMultipleFeedPages] = useState(false)
-  const [projects,setProjects] = useState([])
+  const [buddyUpdates, setBuddyUpdates] = useState(null)
+  const [multipleFeedPages, setMultipleFeedPages] = useState(false)
+  const [projects, setProjects] = useState(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    async function getConnectionUpdates () {
+    async function getConnectionUpdates() {
       const resp = await api.get("/feed?page=1")
       if (resp.data) {
         setBuddyUpdates(resp.data['hydra:member'])
@@ -317,9 +321,9 @@ export function HomeFeed() {
         }
       }
     }
-    async function getProjects () {
-        const resp = await api.get(`users/${user.username}/projects`)
-        setProjects(resp.data['hydra:member'])
+    async function getProjects() {
+      const resp = await api.get(`users/${user.username}/projects`)
+      setProjects(resp.data['hydra:member'])
     }
     try {
       getProjects()
@@ -329,12 +333,12 @@ export function HomeFeed() {
     } finally {
       setLoading(false)
     }
-  },[user])
-   if (loading) {
+  }, [user])
+  if (loading) {
     return <Page>
       <ContentContainer>
         <ContentBlock>
-        <Loading />
+          <Loading />
         </ContentBlock>
       </ContentContainer>
     </Page>
@@ -344,22 +348,32 @@ export function HomeFeed() {
         <NovelQuest />
         <ContentContainer>
           <ContentBlock>
-            <div style={{'position': 'relative'}}>
+            <div style={{ 'position': 'relative' }}>
               <h1>Your Projects</h1>
-              <Button type='normal' onClick={() => navigate('/project/new')} style={{display: 'block', margin: 'auto', 'position': 'absolute', 'top': '1rem', 'right': '1rem'}}>+ New Project</Button>
-              {projects.length > 0 && projects.map((pr) => <><p onClick={() => window.location.href = `/project/view/${pr.code}`}style={{'marginBottom': 0, 'fontSize': '1.2rem', 'fontWeight': 'bold'}}>{pr.title}</p><div key={pr.code}><ProjectUpdateContainer update={pr.most_recent_update} isMyProject={true} /></div></>)}
+              {!projects ?
+                <LoadingInline />
+                :
+                (projects.length > 0) && projects.map((pr) => <><p onClick={() => window.location.href = `/project/view/${pr.code}`} style={{ 'marginBottom': 0, 'fontSize': '1.2rem', 'fontWeight': 'bold' }}>{pr.title}</p><div><ProjectUpdateContainer key={pr.code} update={pr.most_recent_update} isMyProject={true} /></div></>)
+              }
+              <Button type='normal' onClick={() => navigate('/project/new')} style={{ display: 'block', margin: 'auto', 'position': 'absolute', 'top': '0', 'right': '0' }}>+ New Project</Button>
             </div>
-            {(buddyUpdates.length > 0) &&
-            <div style={{'borderTop': '1px solid #ccc', 'marginTop': '1rem'}}>
-                <h1>Your Writing Network</h1>
-                {buddyUpdates.map((update) => <div key={update.update_code}><ProjectUpdateContainer update={update} isMyProject={false} /></div>)}
-                {multipleFeedPages ?
-                  <p style={{'textAlign': 'right', 'fontStyle': 'italic'}}><Link to="/buddies?page=2">See more updates &rarr;</Link></p>
-                  :
-                  <p style={{'textAlign': 'right', 'fontStyle': 'italic'}}>You&rsquo;re all caught up!</p>
-                }
-            </div>
+
+            {
+              !buddyUpdates ?
+                <LoadingInline />
+                :
+                (buddyUpdates.length > 0) &&
+                <div style={{ 'borderTop': '1px solid #ccc', 'marginTop': '1rem' }}>
+                  <h1>Your Writing Network</h1>
+                  {buddyUpdates.map((update) => <ProjectUpdateContainer update={update} key={update.code} isMyProject={false} />)}
+                  {multipleFeedPages ?
+                    <p style={{ 'textAlign': 'right', 'fontStyle': 'italic' }}><Link to="/buddies?page=2">See more updates &rarr;</Link></p>
+                    :
+                    <p style={{ 'textAlign': 'right', 'fontStyle': 'italic' }}>You're all caught up!</p>
+                  }
+                </div>
             }
+
           </ContentBlock>
         </ContentContainer>
       </Page>
