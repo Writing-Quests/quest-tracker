@@ -87,7 +87,14 @@ function RegisterForm({ onSuccess }) {
       if (error) { setError(null) }
       const resp = await api.post(`users/${username}`, data)
       if (!resp.data.created) {
-        throw new Error(`Account not created: ${resp.data.errors[0].text}`)
+        let errorText = "Error during account creation."
+        if (!resp.data.email_available) {
+          errorText += ` The email address ${email} is not available.`
+        }
+        if (!resp.data.username_available) {
+          errorText += ` The username ${username} is not available.`
+        }
+        throw new Error(errorText)
       } else {
         onSuccess()
       }
