@@ -528,8 +528,8 @@ export default function Profile() {
       try {
         const resp = await api.get(`users/${lookupUser}`)
         setProfile(resp.data)
-        if (user && (lookupUser !== user.username) && profile && resp.data.hasOwnProperty('logged_in_user_connection')) {
-          // if we have a user AND we have a profile AND the profile isn't *your* profile AND there's a connection described, then:
+        if (user && (lookupUser !== user.username) && resp.data.hasOwnProperty('logged_in_user_connection')) {
+          // if we have a user AND the profile isn't *your* profile AND there's a connection described, then:
           setConnection({ ...resp.data.logged_in_user_connection })
           if (resp.data.logged_in_user_connection.status == 'blocked') {
             setProfileNotAvailable(true)
