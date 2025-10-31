@@ -11,6 +11,8 @@ use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -75,8 +77,16 @@ use DateTimeImmutable;
         uriTemplate: '/users/{username}/reset', // needed a version with  lighter permissions, restricted to only changing the password
         denormalizationContext: ['groups' => ['user:onlypassword']],
         processor: UserProfileProcessor::class
-      )
-    ],
+      ),
+      new Post(
+        uriTemplate: '/users/{id}',
+        security: "object == user"
+      ),
+      new Patch(
+        uriTemplate: '/users/{id}',
+        security: "object == user"
+      ),
+    ]
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -310,7 +320,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
       }
       $this->setRoles($roles);
     }
-    
+
     #[Groups(['user:write'])]
     public function setSpecificUserRole ($roleName,$add) {
       $roles = $this->getRoles();
@@ -330,7 +340,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->id;
     }
-    
+
     #[Groups(['user:read'])]
     public function getUsername(): ?string
     {

@@ -2066,7 +2066,14 @@ class AppFixtures extends Fixture
         }
 
         // Quest
+        $dateFormat = 'Y-m-d';
         $quest1 = new Quest();
+        $quest1->setTitle('August Novel Quest');
+        $quest1->setStartDate(DateTimeImmutable::createFromFormat($dateFormat, '2025-08-01'));
+        $quest1->setEndDate(DateTimeImmutable::createFromFormat($dateFormat, '2025-08-31'));
+        $quest1->setGoalType('writing');
+        $quest1->setGoalUnits('words');
+        $quest1->setGoalAmount(50000);
         $manager->persist($quest1);
 
         $manager->flush();
