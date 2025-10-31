@@ -248,6 +248,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, Quest>
      */
     #[ORM\ManyToMany(targetEntity: Quest::class, mappedBy: 'user')]
+    #[Groups(['user:read','user:write'])]
     private Collection $quests;
 
     public function __construct()
@@ -710,7 +711,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, FeedEntry>
      */
-    
+
     #[Groups(['user:read'])]
     public function getFeedEntries(): Collection
     {
@@ -742,7 +743,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Interaction>
      */
-    
+
     #[Groups(['user:read'])]
     public function getInteractions(): Collection
     {
@@ -786,6 +787,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Quest>
      */
+    #[Groups(['user:read'])]
     public function getQuests(): Collection
     {
         return $this->quests;

@@ -57,7 +57,7 @@ export function ProgressBar({percent}) {
 }
 
 function QuestProgress({questId}) {
-  const user = useContext(LoggedInUserContext)
+  const { user } = useContext(LoggedInUserContext)
   const [data, setData] = useState()
   useEffect(() => {
     api.get(`/users/${user.username}/quests/${questId}`)
@@ -73,7 +73,7 @@ function QuestProgress({questId}) {
 }
 
 export default function NovelQuest() {
-  const user = useContext(LoggedInUserContext)
+  const { user, setUser } = useContext(LoggedInUserContext)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [refreshHiddenCount, setRefreshHiddenCount] = useState(0)
@@ -89,7 +89,7 @@ export default function NovelQuest() {
         'quests': Array.from(newQuests)
       })
       if(!res.status === 200) { throw new Error(res.status) }
-      user._set(res.data)
+      setUser(res.data)
     } catch(e) {
       console.log(e)
       setError(e)

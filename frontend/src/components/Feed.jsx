@@ -198,7 +198,7 @@ export function BuddyFeed() {
 }
 
 function QuestItem({quest}) {
-  const { user } = useContext(LoggedInUserContext)
+  const { user, setUser } = useContext(LoggedInUserContext)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   function dateInterval(date1, date2) {
@@ -217,7 +217,7 @@ function QuestItem({quest}) {
         'quests': Array.from(newQuests)
       })
       if(!res.status === 200) { throw new Error(res.status) }
-      user._set(res.data)
+      setUser(res.data)
     } catch(e) {
       console.log(e)
       setError(e)

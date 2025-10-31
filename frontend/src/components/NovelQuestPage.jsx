@@ -13,7 +13,7 @@ const { LoggedInUserContext } = context
 const DATE_LENGTH = '2025-01-01'.length
 
 function JoinLeaveQuest() {
-  const user = useContext(LoggedInUserContext)
+  const { user, setUser } = useContext(LoggedInUserContext)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const joined = user.quests.includes('/api/quests/'+NQ_2025)
@@ -25,7 +25,7 @@ function JoinLeaveQuest() {
         'quests': Array.from(newQuests)
       })
       if(!res.status === 200) { throw new Error(res.status) }
-      user._set(res.data)
+      setUser(res.data)
     } catch(e) {
       console.log(e)
       setError(e)
@@ -60,7 +60,7 @@ function JoinLeaveQuest() {
 }
 
 export function QuestProgress({questId}) {
-  const user = useContext(LoggedInUserContext)
+  const { user } = useContext(LoggedInUserContext)
   const [data, setData] = useState()
   useEffect(() => {
     api.get(`/users/${user.username}/quests/${questId}`)
@@ -75,7 +75,7 @@ export function QuestProgress({questId}) {
 }
 
 function Stats() {
-  const user = useContext(LoggedInUserContext)
+  const { user } = useContext(LoggedInUserContext)
   const [data, setData] = useState()
   useEffect(() => {
     api.get(`/users/${user.username}/quests/${NQ_2025}`)
@@ -109,8 +109,8 @@ function Stats() {
 }
 
 export default function NovelQuestPage() {
-  const user = useContext(LoggedInUserContext)
-  const joined = user.quests.includes('/api/quests/'+NQ_2025)
+  const { user } = useContext(LoggedInUserContext)
+  const joined = user.quests?.includes('/api/quests/'+NQ_2025)
   return <Page>
     <ContentContainer>
       <ContentBlock>
