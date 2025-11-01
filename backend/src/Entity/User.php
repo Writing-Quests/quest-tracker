@@ -219,13 +219,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private Collection $feedEntries;
 
-    /**
-     * @var Collection<int, Interaction>
-     */
-    #[ORM\OneToMany(targetEntity: Interaction::class, mappedBy: 'user', orphanRemoval: true)]
-    #[Groups(['user:read'])]
-    private Collection $interactions;
-
     // this is managed in State/UserProfileProvider.php to get user permissions 
     private $loggedInUserAllowed;
     private $loggedInUserConnection;
@@ -257,7 +250,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->projects = new ArrayCollection();
         $this->reports = new ArrayCollection();
         $this->feedEntries = new ArrayCollection();
-        $this->interactions = new ArrayCollection();
         $this->loggedInUserConnection = array();
         $this->loggedInUserAllowed = $this->isPublic();
         $this->quests = new ArrayCollection();
@@ -734,38 +726,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($feedEntry->getUser() === $this) {
                 $feedEntry->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Interaction>
-     */
-
-    #[Groups(['user:read'])]
-    public function getInteractions(): Collection
-    {
-        return $this->interactions;
-    }
-
-    public function addInteraction(Interaction $interaction): static
-    {
-        if (!$this->interactions->contains($interaction)) {
-            $this->interactions->add($interaction);
-            $interaction->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeInteraction(Interaction $interaction): static
-    {
-        if ($this->interactions->removeElement($interaction)) {
-            // set the owning side to null (unless already changed)
-            if ($interaction->getUser() === $this) {
-                $interaction->setUser(null);
             }
         }
 

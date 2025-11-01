@@ -24,7 +24,7 @@ const MessageList = styled.div`
   padding: 0;
   cursor: pointer;
   a {
-    color: #fff;
+    color: #b83a14;
     text-decoration: underline;
     font-weight: bold;
   }
@@ -97,6 +97,9 @@ const MessageList = styled.div`
     background-color: #2f8e19;
     color: #fff;
     font-weight: bold;
+    a {
+      color: #fff;
+    }
   }
   .read_message {
     .most_recent_message_preview, ul.info, .subject {
