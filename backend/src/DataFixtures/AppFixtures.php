@@ -1,0 +1,2088 @@
+<?php
+
+namespace App\DataFixtures;
+
+use App\Entity\User;
+use App\Entity\Project;
+use App\Entity\ProjectGoal;
+use App\Entity\ProgressEntry;
+use App\Entity\Quest;
+use App\Entity\Connection;
+use App\Entity\Notification;
+use App\Entity\MessageThread;
+use App\Entity\DirectMessage;
+
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
+use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Uid\Uuid;
+
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Persistence\ObjectManager;
+
+use DateTimeImmutable;
+
+// TODO: I would like to get these grouped, but grouping was a rabbit hole that was taking up more time that it was saving by just reloading everything. - Ashley
+
+class AppFixtures extends Fixture
+{
+    public $passwordHasher;
+
+    public function __construct()
+    {
+        $passwordHasherFactory = new PasswordHasherFactory([
+            // auto hasher with default options for the User class (and children)
+            User::class => ['algorithm' => 'bcrypt'],
+
+            // auto hasher with custom options for all PasswordAuthenticatedUserInterface instances
+            PasswordAuthenticatedUserInterface::class => [
+                'algorithm' => 'bcrypt',
+                'cost' => 15,
+            ],
+        ]);
+        $this->passwordHasher = new UserPasswordHasher($passwordHasherFactory);
+    }
+
+    public $users = [
+      [
+        "id" => 1,
+        "username" => "Harris",
+        "roles" => [],
+        "email" => "essiemason@quonata.com",
+        "unverifiedEmail" => "essiemason@quonata.com",
+        "createdAt" => "2024-12-19 07:27:45",
+        "editedAt" => "2025-08-27 08:46:30",
+        "emailVerifiedAt" => null,
+        "lastActivityTimestamp" => "2025-08-08 10:30:02",
+        "description" => "Officia est pariatur cupidatat velit et ea ea commodo nisi. Culpa quis ea nulla ad tempor laboris occaecat sint ut ex aliquip esse. Aliqua cupidatat culpa anim nostrud exercitation ullamco excepteur amet fugiat ipsum veniam.",
+        "link" => null,
+        "timezone" => "2025-06-22 13:55:42",
+        "public" => true
+      ],
+      [
+          "id" => 2,
+          "username" => "Tasha",
+          "roles" => [],
+          "email" => "carrilloscott@gogol.com",
+          "unverifiedEmail" => "carrilloscott@gogol.com",
+          "createdAt" => "2025-03-11 01:18:44",
+          "editedAt" => "2025-06-18 03:03:01",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-30 12:27:58",
+          "description" =>
+              "Eiusmod officia esse do duis exercitation elit reprehenderit irure quis amet officia dolor nulla magna. Aute et duis officia adipisicing Lorem labore deserunt reprehenderit consequat ullamco. Esse veniam ea incididunt exercitation nulla ullamco dolore ad. Pariatur cupidatat cillum ad sit. Qui tempor anim ea pariatur ullamco voluptate anim excepteur. Commodo reprehenderit aute cupidatat ipsum.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 3,
+          "username" => "Michele",
+          "roles" => [],
+          "email" => "marinaworkman@proxsoft.com",
+          "unverifiedEmail" => "marinaworkman@proxsoft.com",
+          "createdAt" => "2025-04-27 09:44:24",
+          "editedAt" => "2025-03-06 10:53:31",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-23 11:47:58",
+          "description" =>
+              "Proident consequat non ad veniam aliqua eu consectetur aliqua dolore anim sint nisi. Et irure labore nostrud esse et ad. Sint ea nisi velit occaecat aute velit eu sint ad aliquip esse culpa. Commodo proident in reprehenderit in est irure anim pariatur culpa consequat esse voluptate occaecat.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 4,
+          "username" => "Patrick",
+          "roles" => [],
+          "email" => "suttonchapman@boilcat.com",
+          "unverifiedEmail" => "suttonchapman@boilcat.com",
+          "createdAt" => "2024-12-09 05:00:15",
+          "editedAt" => "2025-05-26 03:13:00",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-22 04:00:24",
+          "description" =>
+              "Nulla tempor proident qui in minim. Dolor eiusmod eu tempor elit occaecat proident cillum aute commodo consequat pariatur eiusmod adipisicing esse. Lorem laborum adipisicing officia sint culpa consectetur. Et dolor qui enim esse veniam consequat est ea proident anim exercitation cupidatat veniam. Ad nisi ipsum amet nulla consequat aute ad velit id nostrud.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 5,
+          "username" => "Chandra",
+          "roles" => [],
+          "email" => "alineburns@flotonic.com",
+          "unverifiedEmail" => "alineburns@flotonic.com",
+          "createdAt" => "2024-10-15 07:37:57",
+          "editedAt" => "2025-03-14 06:35:27",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-05 08:51:13",
+          "description" =>
+              "Eiusmod sint id anim culpa amet qui reprehenderit. Dolore dolor irure commodo ex adipisicing aliquip fugiat non fugiat cupidatat elit. Id aliquip fugiat mollit aute cupidatat est nisi aliqua est aute nostrud quis excepteur.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 6,
+          "username" => "Callie",
+          "roles" => [],
+          "email" => "jarvisalston@xixan.com",
+          "unverifiedEmail" => "jarvisalston@xixan.com",
+          "createdAt" => "2025-04-01 06:00:08",
+          "editedAt" => "2025-06-12 12:51:39",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-09 09:29:23",
+          "description" =>
+              "Minim dolore et pariatur adipisicing officia quis nostrud dolore eu eu consectetur sint. Est labore ipsum veniam do ea deserunt cupidatat velit et sit laboris mollit. Anim proident ex adipisicing non anim esse voluptate non. Laboris duis ad sunt elit mollit. Qui nulla commodo occaecat commodo cillum non ad excepteur consequat mollit. Exercitation est pariatur minim ex ut sunt fugiat pariatur quis pariatur nulla in. Ut laborum commodo nostrud nostrud.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 7,
+          "username" => "Adkins",
+          "roles" => [],
+          "email" => "navarroevans@sealoud.com",
+          "unverifiedEmail" => "navarroevans@sealoud.com",
+          "createdAt" => "2025-04-09 09:12:49",
+          "editedAt" => "2025-07-02 05:50:01",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-08 05:37:32",
+          "description" =>
+              "Irure cillum fugiat in ad magna ex. Elit officia ut aute in nulla. Fugiat sit aliquip laboris cupidatat sint irure eiusmod. Aute minim ullamco cupidatat id aliqua cillum aliqua. Id quis officia est deserunt consectetur sint magna cillum.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 8,
+          "username" => "Maynard",
+          "roles" => [],
+          "email" => "kaylanoble@aquasseur.com",
+          "unverifiedEmail" => "kaylanoble@aquasseur.com",
+          "createdAt" => "2025-05-28 01:58:49",
+          "editedAt" => "2025-05-09 04:54:33",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-30 10:01:36",
+          "description" =>
+              "Mollit ullamco ex est eu voluptate. Ea veniam sit esse cillum. Non laboris aliqua proident cillum enim duis minim qui occaecat sit adipisicing consectetur. Do ad non esse cillum dolor aliqua laborum proident occaecat laboris amet voluptate adipisicing. Magna id ipsum occaecat quis exercitation nulla sint nisi culpa cupidatat elit duis fugiat quis. Occaecat occaecat qui est amet excepteur elit commodo fugiat. Laborum ut minim consequat occaecat in.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 9,
+          "username" => "Janis",
+          "roles" => [],
+          "email" => "mcmahonhenson@corporana.com",
+          "unverifiedEmail" => "mcmahonhenson@corporana.com",
+          "createdAt" => "2024-12-23 05:43:57",
+          "editedAt" => "2025-05-24 03:34:14",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-07-02 07:47:52",
+          "description" =>
+              "In occaecat commodo ex nisi elit laborum velit quis et id. Cillum labore eu veniam commodo ea ex duis sunt. Voluptate magna sit ad do laborum velit magna sint. Sit consequat incididunt commodo est consequat. Culpa consequat proident sit qui aliqua deserunt consequat deserunt. Deserunt aliqua dolore cillum cillum consectetur reprehenderit ea proident veniam reprehenderit amet occaecat.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 10,
+          "username" => "Holden",
+          "roles" => [],
+          "email" => "sandersstout@buzzopia.com",
+          "unverifiedEmail" => "sandersstout@buzzopia.com",
+          "createdAt" => "2024-11-10 08:43:29",
+          "editedAt" => "2025-05-12 02:04:13",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-09 12:45:29",
+          "description" =>
+              "Irure pariatur id elit ipsum id exercitation esse in ea adipisicing eiusmod consectetur. Cupidatat dolor nulla ad ad in in. Incididunt quis amet eiusmod duis nulla cupidatat elit fugiat culpa dolore magna magna aute occaecat. Deserunt anim aliqua esse irure. Amet ipsum eiusmod sit duis nisi minim consectetur cillum velit. Esse excepteur elit aliquip Lorem velit mollit et proident qui eiusmod excepteur nulla pariatur velit. Laboris cillum adipisicing elit aliquip velit enim consequat elit.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 11,
+          "username" => "Chapman",
+          "roles" => [],
+          "email" => "danielleleblanc@elpro.com",
+          "unverifiedEmail" => "danielleleblanc@elpro.com",
+          "createdAt" => "2025-04-29 04:38:41",
+          "editedAt" => "2025-04-06 10:24:55",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-04 08:00:26",
+          "description" =>
+              "Labore occaecat velit Lorem excepteur consequat reprehenderit aliquip consectetur veniam quis exercitation quis deserunt enim. Deserunt cupidatat proident nulla duis. Veniam ut adipisicing laboris fugiat id deserunt deserunt in eu voluptate eiusmod duis. Incididunt ullamco occaecat non culpa elit pariatur enim. Ad voluptate aliqua elit ad nulla velit.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 12,
+          "username" => "Pace",
+          "roles" => [],
+          "email" => "trujillovazquez@buzzworks.com",
+          "unverifiedEmail" => "trujillovazquez@buzzworks.com",
+          "createdAt" => "2025-06-02 08:20:47",
+          "editedAt" => "2025-03-17 09:30:23",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-24 07:57:44",
+          "description" =>
+              "In ex ea Lorem nisi. Culpa magna laboris ea nulla irure magna. Nulla Lorem labore nulla id incididunt esse.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 13,
+          "username" => "Adela",
+          "roles" => [],
+          "email" => "juarezmcneil@kindaloo.com",
+          "unverifiedEmail" => "juarezmcneil@kindaloo.com",
+          "createdAt" => "2025-06-26 05:10:57",
+          "editedAt" => "2025-05-27 09:49:02",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-16 05:34:48",
+          "description" =>
+              "Tempor qui reprehenderit aliquip elit do magna ut. Ad cupidatat esse occaecat ex incididunt eiusmod tempor. Laboris laborum et dolor veniam excepteur esse exercitation proident occaecat ut.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 14,
+          "username" => "Natalie",
+          "roles" => [],
+          "email" => "macdonaldrose@earthmark.com",
+          "unverifiedEmail" => "macdonaldrose@earthmark.com",
+          "createdAt" => "2024-10-04 08:38:58",
+          "editedAt" => "2025-06-10 11:48:36",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-25 10:04:36",
+          "description" =>
+              "Cillum aliquip anim laborum laboris reprehenderit eiusmod elit elit ipsum. Reprehenderit enim nostrud reprehenderit nostrud dolor irure aliquip ullamco. Deserunt esse nostrud sunt tempor ipsum. Id ut ex labore sunt proident nostrud dolore laboris reprehenderit aliqua et sint proident. Laboris amet irure non sunt pariatur.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 15,
+          "username" => "Graciela",
+          "roles" => [],
+          "email" => "valariewiley@uncorp.com",
+          "unverifiedEmail" => "valariewiley@uncorp.com",
+          "createdAt" => "2024-12-26 11:08:30",
+          "editedAt" => "2025-03-01 12:02:16",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-06 10:13:58",
+          "description" =>
+              "Id fugiat minim nisi nisi minim sint cillum laboris do exercitation nulla ipsum quis. Laboris ad consectetur ex ea dolore et. Sint nostrud enim amet voluptate incididunt nulla sunt aliquip magna est sint.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 16,
+          "username" => "Mariana",
+          "roles" => [],
+          "email" => "peggycook@papricut.com",
+          "unverifiedEmail" => "peggycook@papricut.com",
+          "createdAt" => "2024-12-28 08:42:23",
+          "editedAt" => "2025-04-08 05:59:43",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-12 03:58:27",
+          "description" =>
+              "Pariatur ipsum occaecat amet nulla non qui. Tempor cupidatat ex commodo ullamco ea exercitation cillum esse. Nostrud duis labore laboris tempor do laboris enim laborum proident. Eiusmod enim aute Lorem nisi tempor magna in veniam sunt voluptate culpa culpa amet. Labore dolor proident sunt cillum. Amet officia aute ipsum magna aliqua tempor anim nisi do tempor. Ut pariatur ad exercitation irure labore aute est enim laborum.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 17,
+          "username" => "Caldwell",
+          "roles" => [],
+          "email" => "heatherrandall@zanilla.com",
+          "unverifiedEmail" => "heatherrandall@zanilla.com",
+          "createdAt" => "2025-01-30 03:33:34",
+          "editedAt" => "2025-04-09 10:56:25",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-23 03:17:52",
+          "description" =>
+              "Reprehenderit eu cupidatat elit minim incididunt aliquip est magna duis sint in id. Id esse Lorem aute occaecat fugiat deserunt mollit irure. Dolor anim do est amet est dolore fugiat duis. Lorem deserunt nulla cillum occaecat tempor ad laboris cupidatat. Eiusmod id exercitation excepteur duis. Laboris pariatur commodo in aute quis tempor est culpa proident. Enim consectetur nisi est consectetur ad esse pariatur commodo mollit irure amet.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 18,
+          "username" => "Alexandra",
+          "roles" => [],
+          "email" => "fannymoss@extrawear.com",
+          "unverifiedEmail" => "fannymoss@extrawear.com",
+          "createdAt" => "2025-07-01 10:23:58",
+          "editedAt" => "2025-05-14 12:42:49",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-05-08 11:06:58",
+          "description" =>
+              "Tempor id qui adipisicing laboris duis irure occaecat eu. Ut et officia incididunt ipsum fugiat. Consectetur proident ut aliqua laborum. Quis est aliquip labore occaecat.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 19,
+          "username" => "Garrett",
+          "roles" => [],
+          "email" => "meyerscabrera@liquidoc.com",
+          "unverifiedEmail" => "meyerscabrera@liquidoc.com",
+          "createdAt" => "2024-10-19 06:26:47",
+          "editedAt" => "2025-03-16 12:19:53",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-24 05:54:54",
+          "description" =>
+              "Pariatur duis labore cillum ipsum anim. Elit mollit quis laboris adipisicing do sit eu. Labore qui tempor irure et minim sit esse deserunt ullamco incididunt est non tempor. Consectetur proident magna quis eiusmod ullamco nostrud veniam in exercitation Lorem nisi.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 20,
+          "username" => "Mcconnell",
+          "roles" => [],
+          "email" => "cardenasabbott@zentury.com",
+          "unverifiedEmail" => "cardenasabbott@zentury.com",
+          "createdAt" => "2025-01-24 03:26:17",
+          "editedAt" => "2025-05-14 12:21:22",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-23 11:33:57",
+          "description" =>
+              "Mollit minim et id fugiat tempor amet. Enim sint pariatur quis voluptate eiusmod est nisi ipsum id proident id. Adipisicing ullamco excepteur ut excepteur consequat commodo consequat elit ut aliquip aliquip deserunt. Qui culpa non cupidatat anim ut tempor labore quis voluptate qui elit ad exercitation incididunt.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 21,
+          "username" => "Dickerson",
+          "roles" => [],
+          "email" => "reesestevens@hivedom.com",
+          "unverifiedEmail" => "reesestevens@hivedom.com",
+          "createdAt" => "2025-06-25 09:35:09",
+          "editedAt" => "2025-03-14 05:54:56",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-11 05:33:09",
+          "description" =>
+              "Mollit adipisicing et qui labore ullamco sint labore magna. Eu dolor do esse excepteur ea qui ut et sint eu voluptate aliqua cupidatat nulla. Elit officia incididunt quis minim in nisi Lorem velit enim duis do aute. Nulla quis aute esse eu tempor dolore sit sunt laborum voluptate minim ea in deserunt. Irure irure magna anim sint esse reprehenderit ullamco id non sint sit.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 22,
+          "username" => "Santana",
+          "roles" => [],
+          "email" => "leonardhart@comtrail.com",
+          "unverifiedEmail" => "leonardhart@comtrail.com",
+          "createdAt" => "2024-11-17 05:22:03",
+          "editedAt" => "2025-03-20 08:55:30",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-11 12:02:11",
+          "description" =>
+              "Sunt aliquip consectetur in dolore velit. Eiusmod tempor deserunt est proident fugiat veniam. Id laborum aliquip ad sunt aliquip velit et quis voluptate. Eu excepteur ullamco pariatur qui velit labore. Aliqua amet sunt cupidatat occaecat mollit. Irure laborum pariatur nostrud in laboris elit excepteur elit consectetur in commodo. Officia consectetur est voluptate id Lorem labore commodo ullamco id dolore laborum.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 23,
+          "username" => "Schwartz",
+          "roles" => [],
+          "email" => "barrerarusso@extragene.com",
+          "unverifiedEmail" => "barrerarusso@extragene.com",
+          "createdAt" => "2025-05-23 08:44:29",
+          "editedAt" => "2025-06-18 10:46:49",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-05-16 02:06:40",
+          "description" =>
+              "Occaecat eu veniam culpa sint est occaecat officia officia quis ut non. Eu consequat sit nostrud qui laborum voluptate labore. Eu sunt velit qui enim mollit magna mollit pariatur ullamco sunt nostrud duis elit consequat.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 24,
+          "username" => "Camacho",
+          "roles" => [],
+          "email" => "watkinspeterson@musaphics.com",
+          "unverifiedEmail" => "watkinspeterson@musaphics.com",
+          "createdAt" => "2025-05-13 02:50:29",
+          "editedAt" => "2025-06-07 05:26:13",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-03 01:02:56",
+          "description" =>
+              "Sint adipisicing amet magna consectetur ex. Ipsum id cillum ad consequat labore nostrud Lorem deserunt voluptate et sit. Consectetur magna ut consectetur anim veniam.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 25,
+          "username" => "Opal",
+          "roles" => [],
+          "email" => "loreneoneal@plutorque.com",
+          "unverifiedEmail" => "loreneoneal@plutorque.com",
+          "createdAt" => "2025-02-07 07:46:38",
+          "editedAt" => "2025-04-10 11:37:20",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-26 06:03:46",
+          "description" =>
+              "Enim eiusmod et proident id labore nostrud. Sint ex sint ea qui consectetur irure magna. Ad consectetur enim ex dolor do commodo minim irure aute nisi mollit eiusmod aliquip tempor. Esse in ex excepteur enim labore id in deserunt deserunt officia. Nisi quis in cillum magna aliqua adipisicing aliqua mollit. Id ut Lorem mollit ea pariatur anim sint qui aliqua ipsum consectetur officia ad. Mollit dolor elit eiusmod cillum laboris cillum eiusmod culpa reprehenderit occaecat occaecat enim culpa ea.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 26,
+          "username" => "Muriel",
+          "roles" => [],
+          "email" => "hughesbuck@qualitern.com",
+          "unverifiedEmail" => "hughesbuck@qualitern.com",
+          "createdAt" => "2025-04-03 04:12:59",
+          "editedAt" => "2025-06-05 11:38:44",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-24 04:32:29",
+          "description" =>
+              "Tempor duis nulla ullamco elit officia proident minim et velit dolore. Laborum Lorem deserunt enim proident esse. Incididunt ad cillum commodo ea magna est nisi. Magna et laborum tempor nostrud ullamco tempor deserunt elit nisi ex. Ex culpa ad id incididunt sit labore et elit eiusmod labore. Eiusmod aliquip proident amet excepteur culpa incididunt tempor aliqua in fugiat consequat officia.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 27,
+          "username" => "Hollie",
+          "roles" => [],
+          "email" => "susannaking@progenex.com",
+          "unverifiedEmail" => "susannaking@progenex.com",
+          "createdAt" => "2024-11-18 12:28:54",
+          "editedAt" => "2025-03-11 06:51:17",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-04 06:16:24",
+          "description" =>
+              "Dolor est fugiat culpa ut aute amet consequat et dolore eiusmod. Nostrud eiusmod magna nisi consectetur quis proident dolor anim excepteur. Veniam sint cupidatat irure ex. Non ex eu id exercitation excepteur tempor. Laborum reprehenderit Lorem ullamco qui sunt tempor tempor laboris incididunt officia esse ex.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 28,
+          "username" => "Thompson",
+          "roles" => [],
+          "email" => "shereecarney@orbalix.com",
+          "unverifiedEmail" => "shereecarney@orbalix.com",
+          "createdAt" => "2025-02-19 10:13:12",
+          "editedAt" => "2025-06-24 06:16:25",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-07 08:44:29",
+          "description" =>
+              "Ullamco velit non proident elit nostrud proident ad aliqua adipisicing anim consequat laborum nulla. Irure sunt nisi non cillum. Id velit aute minim consectetur nulla sit in Lorem reprehenderit sunt in enim labore ad.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 29,
+          "username" => "Winifred",
+          "roles" => [],
+          "email" => "parkmorrow@enersol.com",
+          "unverifiedEmail" => "parkmorrow@enersol.com",
+          "createdAt" => "2025-05-15 04:04:54",
+          "editedAt" => "2025-04-17 07:09:56",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-05-08 06:13:54",
+          "description" =>
+              "Exercitation voluptate enim veniam adipisicing exercitation amet occaecat. Magna ullamco deserunt exercitation sit est ad exercitation non deserunt. Ea ex consectetur voluptate deserunt eiusmod incididunt. Labore consequat enim aliqua nostrud ut nisi. Irure dolor aute incididunt duis. Non in ipsum sint do dolor voluptate minim. Anim esse do aute aute cupidatat.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 30,
+          "username" => "Mccall",
+          "roles" => [],
+          "email" => "shawmcmahon@amtas.com",
+          "unverifiedEmail" => "shawmcmahon@amtas.com",
+          "createdAt" => "2025-02-18 10:51:00",
+          "editedAt" => "2025-04-01 10:24:41",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-14 01:58:01",
+          "description" =>
+              "Dolore officia quis cupidatat in exercitation elit ea ad anim adipisicing nulla. Enim exercitation irure dolore proident quis non. Velit sit veniam aute et amet amet sint ullamco fugiat ex eu ad labore consequat. Excepteur non duis mollit velit est ex tempor excepteur officia excepteur elit ea adipisicing cillum.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 31,
+          "username" => "Joyce",
+          "roles" => [],
+          "email" => "schroederburke@plasmox.com",
+          "unverifiedEmail" => "schroederburke@plasmox.com",
+          "createdAt" => "2025-02-09 06:27:04",
+          "editedAt" => "2025-04-07 08:29:30",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-09 12:23:39",
+          "description" =>
+              "Laborum enim fugiat eiusmod incididunt veniam aliqua. Nisi exercitation ea reprehenderit quis. Ea anim sit voluptate ex proident. Minim aliquip nulla eiusmod fugiat consectetur. Lorem esse ad minim irure ut voluptate amet minim ex labore. Consequat cupidatat eu magna aute eiusmod anim ea dolore.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 32,
+          "username" => "Ashley",
+          "roles" => [],
+          "email" => "bradfordprince@zillanet.com",
+          "unverifiedEmail" => "bradfordprince@zillanet.com",
+          "createdAt" => "2025-06-11 03:49:21",
+          "editedAt" => "2025-03-29 03:56:03",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-05 09:56:33",
+          "description" =>
+              "Nostrud ut deserunt reprehenderit quis quis ea. Lorem Lorem non nisi sunt ut ad reprehenderit est. Elit qui et excepteur in magna sunt est ea. Amet ex ipsum reprehenderit sit qui cupidatat in ex officia cillum ullamco irure. Et nisi ad culpa dolore minim qui deserunt tempor duis eiusmod sint. Laboris duis sint enim minim velit do commodo pariatur fugiat ullamco ullamco do. Reprehenderit ipsum occaecat aute officia cupidatat ipsum laboris.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 33,
+          "username" => "Horne",
+          "roles" => [],
+          "email" => "laceyspencer@diginetic.com",
+          "unverifiedEmail" => "laceyspencer@diginetic.com",
+          "createdAt" => "2025-03-03 04:54:57",
+          "editedAt" => "2025-03-26 10:55:08",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-02 08:34:05",
+          "description" =>
+              "Cupidatat eiusmod consectetur ea enim ex est. Elit et nisi do enim commodo est anim laboris cupidatat magna. Id duis eu eu id irure fugiat anim sunt ut ea qui est reprehenderit fugiat. Eu fugiat pariatur commodo dolor fugiat duis quis cupidatat. Nisi laboris ut voluptate ea ex sint commodo consectetur irure proident sunt. Et mollit nostrud anim voluptate dolor labore ullamco do pariatur aliqua ad aliqua. Non cillum ut et commodo ea ea duis.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 34,
+          "username" => "Francisca",
+          "roles" => [],
+          "email" => "davissheppard@soprano.com",
+          "unverifiedEmail" => "davissheppard@soprano.com",
+          "createdAt" => "2025-06-15 09:34:55",
+          "editedAt" => "2025-04-11 09:09:02",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-05-17 12:40:03",
+          "description" =>
+              "Commodo anim consectetur culpa id officia amet labore. Sint incididunt sit sint ad. Ex in eu consectetur elit duis deserunt quis ullamco aute magna est irure. Id elit deserunt dolor consequat ea irure eu cillum ipsum eu. Voluptate eiusmod sint veniam id ullamco occaecat minim culpa officia velit non est anim ut.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 35,
+          "username" => "Jones",
+          "roles" => [],
+          "email" => "elbacharles@biotica.com",
+          "unverifiedEmail" => "elbacharles@biotica.com",
+          "createdAt" => "2025-07-01 06:42:12",
+          "editedAt" => "2025-05-13 01:06:41",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-05-07 01:50:09",
+          "description" =>
+              "Ex tempor cillum laboris nulla sint do exercitation dolor magna tempor culpa dolor. Nulla nostrud non enim dolore ullamco minim in reprehenderit. Incididunt in velit nulla mollit. Labore ea ipsum aliqua tempor labore. Proident dolor aute amet consectetur amet ex proident sit sit.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 36,
+          "username" => "Vicki",
+          "roles" => [],
+          "email" => "snowmolina@deminimum.com",
+          "unverifiedEmail" => "snowmolina@deminimum.com",
+          "createdAt" => "2024-10-17 12:34:50",
+          "editedAt" => "2025-04-12 02:10:39",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-11 01:59:00",
+          "description" =>
+              "Cupidatat in enim cupidatat nisi consequat ea quis laboris aliquip sit ea ipsum. Aute proident excepteur non duis reprehenderit eiusmod. Incididunt nisi amet ex voluptate quis id sit proident sint. Aliquip sit aliqua aliquip tempor sit tempor velit nisi magna pariatur ex ipsum. Magna cupidatat ea pariatur duis nisi exercitation dolor. Reprehenderit nulla enim do esse elit commodo occaecat ipsum excepteur ipsum irure irure.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 37,
+          "username" => "Harper",
+          "roles" => [],
+          "email" => "pammadden@intradisk.com",
+          "unverifiedEmail" => "pammadden@intradisk.com",
+          "createdAt" => "2025-06-28 09:18:26",
+          "editedAt" => "2025-05-15 12:26:51",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-04-13 07:42:24",
+          "description" =>
+              "Minim excepteur eiusmod qui ea. Qui id cillum do reprehenderit ullamco. Nostrud veniam ipsum eiusmod anim deserunt. Cillum enim tempor ullamco consequat tempor nisi enim. Sit do dolor sint non adipisicing laborum ut aliqua. Officia veniam est duis incididunt ullamco ea.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+      [
+          "id" => 38,
+          "username" => "Shields",
+          "roles" => [],
+          "email" => "cobbfernandez@kozgene.com",
+          "unverifiedEmail" => "cobbfernandez@kozgene.com",
+          "createdAt" => "2025-01-25 06:40:52",
+          "editedAt" => "2025-07-04 03:17:43",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-06-11 11:56:23",
+          "description" =>
+              "Reprehenderit mollit do mollit do Lorem laboris pariatur. Consequat elit reprehenderit ea aliqua exercitation elit eu cillum dolore. In anim Lorem esse cillum excepteur nulla exercitation magna nulla laborum ut pariatur. Occaecat proident proident anim quis occaecat consequat mollit sint ipsum aliquip tempor voluptate officia. Occaecat proident excepteur fugiat magna eu ea do est nisi qui reprehenderit amet. Commodo proident esse in tempor ad ad veniam minim consectetur cillum aliquip labore tempor. Enim laboris officia adipisicing ut.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => true,
+      ],
+      [
+          "id" => 39,
+          "username" => "Dora",
+          "roles" => [],
+          "email" => "margueritebrewer@signity.com",
+          "unverifiedEmail" => "margueritebrewer@signity.com",
+          "createdAt" => "2024-11-09 06:30:09",
+          "editedAt" => "2025-05-17 12:42:22",
+          "emailVerifiedAt" => null,
+          "lastActivityTimestamp" => "2025-03-24 05:27:38",
+          "description" =>
+              "Proident laborum in dolor officia aliqua minim ipsum ea laborum. Consequat pariatur tempor nostrud duis adipisicing. Enim eiusmod laborum duis mollit cillum anim ipsum.",
+          "link" => null,
+          "timezone" => "2025-06-22 13:55:42",
+          "public" => false,
+      ],
+    ];
+
+    public $projects = [
+        [
+            "userId" => 33,
+            "createdAt" => "2024-12-08 07:15:12",
+            "editedAt" => "2025-03-13 01:51:10",
+            "title" =>
+                "veniam proident voluptate ad reprehenderit commodo aliqua pariatur",
+            "public" => false,
+        ],
+        [
+            "userId" => 7,
+            "createdAt" => "2025-04-04 05:50:06",
+            "editedAt" => "2024-11-01 07:25:35",
+            "title" =>
+                "commodo consequat aute proident dolor occaecat duis consequat et et enim esse",
+            "public" => false,
+        ],
+        [
+            "userId" => 2,
+            "createdAt" => "2025-02-27 11:09:36",
+            "editedAt" => "2025-07-04 06:59:52",
+            "title" => "reprehenderit",
+            "public" => true,
+        ],
+        [
+            "userId" => 5,
+            "createdAt" => "2025-02-20 09:32:32",
+            "editedAt" => "2025-04-07 03:51:34",
+            "title" => "ut et",
+            "public" => false,
+        ],
+        [
+            "userId" => 32,
+            "createdAt" => "2024-12-25 11:29:36",
+            "editedAt" => "2024-11-25 07:43:44",
+            "title" =>
+                "veniam nisi nostrud elit enim fugiat Lorem eiusmod anim esse deserunt dolore in ullamco eu",
+            "public" => false,
+        ],
+        [
+            "userId" => 27,
+            "createdAt" => "2025-07-03 12:49:55",
+            "editedAt" => "2025-03-14 10:29:32",
+            "title" => "in",
+            "public" => true,
+        ],
+        [
+            "userId" => 5,
+            "createdAt" => "2025-05-20 03:09:40",
+            "editedAt" => "2024-10-26 02:08:33",
+            "title" => "proident ut eu",
+            "public" => false,
+        ],
+        [
+            "userId" => 4,
+            "createdAt" => "2025-03-17 06:51:37",
+            "editedAt" => "2025-05-11 08:58:16",
+            "title" =>
+                "laboris sint do laboris nulla ipsum Lorem ut culpa quis officia",
+            "public" => false,
+        ],
+        [
+            "userId" => 32,
+            "createdAt" => "2025-04-28 09:49:07",
+            "editedAt" => "2025-04-16 06:41:43",
+            "title" =>
+                "ea aute officia nulla sint elit laborum laboris nostrud esse amet esse pariatur nulla incididunt velit cupidatat eu",
+            "public" => false,
+        ],
+        [
+            "userId" => 36,
+            "createdAt" => "2025-06-08 05:46:24",
+            "editedAt" => "2025-06-30 07:08:16",
+            "title" =>
+                "do nulla enim eiusmod nisi in consectetur quis laboris irure non elit ipsum laborum amet sit ipsum Lorem",
+            "public" => false,
+        ],
+        [
+            "userId" => 5,
+            "createdAt" => "2025-06-18 10:04:05",
+            "editedAt" => "2025-04-26 03:34:47",
+            "title" => "minim in mollit in ex quis duis",
+            "public" => true,
+        ],
+        [
+            "userId" => 25,
+            "createdAt" => "2024-12-22 09:18:01",
+            "editedAt" => "2025-05-31 08:15:31",
+            "title" => "cupidatat",
+            "public" => true,
+        ],
+        [
+            "userId" => 28,
+            "createdAt" => "2025-05-21 05:56:20",
+            "editedAt" => "2025-05-18 02:04:28",
+            "title" =>
+                "dolore ipsum ullamco proident sunt qui voluptate labore tempor ad aliquip nisi non consectetur commodo veniam do dolore",
+            "public" => false,
+        ],
+        [
+            "userId" => 39,
+            "createdAt" => "2025-06-21 12:43:35",
+            "editedAt" => "2024-12-25 12:56:22",
+            "title" => "ex Lorem do qui duis est sit in pariatur qui",
+            "public" => true,
+        ],
+        [
+            "userId" => 2,
+            "createdAt" => "2024-10-07 10:41:01",
+            "editedAt" => "2025-07-02 04:50:31",
+            "title" => "duis",
+            "public" => false,
+        ],
+        [
+            "userId" => 37,
+            "createdAt" => "2024-12-08 09:33:39",
+            "editedAt" => "2025-03-05 08:32:27",
+            "title" => "laborum magna elit adipisicing",
+            "public" => false,
+        ],
+        [
+            "userId" => 24,
+            "createdAt" => "2025-03-17 01:20:21",
+            "editedAt" => "2025-06-19 06:56:13",
+            "title" =>
+                "laboris dolore tempor sunt exercitation officia ad officia esse",
+            "public" => true,
+        ],
+        [
+            "userId" => 13,
+            "createdAt" => "2025-04-27 09:17:24",
+            "editedAt" => "2025-04-20 01:12:37",
+            "title" => "est duis veniam quis commodo",
+            "public" => false,
+        ],
+        [
+            "userId" => 15,
+            "createdAt" => "2025-06-15 07:41:46",
+            "editedAt" => "2025-06-30 08:45:55",
+            "title" => "sit elit qui sint",
+            "public" => true,
+        ],
+        [
+            "userId" => 25,
+            "createdAt" => "2025-07-03 10:46:58",
+            "editedAt" => "2025-01-02 12:05:15",
+            "title" => "anim in fugiat",
+            "public" => true,
+        ],
+        [
+            "userId" => 20,
+            "createdAt" => "2024-12-13 11:58:15",
+            "editedAt" => "2024-12-30 09:35:49",
+            "title" =>
+                "mollit tempor elit esse magna magna qui sit commodo exercitation aliqua adipisicing cillum duis nostrud eiusmod",
+            "public" => true,
+        ],
+        [
+            "userId" => 4,
+            "createdAt" => "2025-04-06 10:33:50",
+            "editedAt" => "2025-03-16 11:38:21",
+            "title" => "ullamco id qui Lorem dolore sit sint fugiat laboris",
+            "public" => false,
+        ],
+        [
+            "userId" => 24,
+            "createdAt" => "2024-11-13 11:34:26",
+            "editedAt" => "2025-02-27 07:18:54",
+            "title" => "excepteur fugiat amet id ea et",
+            "public" => false,
+        ],
+        [
+            "userId" => 17,
+            "createdAt" => "2025-05-06 01:06:25",
+            "editedAt" => "2025-01-05 07:35:57",
+            "title" => "minim mollit laboris elit",
+            "public" => true,
+        ],
+        [
+            "userId" => 16,
+            "createdAt" => "2025-05-05 04:36:26",
+            "editedAt" => "2025-01-09 01:30:28",
+            "title" => "ipsum ipsum proident magna exercitation culpa Lorem",
+            "public" => true,
+        ],
+        [
+            "userId" => 18,
+            "createdAt" => "2024-12-27 09:28:22",
+            "editedAt" => "2025-06-25 10:47:38",
+            "title" =>
+                "reprehenderit deserunt cillum aliqua irure amet ut nulla minim Lorem mollit dolor ad voluptate esse aliquip deserunt",
+            "public" => false,
+        ],
+        [
+            "userId" => 10,
+            "createdAt" => "2025-05-02 09:39:42",
+            "editedAt" => "2025-05-29 06:11:50",
+            "title" => "commodo",
+            "public" => true,
+        ],
+        [
+            "userId" => 34,
+            "createdAt" => "2024-12-15 02:36:46",
+            "editedAt" => "2025-01-03 08:22:45",
+            "title" => "ad dolore consectetur",
+            "public" => false,
+        ],
+        [
+            "userId" => 16,
+            "createdAt" => "2024-12-26 02:32:14",
+            "editedAt" => "2024-12-02 04:38:51",
+            "title" => "duis velit elit in amet sunt est pariatur officia",
+            "public" => false,
+        ],
+        [
+            "userId" => 33,
+            "createdAt" => "2025-03-31 01:49:39",
+            "editedAt" => "2024-10-25 11:21:45",
+            "title" => "cupidatat",
+            "public" => false,
+        ],
+        [
+            "userId" => 38,
+            "createdAt" => "2025-05-06 05:16:25",
+            "editedAt" => "2025-06-04 02:06:32",
+            "title" => "aliquip minim aliqua",
+            "public" => true,
+        ],
+        [
+            "userId" => 8,
+            "createdAt" => "2024-11-28 04:51:50",
+            "editedAt" => "2025-04-21 01:26:16",
+            "title" =>
+                "laborum ea labore sit voluptate Lorem elit ullamco laboris ea",
+            "public" => true,
+        ],
+        [
+            "userId" => 17,
+            "createdAt" => "2025-02-09 06:13:54",
+            "editedAt" => "2024-12-26 08:14:47",
+            "title" =>
+                "nostrud aliquip id minim occaecat proident tempor incididunt amet voluptate laborum occaecat",
+            "public" => true,
+        ],
+        [
+            "userId" => 28,
+            "createdAt" => "2025-02-21 03:12:45",
+            "editedAt" => "2024-10-01 02:34:18",
+            "title" => "irure nostrud ipsum anim",
+            "public" => false,
+        ],
+        [
+            "userId" => 24,
+            "createdAt" => "2025-04-13 06:24:30",
+            "editedAt" => "2025-01-18 08:04:59",
+            "title" =>
+                "cupidatat eiusmod veniam Lorem consectetur do dolore culpa id",
+            "public" => false,
+        ],
+        [
+            "userId" => 26,
+            "createdAt" => "2025-02-02 05:21:12",
+            "editedAt" => "2025-02-27 01:15:21",
+            "title" => "mollit aliquip labore exercitation anim commodo",
+            "public" => true,
+        ],
+        [
+            "userId" => 14,
+            "createdAt" => "2024-10-11 03:27:04",
+            "editedAt" => "2025-06-17 02:40:22",
+            "title" => "esse sint nulla reprehenderit",
+            "public" => false,
+        ],
+        [
+            "userId" => 19,
+            "createdAt" => "2025-04-06 05:33:21",
+            "editedAt" => "2025-06-27 01:31:39",
+            "title" => "enim",
+            "public" => false,
+        ],
+        [
+            "userId" => 24,
+            "createdAt" => "2025-01-14 09:13:13",
+            "editedAt" => "2024-12-14 10:04:31",
+            "title" =>
+                "ipsum proident veniam non velit elit laborum eu consectetur occaecat id quis",
+            "public" => false,
+        ],
+        [
+            "userId" => 11,
+            "createdAt" => "2025-02-12 04:11:12",
+            "editedAt" => "2025-06-26 08:42:14",
+            "title" => "irure est et dolore ut veniam",
+            "public" => false,
+        ],
+        [
+            "userId" => 34,
+            "createdAt" => "2024-10-03 12:47:16",
+            "editedAt" => "2024-12-10 12:38:50",
+            "title" =>
+                "fugiat ipsum Lorem reprehenderit id magna amet cillum nisi proident do",
+            "public" => true,
+        ],
+        [
+            "userId" => 3,
+            "createdAt" => "2025-06-18 09:40:54",
+            "editedAt" => "2025-06-11 10:25:11",
+            "title" => "aliquip aute reprehenderit quis",
+            "public" => false,
+        ],
+        [
+            "userId" => 29,
+            "createdAt" => "2024-12-19 11:41:06",
+            "editedAt" => "2024-12-28 07:41:00",
+            "title" =>
+                "fugiat do ullamco veniam duis sit anim adipisicing nulla voluptate Lorem laborum laborum fugiat voluptate adipisicing aliquip",
+            "public" => false,
+        ],
+        [
+            "userId" => 8,
+            "createdAt" => "2024-11-28 10:58:48",
+            "editedAt" => "2024-11-19 10:22:40",
+            "title" => "fugiat irure aliqua id deserunt",
+            "public" => true,
+        ],
+        [
+            "userId" => 9,
+            "createdAt" => "2025-05-09 06:42:05",
+            "editedAt" => "2025-05-08 02:18:16",
+            "title" => "do esse ipsum anim exercitation tempor est",
+            "public" => false,
+        ],
+        [
+            "userId" => 13,
+            "createdAt" => "2025-05-08 03:04:53",
+            "editedAt" => "2025-01-07 07:54:26",
+            "title" =>
+                "exercitation Lorem fugiat et velit deserunt laborum nulla tempor nisi do",
+            "public" => true,
+        ],
+        [
+            "userId" => 27,
+            "createdAt" => "2025-01-17 12:45:54",
+            "editedAt" => "2025-02-03 08:08:35",
+            "title" =>
+                "do cupidatat sunt aliqua incididunt minim velit do sunt est sunt culpa eiusmod qui",
+            "public" => false,
+        ],
+        [
+            "userId" => 7,
+            "createdAt" => "2025-06-02 07:21:34",
+            "editedAt" => "2024-10-11 02:23:30",
+            "title" => "sint aliquip commodo incididunt nostrud non id ea in",
+            "public" => true,
+        ],
+        [
+            "userId" => 24,
+            "createdAt" => "2025-03-18 07:17:20",
+            "editedAt" => "2025-04-11 11:30:11",
+            "title" => "aliqua",
+            "public" => true,
+        ],
+        [
+            "userId" => 17,
+            "createdAt" => "2025-06-22 07:26:22",
+            "editedAt" => "2024-10-18 08:44:13",
+            "title" => "aliquip veniam excepteur proident dolore Lorem ex",
+            "public" => false,
+        ],
+        [
+            "userId" => 22,
+            "createdAt" => "2025-01-29 11:11:29",
+            "editedAt" => "2025-04-26 03:54:13",
+            "title" => "id cupidatat eu",
+            "public" => true,
+        ],
+        [
+            "userId" => 33,
+            "createdAt" => "2024-11-17 11:43:29",
+            "editedAt" => "2025-02-13 01:00:56",
+            "title" => "irure proident reprehenderit culpa proident",
+            "public" => false,
+        ],
+        [
+            "userId" => 34,
+            "createdAt" => "2025-02-01 05:14:46",
+            "editedAt" => "2025-02-04 08:22:52",
+            "title" =>
+                "velit culpa ad mollit occaecat culpa mollit ut duis velit ad tempor",
+            "public" => false,
+        ],
+        [
+            "userId" => 20,
+            "createdAt" => "2025-05-20 08:32:02",
+            "editedAt" => "2025-06-02 10:12:23",
+            "title" => "est amet esse sit labore dolore pariatur",
+            "public" => true,
+        ],
+        [
+            "userId" => 29,
+            "createdAt" => "2025-04-01 09:08:10",
+            "editedAt" => "2025-03-30 02:50:44",
+            "title" => "culpa elit aliquip excepteur ut",
+            "public" => true,
+        ],
+        [
+            "userId" => 12,
+            "createdAt" => "2025-05-11 03:53:35",
+            "editedAt" => "2025-01-30 11:24:51",
+            "title" =>
+                "pariatur enim anim sunt aliquip consequat duis mollit fugiat labore velit nostrud qui dolor voluptate elit consequat",
+            "public" => true,
+        ],
+        [
+            "userId" => 18,
+            "createdAt" => "2025-02-21 08:29:37",
+            "editedAt" => "2025-03-12 09:07:22",
+            "title" =>
+                "ut deserunt ex aute ut fugiat ex magna occaecat incididunt nulla tempor labore nulla consequat",
+            "public" => true,
+        ],
+        [
+            "userId" => 30,
+            "createdAt" => "2025-02-06 11:54:50",
+            "editedAt" => "2024-10-13 08:26:18",
+            "title" => "officia proident labore culpa sunt nulla incididunt est",
+            "public" => true,
+        ],
+        [
+            "userId" => 2,
+            "createdAt" => "2025-04-18 07:42:28",
+            "editedAt" => "2025-01-02 06:28:37",
+            "title" =>
+                "anim reprehenderit adipisicing mollit sit tempor culpa voluptate nisi veniam ipsum",
+            "public" => true,
+        ],
+    ];
+
+    public $progressEntries = [
+        [
+            "projectId" => 37,
+            "createdAt" => "2025-02-18 01:32:54",
+            "entryDate" => "2025-02-18 01:32:54",
+            "value" => 14787,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 8,
+            "createdAt" => "2025-01-13 05:44:04",
+            "entryDate" => "2025-01-13 05:44:04",
+            "value" => 6,
+            "type" => "writing",
+            "units" => "hours",
+        ],
+        [
+            "projectId" => 50,
+            "createdAt" => "2025-03-02 12:24:15",
+            "entryDate" => "2025-03-02 12:24:15",
+            "value" => 3411,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 31,
+            "createdAt" => "2024-11-10 07:09:11",
+            "entryDate" => "2024-11-10 07:09:11",
+            "value" => 2322,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 34,
+          "createdAt" => "2025-06-05 03:45:24",
+            "entryDate" => "2025-06-05 03:45:24",
+            "value" => 3423,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 50,
+            "createdAt" => "2025-07-03 03:38:52",
+            "entryDate" => "2025-07-03 03:38:52",
+            "value" => 11303,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 29,
+            "createdAt" => "2024-11-10 06:53:51",
+            "entryDate" => "2024-11-10 06:53:51",
+            "value" => 9092,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 53,
+            "createdAt" => "2024-12-27 06:20:10",
+            "entryDate" => "2024-12-27 06:20:10",
+            "value" => 316,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 1,
+            "createdAt" => "2025-01-19 06:18:50",
+            "entryDate" => "2025-01-19 06:18:50",
+            "value" => 13044,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 18,
+            "createdAt" => "2025-03-24 03:49:50",
+            "entryDate" => "2025-03-24 03:49:50",
+            "value" => 6249,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 35,
+            "createdAt" => "2024-12-08 08:36:31",
+            "entryDate" => "2024-12-08 08:36:31",
+            "value" => 4659,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 47,
+            "createdAt" => "2024-10-21 12:30:12",
+            "entryDate" => "2024-10-21 12:30:12",
+            "value" => 1854,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 51,
+            "createdAt" => "2025-01-13 04:38:00",
+            "entryDate" => "2025-01-13 04:38:00",
+            "value" => 13121,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 44,
+            "createdAt" => "2025-04-09 06:43:51",
+            "entryDate" => "2025-04-09 06:43:51",
+            "value" => 5822,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 54,
+            "createdAt" => "2025-02-09 04:01:22",
+            "entryDate" => "2025-02-09 04:01:22",
+            "value" => 1933,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 58,
+            "createdAt" => "2025-04-14 04:59:43",
+            "entryDate" => "2025-04-14 04:59:43",
+            "value" => 1175,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 2,
+            "createdAt" => "2024-12-06 12:42:15",
+            "entryDate" => "2024-12-06 12:42:15",
+            "value" => 3528,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 21,
+            "createdAt" => "2025-04-12 05:00:43",
+            "entryDate" => "2025-04-12 05:00:43",
+            "value" => 6288,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 28,
+            "createdAt" => "2024-11-17 09:51:18",
+            "entryDate" => "2024-11-17 09:51:18",
+            "value" => 3561,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 13,
+            "createdAt" => "2024-12-05 06:58:31",
+            "entryDate" => "2024-12-05 06:58:31",
+            "value" => 6389,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 1,
+            "createdAt" => "2025-03-28 11:11:55",
+            "entryDate" => "2025-03-28 11:11:55",
+            "value" => 14811,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 1,
+            "createdAt" => "2025-06-22 07:22:13",
+            "entryDate" => "2025-06-22 07:22:13",
+            "value" => 2067,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 42,
+            "createdAt" => "2025-03-07 12:57:19",
+            "entryDate" => "2025-03-07 12:57:19",
+            "value" => 4249,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 24,
+            "createdAt" => "2024-11-26 10:59:15",
+            "entryDate" => "2024-11-26 10:59:15",
+            "value" => 4523,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 56,
+            "createdAt" => "2025-02-22 11:30:36",
+            "entryDate" => "2025-02-22 11:30:36",
+            "value" => 10074,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 41,
+            "createdAt" => "2024-12-30 02:22:35",
+            "entryDate" => "2024-12-30 02:22:35",
+            "value" => 411,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 53,
+            "createdAt" => "2024-10-01 02:31:54",
+            "entryDate" => "2024-10-01 02:31:54",
+            "value" => 8352,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 2,
+            "createdAt" => "2025-04-29 12:38:11",
+            "entryDate" => "2025-04-29 12:38:11",
+            "value" => 6500,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 12,
+            "createdAt" => "2025-03-16 08:06:50",
+            "entryDate" => "2025-03-16 08:06:50",
+            "value" => 9957,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 5,
+            "createdAt" => "2024-10-12 07:12:38",
+            "entryDate" => "2024-10-12 07:12:38",
+            "value" => 10470,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 8,
+            "createdAt" => "2025-01-19 08:36:32",
+            "entryDate" => "2025-01-19 08:36:32",
+            "value" => 14571,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 37,
+            "createdAt" => "2024-11-07 08:08:14",
+            "entryDate" => "2024-11-07 08:08:14",
+            "value" => 5743,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 28,
+            "createdAt" => "2025-01-06 03:00:30",
+            "entryDate" => "2025-01-06 03:00:30",
+            "value" => 13943,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 53,
+            "createdAt" => "2024-12-19 01:49:14",
+            "entryDate" => "2024-12-19 01:49:14",
+            "value" => 9477,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 4,
+            "createdAt" => "2025-06-30 02:00:04",
+            "entryDate" => "2025-06-30 02:00:04",
+            "value" => 5933,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 13,
+            "createdAt" => "2025-01-17 04:30:57",
+            "entryDate" => "2025-01-17 04:30:57",
+            "value" => 1616,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 9,
+            "createdAt" => "2024-12-14 04:37:45",
+            "entryDate" => "2024-12-14 04:37:45",
+            "value" => 9,
+            "type" => "writing",
+            "units" => "pages",
+        ],
+        [
+            "projectId" => 46,
+            "createdAt" => "2025-04-17 09:14:22",
+            "entryDate" => "2025-04-17 09:14:22",
+            "value" => 1.5,
+            "type" => "writing",
+            "units" => "hours",
+        ],
+        [
+            "projectId" => 9,
+            "createdAt" => "2025-03-01 04:14:51",
+            "entryDate" => "2025-03-01 04:14:51",
+            "value" => 22,
+            "type" => "writing",
+            "units" => "pages",
+        ],
+        [
+            "projectId" => 11,
+            "createdAt" => "2025-01-26 04:01:57",
+            "entryDate" => "2025-01-26 04:01:57",
+            "value" => 11,
+            "type" => "writing",
+            "units" => "pages",
+        ],
+        [
+            "projectId" => 49,
+            "createdAt" => "2025-01-06 07:17:42",
+            "entryDate" => "2025-01-06 07:17:42",
+            "value" => 4690,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 44,
+            "createdAt" => "2025-04-25 06:09:12",
+            "entryDate" => "2025-04-25 06:09:12",
+            "value" => 3,
+            "type" => "writing",
+            "units" => "hours",
+        ],
+        [
+            "projectId" => 50,
+            "createdAt" => "2025-03-23 10:46:25",
+            "entryDate" => "2025-03-23 10:46:25",
+            "value" => 7553,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 16,
+            "createdAt" => "2025-03-27 04:59:43",
+            "entryDate" => "2025-03-27 04:59:43",
+            "value" => 13390,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 55,
+            "createdAt" => "2024-10-16 04:06:48",
+            "entryDate" => "2024-10-16 04:06:48",
+            "value" => 133,
+            "type" => "writing",
+            "units" => "minutes",
+        ],
+        [
+            "projectId" => 36,
+            "createdAt" => "2025-01-18 04:20:50",
+            "entryDate" => "2025-01-18 04:20:50",
+            "value" => 14566,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 35,
+            "createdAt" => "2025-03-15 03:46:57",
+            "entryDate" => "2025-03-15 03:46:57",
+            "value" => 9394,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 15,
+            "createdAt" => "2025-01-29 11:52:57",
+            "entryDate" => "2025-01-29 11:52:57",
+            "value" => 1352,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 28,
+            "createdAt" => "2025-05-31 12:37:46",
+            "entryDate" => "2025-05-31 12:37:46",
+            "value" => 7168,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 55,
+            "createdAt" => "2025-04-01 07:02:49",
+            "entryDate" => "2025-04-01 07:02:49",
+            "value" => 204,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 7,
+            "createdAt" => "2024-11-21 08:54:52",
+            "entryDate" => "2024-11-21 08:54:52",
+            "value" => 3176,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 29,
+            "createdAt" => "2025-06-19 07:21:13",
+            "entryDate" => "2025-06-19 07:21:13",
+            "value" => 9464,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 23,
+            "createdAt" => "2025-03-28 10:21:23",
+            "entryDate" => "2025-03-28 10:21:23",
+            "value" => 11318,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 52,
+            "createdAt" => "2024-10-13 08:00:15",
+            "entryDate" => "2024-10-13 08:00:15",
+            "value" => 10339,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 23,
+            "createdAt" => "2024-11-29 04:42:18",
+            "entryDate" => "2024-11-29 04:42:18",
+            "value" => 663,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 10,
+            "createdAt" => "2024-11-14 11:11:03",
+            "entryDate" => "2024-11-14 11:11:03",
+            "value" => 1389,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 17,
+            "createdAt" => "2025-01-27 04:34:08",
+            "entryDate" => "2025-01-27 04:34:08",
+            "value" => 4375,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 44,
+            "createdAt" => "2024-11-10 08:32:26",
+            "entryDate" => "2024-11-10 08:32:26",
+            "value" => 5063,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 58,
+            "createdAt" => "2025-04-26 06:04:27",
+            "entryDate" => "2025-04-26 06:04:27",
+            "value" => 1317,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 41,
+            "createdAt" => "2025-06-26 04:26:20",
+            "entryDate" => "2025-06-26 04:26:20",
+            "value" => 15,
+            "type" => "writing",
+            "units" => "pages",
+        ],
+        [
+            "projectId" => 13,
+            "createdAt" => "2024-11-22 06:20:42",
+            "entryDate" => "2024-11-22 06:20:42",
+            "value" => 9987,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 45,
+            "createdAt" => "2025-02-19 03:56:10",
+            "entryDate" => "2025-02-19 03:56:10",
+            "value" => 372,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 19,
+            "createdAt" => "2025-06-05 01:22:13",
+            "entryDate" => "2025-06-05 01:22:13",
+            "value" => 9188,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 20,
+            "createdAt" => "2024-10-21 03:18:07",
+            "entryDate" => "2024-10-21 03:18:07",
+            "value" => 8120,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 23,
+            "createdAt" => "2025-06-02 04:46:19",
+            "entryDate" => "2025-06-02 04:46:19",
+            "value" => 1,
+            "type" => "writing",
+            "units" => "hours",
+        ],
+        [
+            "projectId" => 45,
+            "createdAt" => "2025-04-12 10:54:29",
+            "entryDate" => "2025-04-12 10:54:29",
+            "value" => 9911,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 24,
+            "createdAt" => "2025-01-22 01:04:26",
+            "entryDate" => "2025-01-22 01:04:26",
+            "value" => 2,
+            "type" => "writing",
+            "units" => "hours",
+        ],
+        [
+            "projectId" => 6,
+            "createdAt" => "2025-03-18 11:44:45",
+            "entryDate" => "2025-03-18 11:44:45",
+            "value" => 3480,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 38,
+            "createdAt" => "2025-05-25 02:41:32",
+            "entryDate" => "2025-05-25 02:41:32",
+            "value" => 12225,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 41,
+            "createdAt" => "2025-03-31 06:45:53",
+            "entryDate" => "2025-03-31 06:45:53",
+            "value" => 7908,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 4,
+            "createdAt" => "2025-01-21 06:32:39",
+            "entryDate" => "2025-01-21 06:32:39",
+            "value" => 1688,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 53,
+            "createdAt" => "2025-06-15 03:24:53",
+            "entryDate" => "2025-06-15 03:24:53",
+            "value" => 1917,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 29,
+            "createdAt" => "2025-02-18 01:46:05",
+            "entryDate" => "2025-02-18 01:46:05",
+            "value" => 6969,
+            "type" => "writing",
+            "units" => "lines",
+        ],
+        [
+            "projectId" => 47,
+            "createdAt" => "2024-11-05 12:40:33",
+            "entryDate" => "2024-11-05 12:40:33",
+            "value" => 5451,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 39,
+            "createdAt" => "2024-12-07 05:44:36",
+            "entryDate" => "2024-12-07 05:44:36",
+            "value" => 12547,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 48,
+            "createdAt" => "2025-03-13 05:42:41",
+            "entryDate" => "2025-03-13 05:42:41",
+            "value" => 2148,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 2,
+            "createdAt" => "2025-04-01 03:43:31",
+            "entryDate" => "2025-04-01 03:43:31",
+            "value" => 4191,
+            "type" => "writing",
+            "units" => "words",
+        ],
+        [
+            "projectId" => 15,
+            "createdAt" => "2025-05-23 06:49:19",
+            "entryDate" => "2025-05-23 06:49:19",
+            "value" => 289,
+            "type" => "writing",
+            "units" => "minutes",
+        ],
+        [
+            "projectId" => 30,
+            "createdAt" => "2025-06-10 12:04:57",
+            "entryDate" => "2025-06-10 12:04:57",
+            "value" => 8663,
+            "type" => "writing",
+            "units" => "words",
+        ],
+    ];
+
+    public $connections = [
+        [
+            "status" => "mutual",
+            "createdAt" => "2024-10-17 08:40:03",
+            "changedAt" => "2024-11-01 10:39:35",
+            "initiatingUserId" => 11,
+            "connectedUserId" => 22,
+        ],
+        [
+            "status" => "blocked",
+            "createdAt" => "2025-06-03 05:09:10",
+            "changedAt" => "2024-12-07 04:14:30",
+            "initiatingUserId" => 37,
+            "connectedUserId" => 10,
+        ],
+        [
+            "status" => "blocked",
+            "createdAt" => "2025-03-22 02:54:34",
+            "changedAt" => "2024-11-09 09:48:55",
+            "initiatingUserId" => 31,
+            "connectedUserId" => 23,
+        ],
+        [
+            "status" => "mutual",
+            "createdAt" => "2025-02-01 04:29:05",
+            "changedAt" => "2024-12-04 10:46:52",
+            "initiatingUserId" => 14,
+            "connectedUserId" => 13,
+        ],
+        [
+            "status" => "ignored",
+            "createdAt" => "2025-02-01 12:28:30",
+            "changedAt" => "2024-12-03 06:33:49",
+            "initiatingUserId" => 7,
+            "connectedUserId" => 9,
+        ],
+        [
+            "status" => "blocked",
+            "createdAt" => "2025-03-01 02:54:50",
+            "changedAt" => "2025-01-21 04:33:39",
+            "initiatingUserId" => 9,
+            "connectedUserId" => 29,
+        ],
+        [
+            "status" => "mutual",
+            "createdAt" => "2025-05-29 07:07:25",
+            "changedAt" => "2025-05-13 08:01:03",
+            "initiatingUserId" => 7,
+            "connectedUserId" => 34,
+        ],
+        [
+            "status" => "pending",
+            "createdAt" => "2024-12-31 11:56:31",
+            "changedAt" => "2025-06-28 03:14:42",
+            "initiatingUserId" => 36,
+            "connectedUserId" => 2,
+        ],
+        [
+            "status" => "following",
+            "createdAt" => "2024-11-03 05:59:46",
+            "changedAt" => "2025-05-17 05:19:13",
+            "initiatingUserId" => 14,
+            "connectedUserId" => 26,
+        ],
+        [
+            "status" => "blocked",
+            "createdAt" => "2025-03-30 10:51:51",
+            "changedAt" => "2025-04-25 06:05:39",
+            "initiatingUserId" => 38,
+            "connectedUserId" => 37,
+        ],
+        [
+            "status" => "blocked",
+            "createdAt" => "2025-06-29 05:27:24",
+            "changedAt" => "2025-06-29 05:21:08",
+            "initiatingUserId" => 19,
+            "connectedUserId" => 14,
+        ],
+        [
+            "status" => "blocked",
+            "createdAt" => "2024-12-17 10:14:02",
+            "changedAt" => "2025-04-11 09:40:57",
+            "initiatingUserId" => 13,
+            "connectedUserId" => 39,
+        ],
+        [
+            "status" => "following",
+            "createdAt" => "2025-03-29 09:02:17",
+            "changedAt" => "2025-03-31 08:04:46",
+            "initiatingUserId" => 25,
+            "connectedUserId" => 6,
+        ],
+        [
+            "status" => "pending",
+            "createdAt" => "2024-12-27 01:09:23",
+            "changedAt" => "2024-11-17 08:37:28",
+            "initiatingUserId" => 23,
+            "connectedUserId" => 14,
+        ],
+        [
+            "status" => "mutual",
+            "createdAt" => "2024-12-18 06:37:00",
+            "changedAt" => "2025-01-02 04:09:12",
+            "initiatingUserId" => 24,
+            "connectedUserId" => 5,
+        ],
+        [
+            "status" => "ignored",
+            "createdAt" => "2025-03-14 07:35:25",
+            "changedAt" => "2024-11-01 11:23:00",
+            "initiatingUserId" => 32,
+            "connectedUserId" => 34,
+        ],
+    ];
+
+    public $notification_options = [
+      ["text" => "sent you a message", "link"=>"/messages"],
+      ["text" => "sent you a buddy request", "link"=>null],
+      ["text" => "is a turtle", "link"=>null],
+      ["text" => "invited you to a group", "link"=>null],
+    ];
+
+    public $dm_content = [
+      "Voluptate cupidatat in amet nulla consectetur enim dolor dolor laboris qui ad. Qui pariatur voluptate pariatur dolore pariatur.",
+      "Voluptate culpa pariatur laboris laborum eu eiusmod adipisicing eiusmod laborum ullamco id sint. Ad occaecat aliquip consequat laboris dolor.",
+      "Enim ipsum ad anim duis do Lorem mollit. Et occaecat esse non esse ut.",
+      "Reprehenderit aliquip ex veniam ex ut. Mollit id amet commodo reprehenderit amet ex magna tempor irure qui eiusmod culpa.",
+      "Reprehenderit mollit ipsum ullamco ex labore. Duis dolor anim adipisicing aliqua voluptate proident do esse.",
+      "Consectetur qui Lorem aliquip laborum reprehenderit tempor ad. Cupidatat minim voluptate adipisicing laborum pariatur cupidatat.",
+      "Culpa commodo reprehenderit amet velit velit incididunt officia culpa sunt excepteur ipsum labore. Consectetur qui sunt quis laborum.",
+      "Dolore labore in esse pariatur magna. Cupidatat laboris velit qui labore pariatur aliquip deserunt laboris. Dolor enim consequat eiusmod enim consectetur laboris do. Fugiat magna incididunt enim nulla. Dolore ullamco tempor elit anim occaecat irure est exercitation ea id. Proident officia laboris mollit nulla in irure quis aute aliquip sint tempor mollit.",
+      "Culpa ad sunt laboris nostrud est sunt sint tempor ut magna voluptate ad proident. Eiusmod et aute do aliqua do cillum et et consequat qui sunt. Aliquip tempor magna ipsum esse eu ipsum id ad. Amet laborum veniam cupidatat deserunt dolore magna eiusmod labore culpa ea occaecat adipisicing sint. Exercitation reprehenderit occaecat laborum aliqua qui ad in duis pariatur laboris ea nisi quis. Lorem nulla duis officia aute culpa exercitation aliquip laboris magna excepteur qui ea veniam.",
+      "Qui aute proident nostrud commodo aliquip dolore qui fugiat eiusmod exercitation eu. Est nisi ullamco Lorem ad nostrud dolor amet. Lorem proident commodo qui aliqua duis elit. Nostrud duis Lorem irure deserunt minim reprehenderit quis laborum cillum duis aute cupidatat. Laborum in et proident exercitation adipisicing deserunt officia ea id in proident adipisicing velit. Nostrud exercitation veniam consectetur incididunt magna nulla dolor consequat ex aliqua pariatur.",
+      "Labore aute proident pariatur non et labore dolore enim. Ut qui aliqua qui veniam culpa. Non aute excepteur Lorem consectetur pariatur qui. Et irure dolore excepteur pariatur excepteur velit qui minim nostrud anim magna. Ad nostrud et consequat qui. Do labore esse amet eu voluptate.",
+      "Consequat commodo deserunt minim aliqua mollit consequat ad sit qui consectetur dolor. Est cillum excepteur incididunt eu cupidatat excepteur eiusmod culpa. Quis aliqua deserunt exercitation id velit dolor proident irure aliquip amet labore. Exercitation deserunt ea velit enim tempor commodo laboris consequat. Elit eiusmod incididunt elit fugiat ut id reprehenderit ex. Cillum veniam officia adipisicing deserunt aliquip.",
+      "Dolore laborum magna id laboris eu tempor irure. Est non in aliqua deserunt pariatur aute officia magna anim est. Ipsum officia elit adipisicing irure et Lorem aliqua do adipisicing qui occaecat aliqua exercitation. Ullamco deserunt elit proident adipisicing magna amet ut do commodo in nisi. Nisi incididunt nostrud minim labore non velit et mollit amet velit consectetur. Sunt aliqua cillum consequat pariatur ullamco deserunt deserunt occaecat.",
+      "Sint consectetur tempor aute dolore irure exercitation et cupidatat adipisicing sit. Sunt adipisicing nulla anim esse consectetur et sint cillum nulla amet sint. Ea quis commodo labore nisi nostrud eiusmod irure veniam irure et anim consectetur. Esse deserunt non dolore ullamco ut ea amet sint enim. Eiusmod incididunt reprehenderit incididunt adipisicing ea reprehenderit adipisicing proident aliqua consequat tempor eu laborum. Dolor aute ullamco enim nisi occaecat officia mollit enim quis tempor est nulla eu.",
+      "Minim id ex ex do nostrud minim aute eiusmod elit. Aute velit exercitation amet tempor voluptate ea dolor elit commodo officia veniam ad. Ex in aliqua nostrud in id voluptate quis eiusmod non minim. Fugiat ut fugiat occaecat eiusmod est dolor ea culpa ea Lorem magna do reprehenderit. Velit cillum irure mollit magna eiusmod veniam ex. Dolore elit duis enim labore incididunt ad cillum dolor.",
+      "Amet ipsum occaecat eu adipisicing eu. Irure consectetur mollit mollit id nostrud officia do laborum velit mollit et voluptate tempor reprehenderit. Aliqua sunt laboris anim minim duis nulla commodo nostrud deserunt sint irure ad. Consectetur labore mollit aliqua voluptate enim. Laborum anim ad id mollit amet aliqua sit Lorem pariatur. Id amet esse pariatur adipisicing non cupidatat.",
+      "Incididunt in duis proident ullamco eu deserunt esse. Ipsum dolore minim sit duis irure tempor est reprehenderit anim nisi sint pariatur veniam. Sit nisi aliqua officia labore. Pariatur veniam et ad laborum cillum. Labore commodo commodo proident nulla cupidatat. Duis qui elit dolore et non. Nulla commodo elit ullamco enim. Et officia amet duis elit mollit aliquip dolor dolore cillum duis minim. In ad non aliquip excepteur. Nostrud proident ea sint quis. Officia do irure quis et. Amet qui excepteur elit anim ut minim magna cillum laboris.",
+      "Ipsum magna nisi qui duis deserunt ullamco irure aute officia dolor excepteur do. Nulla qui dolor aliqua laborum sit. Consequat consectetur tempor esse et aliquip sunt ex laboris. Aliqua eiusmod eu labore ea mollit. Laborum reprehenderit ea sunt sunt enim dolore officia tempor. Dolore culpa ullamco ad ullamco esse. Aliqua elit magna culpa pariatur non aliquip cupidatat ad fugiat proident irure laborum nisi. Ut officia sit laborum sint dolor laboris et consequat mollit laborum duis exercitation veniam incididunt. Qui minim tempor quis eiusmod labore enim irure nisi. Et do labore proident laborum minim pariatur ex duis duis culpa sunt nisi ut. Pariatur eiusmod proident non elit ullamco eiusmod et ullamco laboris anim aliquip excepteur exercitation consectetur. Adipisicing est esse excepteur ut id cupidatat eiusmod elit.",
+      "Aliquip quis quis elit aliqua velit ullamco cillum sit fugiat pariatur consectetur ullamco tempor. Cillum anim exercitation adipisicing cillum officia fugiat non magna ad reprehenderit mollit excepteur eu et. Ea do dolore dolore Lorem nisi quis. Laborum adipisicing aliqua ex pariatur et magna. Ipsum in reprehenderit cillum occaecat voluptate ipsum minim anim culpa deserunt laboris exercitation. Laboris proident ullamco aute ut laboris do. Do sunt anim consequat incididunt commodo id laboris qui consectetur Lorem laborum. Laboris pariatur officia laboris ea et mollit magna officia occaecat velit anim consectetur non. In occaecat anim commodo eiusmod consectetur do. Consectetur magna fugiat ad pariatur reprehenderit tempor velit aliqua. Officia aute magna proident incididunt velit nisi non aliquip labore ullamco. Ullamco deserunt elit officia anim do.",
+      "Proident exercitation deserunt laborum id minim amet magna ut. Anim qui cupidatat anim ex Lorem laborum aute exercitation non. Ea officia non elit exercitation dolore incididunt et duis dolore aliquip dolor fugiat laboris voluptate. Et ullamco quis commodo veniam incididunt. Elit laboris et cupidatat labore. Amet veniam tempor sunt voluptate ullamco ipsum et labore deserunt culpa. Cupidatat duis nisi non proident. Veniam laborum dolore velit aliquip. Nostrud consequat labore est veniam voluptate ex non voluptate velit cupidatat dolor ad irure. Sunt consectetur amet ex pariatur dolor laborum eu aliquip laborum cupidatat id enim occaecat. Ex sit ipsum eu incididunt incididunt duis enim non aliqua id. Adipisicing officia ullamco do sint Lorem nisi laboris veniam minim."
+    ];
+    public function load(ObjectManager $manager): void
+    {
+        /* Order to run through:
+        ** $users
+        ** $projects
+        **** the ProjectListener creates the code and the initial "created" feed entry
+        ** project_goal
+        **** every project goal is the same. its a for-each-user
+        ** $progress_entries
+        **** the ProjectListener creates the feed entry element
+        ** $connections
+        */
+        foreach ($this->users as $user) {
+          $new_user = (new User())
+            ->setUsername($user['username'])
+            ->setEmail($user['email'])
+            ->setUnverifiedEmail($user['unverifiedEmail'])
+            ->setCreatedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$user['createdAt']))
+            ->setEditedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$user['editedAt']))
+            ->setEmailVerifiedAt($user['emailVerifiedAt'])
+            ->setLastActivityTimestamp(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$user['lastActivityTimestamp']))
+            ->setDescription($user['description'])
+            ->setLink($user['link'])
+            ->setTimezone(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$user['timezone']))
+            ->setPublic($user['public']);
+          $hashedPassword = $this->passwordHasher->hashPassword(
+            $new_user,
+            'password'
+          );
+          $new_user->setPassword($hashedPassword);
+          $manager->persist($new_user);
+          $this->addReference("user_".$user['id'],$new_user);
+        }
+
+        $project_count = count($this->projects);
+        for ($i = 1; $i < $project_count; $i++) {
+          $project = $this->projects[$i];
+          $user = $this->getReference("user_".$project['userId'], User::class);
+          $new_project = (new Project())
+            ->setUser($user)
+            ->setCreatedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$project['createdAt']))
+            ->setEditedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$project['editedAt']))
+            ->setTitle($project['title'])
+            ->setPublic($project['public']);
+          $manager->persist($new_project);
+
+          $new_project_goal = (new ProjectGoal())
+            ->setProject($new_project)
+            ->setCreatedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$project['createdAt']))
+            ->setEditedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$project['editedAt']))
+            ->setStartDate(DateTimeImmutable::createFromFormat('Y-m-d','2025-11-01'))
+            ->setEndDate(DateTimeImmutable::createFromFormat('Y-m-d','2025-11-30'));
+          $manager->persist($new_project_goal);
+
+          $this->addReference("project_".$i, $new_project);
+        }
+        foreach ($this->progressEntries as $progress) {
+            $project = $this->getReference("project_".$progress['projectId'], Project::Class);
+            $new_progress = (new ProgressEntry())
+                ->setProject($project)
+                ->setCreatedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$progress['createdAt']))
+                ->setEntryDate(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$progress['entryDate']))
+                ->setValue($progress['value'])
+                ->setType($progress['type'])
+                ->setUnits($progress['units']);
+            $manager->persist($new_progress);
+        }
+
+        foreach ($this->connections as $conn) {
+            // because the database ID isn't just resetting at 1 2 3, etc, gotta get the actual user ID
+            $iuId = $this->getReference("user_".$conn['initiatingUserId'],User::class)->getId();
+            $cuId = $this->getReference("user_".$conn['connectedUserId'],User::class)->getId();
+            $new_connection = (new Connection())
+              ->setCreatedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$conn['createdAt']))
+              ->setChangedAt(DateTimeImmutable::createFromFormat('Y-m-d H:i:s',$conn['changedAt']))
+              ->setStatus($conn['status'])
+              ->setInitiatingUserId($iuId)
+              ->setConnectedUserId($cuId);
+            $manager->persist($new_connection);
+        }
+        $user_count = count($this->users) - 1;
+        $notification_text_count = count($this->notification_options) - 1;
+        foreach (range(0,50) as $i) { // Ashley user is the one I've commandeered to test with, giving her a few known notifications
+          $to_user = $this->getReference("user_32", User::class);
+          $random_from_user = $this->users[rand(0,$user_count)]['username'];
+          $notification = $this->notification_options[rand(0,$notification_text_count)];
+          $user_read = rand(0,1) == 0; // randomly read or not read
+          $new_notification = (new Notification())
+            ->setUser($to_user)
+            ->setContent($random_from_user . " " . $notification['text'])
+            ->setCreatedAt(new DateTimeImmutable())
+            ->setUserRead($user_read);
+          if ($user_read) {
+            $new_notification->setReadAt(new DateTimeImmutable());
+          }
+          if ($notification['link']) {
+            $new_notification->setNotificationLink($notification['link']);
+          }
+          $manager->persist($new_notification);
+        }
+        foreach (range(0,1000) as $i) { // just jamming the database full of random notifications
+          $random_to_user = "user_" . rand(1,$user_count + 1);
+          $to_user = $this->getReference($random_to_user, User::class);
+          $random_from_user = $this->users[rand(0,$user_count)]['username'];
+          $notification = $this->notification_options[rand(0,$notification_text_count)];
+          $user_read = rand(0,1) == 0; // randomly read or not read
+          $new_notification = (new Notification())
+            ->setUser($to_user)
+            ->setContent($random_from_user . " " . $notification['text'])
+            ->setCreatedAt(new DateTimeImmutable())
+            ->setUserRead($user_read);
+          if ($notification['link']) {
+            $new_notification->setNotificationLink($notification['link']);
+          }
+          $manager->persist($new_notification);
+        }
+
+        foreach (range(0,35) as $i) {
+          $msg_user_1 = $this->getReference("user_32", User::class); # this is me!
+          $user1_id = $msg_user_1->getId();
+          $user_2_ref = "user_" . rand(1,$user_count+1);
+          $msg_user_2 = $this->getReference($user_2_ref, User::class);
+          $user2_id = $msg_user_2->getId();
+          $msg_thread = (new MessageThread)
+            ->setSenderUserId($user1_id)
+            ->setReceivingUserId($user2_id)
+            ->setSubject("A thread created in a fixture - $i");
+
+          $manager->persist($msg_thread);
+          $fake_msg_count = count($this->dm_content) - 1;
+          foreach (range(0,8) as $k) {
+            if (rand(0,1) == 0) {
+              $fromUser = $user1_id;
+              $toUser = $user2_id;
+            } else {
+              $fromUser = $user2_id;
+              $toUser = $user1_id;
+            }
+            $new_dm = (new DirectMessage)
+              ->setToUserId($toUser)
+              ->setFromUserId($fromUser)
+              ->setMessageThread($msg_thread)
+              ->setContent($this->dm_content[rand(0,$fake_msg_count)])
+              ->setSentAt(new DatetimeImmutable());
+            $manager->persist($new_dm);
+          }
+        }
+
+        foreach (range(0,12) as $i) {
+          $user_1_ref = "user_" . rand(1,$user_count+1);
+          $msg_user_1 = $this->getReference($user_1_ref, User::class); # this is me!
+          $user1_id = $msg_user_1->getId();
+          $user_2_ref = "user_" . rand(1,$user_count+1);
+          $msg_user_2 = $this->getReference($user_2_ref, User::class);
+          $user2_id = $msg_user_2->getId();
+          $msg_thread = (new MessageThread)
+            ->setSenderUserId($user1_id)
+            ->setReceivingUserId($user2_id)
+            ->setSubject("A thread created in a fixture - $i");
+
+          $manager->persist($msg_thread);
+          $fake_msg_count = count($this->dm_content) - 1;
+          foreach (range(0,8) as $k) {
+            if (rand(0,1) == 0) {
+              $fromUser = $user1_id;
+              $toUser = $user2_id;
+            } else {
+              $fromUser = $user2_id;
+              $toUser = $user1_id;
+            }
+            $new_dm = (new DirectMessage)
+              ->setToUserId($toUser)
+              ->setFromUserId($fromUser)
+              ->setMessageThread($msg_thread)
+              ->setContent($this->dm_content[rand(0,$fake_msg_count)])
+              ->setSentAt(new DatetimeImmutable());
+            $manager->persist($new_dm);
+          }
+        }
+
+        // Quest
+        $dateFormat = 'Y-m-d';
+        $quest1 = new Quest();
+        $quest1->setTitle('August Novel Quest');
+        $quest1->setStartDate(DateTimeImmutable::createFromFormat($dateFormat, '2025-09-01'));
+        $quest1->setEndDate(DateTimeImmutable::createFromFormat($dateFormat, '2025-09-30'));
+        $quest1->setGoalType('writing');
+        $quest1->setGoalUnits('words');
+        $quest1->setGoalAmount(50000);
+        $manager->persist($quest1);
+        // Bypass the automatic uuid creation
+        $quest1->setId(Uuid::fromString('b00cb00c-b00c-4b00-9b00-b00cb00cb00c'));
+        $manager->persist($quest1);
+
+        $manager->flush();
+
+        // all done?!
+        $manager->flush();
+  }
+}

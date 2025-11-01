@@ -9,11 +9,24 @@ services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc..
+    mailer_service:
+      class: App\Service\MailerService
+      public: false
+      autowire: true
+      autoconfigure: true
+      arguments: ["@mailer"]
+    notification_service:
+      class: App\Service\NotificationService
+      public: false
+      autowire: true
+      autoconfigure: true
+      arguments: ["@security.token_storage", "@mailer_service", "@doctrine.orm.entity_manager"]
     project_listener:
       class: App\Listener\ProjectListener
       public: false
       autowire: true
+      autoconfigure: true
       arguments: ["@security.token_storage"]
       tags:
         - {name: doctrine.orm.entity_listener}
@@ -31,7 +44,23 @@ services:
       autoconfigure: true
       tags:
         - {name: doctrine.orm.entity_listener}
-      arguments: ["@security.token_storage", "@mailer"]
+      arguments: ["@security.token_storage", "@mailer", "@doctrine.orm.entity_manager", "@notification_service"]
+    progress_listener:
+      class: App\Listener\ProgressEntryListener
+      public: false
+      autowire: true
+      autoconfigure: true
+      tags:
+        - {name: doctrine.orm.entity_listener}
+      arguments: ["@security.token_storage"]
+    feed_entry_listener:
+      class: App\Listener\FeedEntryListener
+      public: false
+      autowire: true
+      autoconfigure: true
+      tags:
+        - {name: doctrine.orm.entity_listener}
+      arguments: ["@security.token_storage"]
     user_listener:
       class: App\Listener\User
       public: false
@@ -40,9 +69,32 @@ services:
       tags:
         - {name: doctrine.orm.entity_listener}
       arguments: ["@security.token_storage", "@mailer"]
-
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
+    direct_message_listener:
+      class: App\Listener\DirectMessageListener
+      public: false
+      autowire: true
+      autoconfigure: true
+      tags:
+        - {name: doctrine.orm.entity_listener}
+      arguments: ["@security.token_storage"]
+    login_token_listener:
+      class: App\Listener\LoginTokenListener
+      public: false
+      autowire: true
+      autoconfigure: true
+      tags:
+        - {name: doctrine.orm.entity_listener}
+      arguments: ["@security.token_storage", "@doctrine.orm.entity_manager", "@notification_service"]
+    message_thread_listener:
+      class: App\Listener\MessageThreadListener
+      public: false
+      autowire: true
+      autoconfigure: true
+      tags:
+        - {name: doctrine.orm.entity_listener}
+      arguments: ["@security.token_storage"]
+      # makes classes in src/ available to be used as services
+      # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
         exclude:
@@ -53,3 +105,5 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
     'Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter': ~
+    App\State\UserQuestProvider:
+      tags: ['api_platform.state_provider', 'controller.service_arguments']

@@ -1,3 +1,13 @@
+/* 2025-10-22 - dropping some colors here to quickly reference -CSS HSL *
+--white: hsla(240, 20%, 99%, 1);
+--african-violet: hsla(316, 34%, 65%, 1);
+--eggshell: hsla(58, 33%, 84%, 1);
+--white-2: hsla(0, 0%, 100%, 1);
+--atomic-tangerine: hsla(24, 89%, 63%, 1);
+--isabelline: hsla(36, 33%, 94%, 1);
+--white-3: hsla(0, 0%, 100%, 1);
+*/
+
 :root {
   font-family: "Poppins", sans-serif;
   font-synthesis: none;
@@ -40,4 +50,10 @@ a {
 }
 input {
   font-family: "Poppins", sans-serif;
+}
+
+.contains-task-list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
 }

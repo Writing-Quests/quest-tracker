@@ -220,7 +220,7 @@ ProjectSnapshot.propTypes = {
 
 export function ReviewReport () {
   useTitle('Admin - Review Safety report')
-  const user = useContext(LoggedInUserContext)
+  const {user} = useContext(LoggedInUserContext)
   const navigate = useNavigate()
   const { code } = useParams()
   const [ isModalOpen, setIsModalOpen ] = useState(false)

@@ -8,7 +8,7 @@ const { LoggedInUserContext } = context
 
 export default function Certificate({project}) {
   const [file, setFile] = useState()
-  const user = useContext(LoggedInUserContext)
+  const {user} = useContext(LoggedInUserContext)
   useEffect(() => {
     (async () => {
       const res = await fetch('/certificate.pdf')

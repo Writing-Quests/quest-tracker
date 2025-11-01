@@ -15,11 +15,11 @@ class Interaction
 
     #[ORM\ManyToOne(inversedBy: 'interactions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?post $post_id = null;
+    private ?feedEntry $feed_entry_id = null;
 
     #[ORM\ManyToOne(inversedBy: 'interactions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $user_id = null;
+    private ?User $user = null;
 
     #[ORM\Column(length: 255)]
     private ?string $content = null;
@@ -29,26 +29,26 @@ class Interaction
         return $this->id;
     }
 
-    public function getPostId(): ?post
+    public function getFeedEntryId(): ?feedEntry
     {
-        return $this->post_id;
+        return $this->feed_entry_id;
     }
 
-    public function setPostId(?post $post_id): static
+    public function setFeedEntryId(?feedEntry $feed_entry_id): static
     {
-        $this->post_id = $post_id;
+        $this->feed_entry_id = $feed_entry_id;
 
         return $this;
     }
 
-    public function getUserId(): ?User
+    public function getUser(): ?User
     {
-        return $this->user_id;
+        return $this->user;
     }
 
-    public function setUserId(?User $user_id): static
+    public function setUser(?User $user): static
     {
-        $this->user_id = $user_id;
+        $this->user = $user;
 
         return $this;
     }

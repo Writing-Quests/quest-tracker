@@ -84,28 +84,28 @@ const Tab = styled.a`
   }
 `
 
-//const TooltipAboveGoal = styled.span`
-  //font-weight: bold;
-  //color: green;
-//`
+const TooltipAboveGoal = styled.span`
+  font-weight: bold;
+  color: green;
+`
 
-function TooltipContent({progress, units, active, payload}) {
+function TooltipContent({progress, units, active, payload, settings}) {
   if(!active || !payload[0]?.payload) { return null }
-  const {day, cumulative} = payload[0].payload
-  //const diff = cumulative - dailyGoal
-  //const GoalDiffWrapper = diff >= 0 ? TooltipAboveGoal : Fragment
+  const {day, cumulative, dailyGoal} = payload[0].payload
+  const diff = cumulative - dailyGoal
+  const GoalDiffWrapper = diff >= 0 ? TooltipAboveGoal : Fragment
   const dates = Object.keys(progress).sort()
-  const startDateObj = dayjs(dates[0])
+  const startDateObj = (settings.startDate && dayjs(settings.startDate)) || dayjs(dates[0])
   return <TooltipDiv>
     <TooltipDateContainer><TooltipDate>{startDateObj.add(day-1, 'd').format('MMMM D, YYYY')}</TooltipDate> (day {day})</TooltipDateContainer>
     {cumulative !== undefined && <div>
       <strong style={{fontSize: '1rem'}}>{cumulative.toLocaleString()} {units}</strong>
       <br />
-      {/*<GoalDiffWrapper>
+      <GoalDiffWrapper>
         {diff > 0 && '+'}{diff.toLocaleString(undefined, {maximumFractionDigits: 1})}
-      </GoalDiffWrapper> {diff > 0 ? 'above goal' : 'below goal'}*/}
+      </GoalDiffWrapper> {diff > 0 ? 'above goal' : 'below goal'}
     </div>}
-    {/*<div><em>Goal: {dailyGoal.toLocaleString(undefined, {maximumFractionDigits: 1})}</em></div>*/}
+    {dailyGoal && <div><em>Goal: {dailyGoal.toLocaleString(undefined, {maximumFractionDigits: 1})}</em></div>}
   </TooltipDiv>
 }
 TooltipContent.propTypes = {
@@ -155,11 +155,11 @@ XAxisTickLine.propTypes = {
 
 // We want at least 60px per tick
 const WIDTH_PER_TICK = 60
-function XAxisTick({x, y, payload, index, visibleTicksCount, progress, width}) {
+function XAxisTick({x, y, payload, index, visibleTicksCount, progress, width, settings = {}}) {
   if(x === undefined || y === undefined) { return null }
   const dates = Object.keys(progress).sort()
-  const startDateObj = dayjs(dates[0])
-  const endDateObj = dayjs(dates[dates.length-1])
+  const startDateObj = (settings.startDate && dayjs(settings.startDate)) || dayjs(dates[0])
+  const endDateObj = (settings.endDate && dayjs(settings.endDate)) || dayjs(dates[dates.length-1])
   if(index === 0) {
     // First day!
     return <>
@@ -209,12 +209,12 @@ XAxisTick.propTypes = {
   width: PropTypes.number,
 }
 
-function ProgressChartSingle({progress, type, units}) {
+export function ProgressChartSingle({progress, type, units, settings={}}) {
   const [data, largestValue] = useMemo(() => {
     let largestValue = 0
     const dates = Object.keys(progress).sort()
-    const startDateObj = dayjs(dates[0])
-    const endDateObj = dayjs(dates[dates.length-1])
+    const startDateObj = (settings.startDate && dayjs(settings.startDate)) || dayjs(dates[0])
+    const endDateObj = (settings.endDate && dayjs(settings.endDate)) || dayjs(dates[dates.length-1])
     const numDays = endDateObj.diff(startDateObj, 'd') + 1
     const ret = []
     for(let day = 0; day < numDays; day++) {
@@ -227,6 +227,9 @@ function ProgressChartSingle({progress, type, units}) {
       } else {
         toPush.cumulative = toPush.daily + ret[day-1].cumulative
       }
+      if(settings.goal) {
+        toPush.dailyGoal = settings.goal/numDays * (day+1)
+      }
       largestValue = Math.max(largestValue, toPush.cumulative, toPush.daily)
       ret.push(toPush)
     }
@@ -234,32 +237,34 @@ function ProgressChartSingle({progress, type, units}) {
   }, [progress])
   const duration = useMemo(() => {
     const dates = Object.keys(progress).sort()
-    const startDateObj = dayjs(dates[0])
-    const endDateObj = dayjs(dates[dates.length-1])
+    const startDateObj = (settings.startDate && dayjs(settings.startDate)) || dayjs(dates[0])
+    const endDateObj = (settings.endDate && dayjs(settings.endDate)) ||dayjs(dates[dates.length-1])
     return endDateObj.diff(startDateObj, 'd') + 1
   }, [progress])
   const topValue = largestValue
   const orderOfMagnitude = 10 ** getOrderOfMagnitude(topValue)
-  const yAxisLimit = Math.ceil(topValue / orderOfMagnitude) * orderOfMagnitude
+  const yAxisLimit = Math.max(
+    Math.ceil(topValue / orderOfMagnitude) * orderOfMagnitude,
+    settings.goal || 0)
   let numYAxisTicks = Math.floor(yAxisLimit / orderOfMagnitude) // Floor should never actually be needed
   if(numYAxisTicks <= 3) {
     const tickWidth = orderOfMagnitude / 2
     numYAxisTicks = Math.floor(yAxisLimit / tickWidth)
   }
   numYAxisTicks = numYAxisTicks + 1
-  console.log(data)
+  //console.log(data)
   return <ChartContainer>
     <ResponsiveContainer width='100%' height={500} debounce={250}>
       <LineChart data={data} margin={{left: 30, bottom: 20, right: 30, top: 20}}>
         <CartesianGrid stroke="#f6f6f6" />
-        {/*<Line
+        <Line
           type="monotone"
           stroke="#8cc66d"
           strokeWidth={1}
           dataKey="dailyGoal"
           dot={{r: 0, fill: '#8cc66d'}}
           activeDot={{r: 3}}
-        />*/}
+        />
         <Line
           type="monotone"
           stroke="#b83a14"
@@ -277,7 +282,7 @@ function ProgressChartSingle({progress, type, units}) {
           domain={[1, duration]}
           interval={0}
           tickSize={4}
-          tick={<XAxisTick progress={progress} />}
+          tick={<XAxisTick progress={progress} settings={settings} />}
         />
         <YAxis
           domain={[0, yAxisLimit]}
@@ -293,7 +298,7 @@ function ProgressChartSingle({progress, type, units}) {
           cursor={false}
           isAnimationActive={false}
           allowEscapeViewBox={{y: true}}
-          content={<TooltipContent progress={progress} units={units} />}
+          content={<TooltipContent progress={progress} units={units} settings={settings} />}
           coordinate={{ x: 100, y: 140 }}
         />
       </LineChart>

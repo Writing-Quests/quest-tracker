@@ -1,0 +1,9 @@
+{% extends "base.email.txt" %}
+{% block content %}
+You have a new message from {{user}} (https://quesy.writingquests.org/profile/{{user}})
+
+{{ message }}
+
+View this thread and reply to this message: {{thread}}
+View all your DMs: https://questy.writingquests.org/messages
+{% endblock %}

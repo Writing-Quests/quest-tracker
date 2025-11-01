@@ -27,20 +27,25 @@ use Symfony\Component\Uid\Ulid;
     operations: [
         new Get(
           uriTemplate: '/project/{code}',
-          security: "is_granted('ROLE_ADMIN') or object.getUser() == user or object.getUser().isPublic()",
+          security: "is_granted('ROLE_ADMIN') or object.getUser() == user or object.getUser().isPublic() or object.getUser().isLoggedInUserAllowed()",
         ),
+        /*
         new GetCollection(
-            uriTemplate: '/users/{id}/projects',
-            uriVariables: [
-                'id' => new Link(
-                    fromClass: User::class,
-                    fromProperty: 'username',
-                    toProperty: 'user',
-                    securityObjectName: 'uriUser',
-                    security: "uriUser == user or is_granted('ROLE_ADMIN') or uriUser.isPublic()",
-                )
-            ],
-            security: "true", // Security is on the Link level for now
+          uriTemplate: '/project/{code}/updates',
+          security: "is_granted('ROLE_ADMIN') or object.getUser() == user or object.getUser().isPublic()",
+        ),*/
+        new GetCollection(
+          uriTemplate: '/users/{id}/projects',
+          uriVariables: [
+              'id' => new Link(
+                  fromClass: User::class,
+                  fromProperty: 'username',
+                  toProperty: 'user',
+                  securityObjectName: 'uriUser',
+                  security: "uriUser == user or is_granted('ROLE_ADMIN') or uriUser.isPublic() or uriUser.isLoggedInUserAllowed()",
+              )
+          ],
+          security: "true", // Security is on the Link level for now
         ),
         new Post(
             security: "is_granted('ROLE_USER')",
@@ -49,7 +54,7 @@ use Symfony\Component\Uid\Ulid;
             security: "is_granted('ROLE_ADMIN') or (object.getUser() == user)",
         ),
     ],
-    security: "object.isPublic() or is_granted('ROLE_ADMIN') or (object.getUser() == user)",
+    //security: "object.isPublic() or is_granted('ROLE_ADMIN') or (object.getUser() == user)",
 )]
 class Project
 {
@@ -61,6 +66,7 @@ class Project
 
     #[ORM\ManyToOne(inversedBy: 'projects')]
     #[ORM\JoinColumn(nullable: false)]
+    #[ApiProperty(identifier: false, writable: false, readable: false)]
     private ?User $user = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "CURRENT_TIMESTAMP"])]
@@ -74,7 +80,7 @@ class Project
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $title = null;
 
-    #[ORM\Column(options: ["default" => "json_object()"], nullable: true)]
+    #[ORM\Column(nullable: true)]
     private ?array $details = null;
 
     #[ORM\Column(nullable: false, options: ["default" => false])]
@@ -94,12 +100,31 @@ class Project
      * @var Collection<int, ProgressEntry>
      */
     #[ORM\OneToMany(targetEntity: ProgressEntry::class, mappedBy: 'project', orphanRemoval: true)]
+    #[ORM\OrderBy(["created_at" => "DESC"])]
     private Collection $progressEntries;
+
+    /**
+     * @var Collection<int, FeedEntry>
+     */
+    #[ORM\OneToMany(targetEntity: FeedEntry::class, mappedBy: 'project')]
+    #[ORM\OrderBy(["edited_at" => "DESC"])]
+    private Collection $updates;
 
     public function __construct()
     {
         $this->projectGoals = new ArrayCollection();
         $this->progressEntries = new ArrayCollection();
+        $this->updates = new ArrayCollection();
+    }
+
+    #[ApiResource (writable: false)]
+    public function getMostRecentUpdate() {
+      return $this->getUpdates()[0];
+    }
+
+    #[ApiResource (writable: false)]
+    public function getOwnerUsername() {
+      return $this->getUser()->getUsername();
     }
 
     public function getId(): ?string
@@ -107,6 +132,7 @@ class Project
         return $this->id;
     }
 
+    #[ApiProperty(identifier: false, writable: false, readable: false)]
     public function getUser(): ?User
     {
         return $this->user;
@@ -293,6 +319,36 @@ class Project
             // set the owning side to null (unless already changed)
             if ($progressEntry->getProject() === $this) {
                 $progressEntry->setProject(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FeedEntry>
+     */
+    public function getUpdates(): Collection
+    {
+        return $this->updates;
+    }
+
+    public function addUpdate(FeedEntry $update): static
+    {
+        if (!$this->updates->contains($update)) {
+            $this->updates->add($update);
+            $update->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUpdate(FeedEntry $update): static
+    {
+        if ($this->updates->removeElement($update)) {
+            // set the owning side to null (unless already changed)
+            if ($update->getProject() === $this) {
+                $update->setProject(null);
             }
         }
 

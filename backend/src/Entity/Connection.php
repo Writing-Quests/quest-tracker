@@ -6,6 +6,7 @@ use ApiPlatform\Api\UriVariablesConverter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiSubresource;
 use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Patch;
@@ -13,8 +14,10 @@ use ApiPlatform\OpenApi\Model;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\QueryParameter;
 
+use App\State\MutualsOpenDms;
 
 use App\Repository\ConnectionRepository;
+use App\State\ConnectionFeedProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -25,6 +28,10 @@ use Doctrine\ORM\Mapping as ORM;
 // NOTE: GET endpoints are managed via App\Controller\ConnectionController to account for user column weirdness
 #[ApiResource(
   operations: [
+      new GetCollection (
+        uriTemplate: 'connection/mutual/dm',
+        provider: MutualsOpenDms::class
+      ),
       new Post (
         uriTemplate: 'connection/new',
         security: "is_granted('ROLE_USER')"
@@ -53,22 +60,20 @@ class Connection
     private ?string $status = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ApiProperty]
     private ?\DateTimeInterface $created_at = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ApiProperty]
     private ?\DateTimeInterface $changed_at = null;
 
     #[ORM\Column]
+    #[ApiProperty]
     private ?int $initiating_user_id;
 
     #[ORM\Column]
+    #[ApiProperty]
     private ?int $connected_user_id;
-
-    #[ORM\Column(nullable: true)]
-    private ?bool $notifyInitiatingUser = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?bool $notifyConnectedUser = null;
 
     public function __construct()
     {}
@@ -140,30 +145,6 @@ class Connection
     public function setInitiatingUserId(int $initiating_user_id): static
     {
         $this->initiating_user_id = $initiating_user_id;
-
-        return $this;
-    }
-
-    public function isNotifyInitiatingUser(): ?bool
-    {
-        return $this->notifyInitiatingUser;
-    }
-
-    public function setNotifyInitiatingUser(?bool $notifyInitiatingUser): static
-    {
-        $this->notifyInitiatingUser = $notifyInitiatingUser;
-
-        return $this;
-    }
-
-    public function isNotifyConnectedUser(): ?bool
-    {
-        return $this->notifyConnectedUser;
-    }
-
-    public function setNotifyConnectedUser(?bool $notifyConnectedUser): static
-    {
-        $this->notifyConnectedUser = $notifyConnectedUser;
 
         return $this;
     }

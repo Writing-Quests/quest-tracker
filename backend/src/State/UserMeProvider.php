@@ -2,8 +2,8 @@
 
 namespace App\State;
 
+use DateTimeImmutable;
 use App\Entity\User;
-use App\Entity\Connection;
 use App\State\NotLoggedInRepresentation;
 use ApiPlatform\State\ProviderInterface;
 use ApiPlatform\Metadata\Operation;
@@ -25,6 +25,9 @@ final class UserMeProvider implements ProviderInterface {
     {
         $user = $this->security->getUser();
         if($user) {
+            $user->setLastActivityTimestamp(new DateTimeImmutable());
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
             return $this
                 ->entityManager
                 ->getRepository(User::class)

@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useContext,useState,useEffect } from 'react'
+import { useContext, useState, useEffect } from 'react'
 //import { useSearchParams } from 'react-router-dom'
 import { ContentContainer, ContentBlock, ErrorContainer, SuccessContainer, NeutralContainer } from '../Containers'
 import styled from 'styled-components'
@@ -53,23 +53,23 @@ export function ConnectionLink () {
   const [queryParameters] = useSearchParams()
   const connectionId = queryParameters.get('conn')
   const connectionStatus = queryParameters.get('status')
-  const user = useContext(LoggedInUserContext)
+  const {user} = useContext(LoggedInUserContext)
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState(null)
 }
 */}
 
-export function Connections () {
-  const user = useContext(LoggedInUserContext)
-  const [loading,setLoading] = useState(true)
-  const [error,setError] = useState(null)
+export function BuddyList() {
+  const { user } = useContext(LoggedInUserContext)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [tempContainerContent, setTempContainerContent] = useState('')
   const [tempContainerType, setTempContainerType] = useState(null)
-  const [connections,setConnections] = useState([])
+  const [connections, setConnections] = useState([])
   const [section, setSection] = useState('buddies')
-  const [submitWait,setSubmitWait] = useState(false)
-  const [waitingText,setWaitingText] = useState('')
-  async function getUserConnections () {
+  const [submitWait, setSubmitWait] = useState(false)
+  const [waitingText, setWaitingText] = useState('')
+  async function getUserConnections() {
     try {
       const resp = await api.get('connection/all')
       setConnections(resp.data)
@@ -86,20 +86,81 @@ export function Connections () {
       console.error(err)
       setError(err)
     }
-  },[user])
+  }, [user])
 
-  function makeConnectionMap (array, section) {
-    return array.map(u => <li key={u.id}><ProfileLink href={"/profile/"+ ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section={section} /></li>)
+  if (loading) {
+    return <Page>
+      <Notices />
+      <Loading />
+    </Page>
+  } else if (error !== null) {
+    let msg = 'An unknown error occured.'
+    if (error.status === 404) {
+      msg = `Unable to find any connection information for ${user.username}.`
+    }
+    return <Page>
+      <ErrorContainer><strong>Error:</strong> {msg}</ErrorContainer>
+    </Page>
+  } else {
+    return <Page>
+      <ContentContainer>
+        <ContentBlock>
+          {submitWait &&
+            <Loading inline={true} text={waitingText} />
+          }
+          {(tempContainerType) &&
+            <TemporaryNoticeContainer />
+          }
+          {JSON.stringify(connections)}
+        </ContentBlock>
+      </ContentContainer>
+    </Page>
+  }
+}
+
+export function Connections() {
+  const { user } = useContext(LoggedInUserContext)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [tempContainerContent, setTempContainerContent] = useState('')
+  const [tempContainerType, setTempContainerType] = useState(null)
+  const [connections, setConnections] = useState([])
+  const [section, setSection] = useState('buddies')
+  const [submitWait, setSubmitWait] = useState(false)
+  const [waitingText, setWaitingText] = useState('')
+  async function getUserConnections() {
+    try {
+      const resp = await api.get('connection/all')
+      setConnections(resp.data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+  useEffect(() => {
+    try {
+      getUserConnections(user.username)
+    } catch (err) {
+      console.error(err)
+      setError(err)
+    }
+  }, [user])
+
+  function makeConnectionMap(array, section) {
+    if (Boolean(array)) {
+      return array.map(u => <li key={u.id}><ProfileLink href={"/profile/" + ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section={section} /></li>)
+    }
   }
 
-  function TemporaryNoticeContainer () {
-    setTimeout(()=>{
+  function TemporaryNoticeContainer() {
+    setTimeout(() => {
       setTempContainerType(null)
-    },5000) // 5 seconds
+    }, 5000) // 5 seconds
     switch (tempContainerType) {
       case 'success':
         return <SuccessContainer>{tempContainerContent}</SuccessContainer>
-      
+
       case 'error':
         return <ErrorContainer>{tempContainerContent}</ErrorContainer>
 
@@ -107,35 +168,35 @@ export function Connections () {
         return <NeutralContainer>{tempContainerContent}</NeutralContainer>
     }
   }
-  function UserActions ({connection, section}) {
+  function UserActions({ connection, section }) {
     switch (section) {
       case 'blocked':
         return <Button onClick={() => { manageConnection(connection, 'delete') }}>Unblock</Button>
-  
+
       case 'waiting':
         return <><Button onClick={() => { manageConnection(connection, 'ignored') }}>Ignore Request</Button><Button onClick={() => { manageConnection(connection, 'mutual') }}>Accept Request</Button></>
 
       case 'ignored':
         return <Button onClick={() => { manageConnection(connection, 'mutual') }}>Accept Request</Button>
-      
+
       case 'following':
         return <Button onClick={() => { manageConnection(connection, 'delete') }}>Unfollow</Button>
-  
+
       case 'pending':
         return <Button onClick={() => { manageConnection(connection, 'delete') }}>Cancel Request</Button>
-  
+
       case 'mutual':
         return <Button onClick={() => { manageConnection(connection, 'delete') }}>Remove</Button>
     }
   }
 
-  function ListConnections ({title,ifnone=null,userlist}) {
-    if (userlist.length > 0) {
+  function ListConnections({ title, ifnone = null, userlist }) {
+    if (Boolean(userlist.length)) {
       return (<>
-          <h2>{title}</h2>
-          <ConnectionUserList>
-            {userlist}
-          </ConnectionUserList>
+        <h2>{title}</h2>
+        <ConnectionUserList>
+          {userlist}
+        </ConnectionUserList>
       </>)
     } else if (ifnone) {
       return (
@@ -144,40 +205,41 @@ export function Connections () {
     }
   }
 
-  function removeConnectionEntry (status,id) {
-    let entries = connections[status].filter(conn => { return conn.id !== id })
-    connections[status] = entries
-    let keys = Object.keys(connections)
-    let updatedConnections = {}
-    keys.forEach((k) => {
-      updatedConnections[k] = connections[k]
-    })
-    setConnections(updatedConnections)
+  function removeConnectionEntry(oldStatus, id) {
+    let entries = connections[oldStatus].filter(conn => { return conn.id !== id })
+    let currentConnections = {...connections}
+    currentConnections[oldStatus] = entries
+    setConnections({ ...currentConnections })
   }
 
-  async function manageConnection (connection,userAction) {
+  async function manageConnection(connection, userAction) {
     setSubmitWait(true)
     setTempContainerContent(false)
     setTempContainerType(null)
     setWaitingText('Updating Connections')
     let otherUser = (connection.initiating_user_id === user.id) ? connection.connected_username : connection.initiating_username
     let tempContainer = 'success'
+    let statusText = `Connection with ${otherUser} updated.`
     try {
       if (userAction == 'delete') {
-        removeConnectionEntry(connection.status,connection.id)
+        removeConnectionEntry(connection.status, connection.id)
         await api.delete(`/connection/${connection.id}`)
+        statusText = `Your connection to ${otherUser} has been removed.`
       } else {
-        await api.patch(`/connection/${connection.id}`,{
+        await api.patch(`/connection/${connection.id}`, {
           'status': userAction
         })
         const oldStatus = userAction == 'ignored' ? 'waiting' : 'pending'
         connection.status = userAction
         // moves the connection from the array it was in, to the new one it occupies
-        removeConnectionEntry(oldStatus,connection.id)
-        connections[userAction].push(connection)
-        setConnections(connections)
+        removeConnectionEntry(oldStatus, connection.id)
+        const theseConnections = [...connections[userAction]]
+        theseConnections.push(connection)
+        const updatedConnections = [...connections]
+        updatedConnections[userAction] = theseConnections
+        setConnections(updatedConnections)
       }
-      setTempContainerContent(`Successfully updated your connection with ${otherUser}.`)
+      setTempContainerContent(statusText)
     } catch (err) {
       console.error(err)
       tempContainer = 'error'
@@ -189,59 +251,69 @@ export function Connections () {
     }
   }
 
-  if(loading) {
+  if (loading) {
     return <Page>
       <Notices />
       <Loading />
     </Page>
   } else if (error !== null) {
     let msg = 'An unknown error occured.'
-    if (error.status === 404) { 
+    if (error.status === 404) {
       msg = `Unable to find any connection information for ${user.username}.`
     }
     return <Page>
       <ErrorContainer><strong>Error:</strong> {msg}</ErrorContainer>
     </Page>
   } else {
-    let waitingRequests = makeConnectionMap(connections.waiting, 'waiting')
-    let pendingRequests = makeConnectionMap(connections.pending, 'pending')
-    let ignoredRequests = makeConnectionMap(connections.ignored, 'ignored')
-    let following = makeConnectionMap(connections.following, 'following')
-    let mutuals = makeConnectionMap(connections.mutual, 'mutual')
-    let blocked = makeConnectionMap(connections.blocked, 'blocked')
     return <Page>
       <ContentContainer>
         <ContentBlock>
-          {submitWait && 
+          {submitWait &&
             <Loading inline={true} text={waitingText} />
           }
-          {(tempContainerType) && 
+          {(tempContainerType) &&
             <TemporaryNoticeContainer />
           }
-        <SectionOptions>
-            <OptionButton selected={section === 'buddies'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Buddies</OptionButton>
-            <OptionButton selected={section === 'following'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Following</OptionButton>
-            <OptionButton selected={section === 'pending'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Pending</OptionButton>
-            <OptionButton selected={section === 'blocked'} onClick={(e) => {setSection(e.target.textContent.toLowerCase())}}>Blocked</OptionButton>
+          {connections &&
+          <>
+          <SectionOptions>
+            <OptionButton selected={section === 'buddies'} onClick={(e) => { setSection(e.target.textContent.toLowerCase()) }}>Buddies</OptionButton>
+            <OptionButton selected={section === 'following'} onClick={(e) => { setSection(e.target.textContent.toLowerCase()) }}>Following</OptionButton>
+            <OptionButton selected={section === 'pending'} onClick={(e) => { setSection(e.target.textContent.toLowerCase()) }}>Pending</OptionButton>
+            <OptionButton selected={section === 'blocked'} onClick={(e) => { setSection(e.target.textContent.toLowerCase()) }}>Blocked</OptionButton>
           </SectionOptions>
 
-            <ToggledSection selected={(section === 'buddies')}>
-              <ListConnections title="Your Mutual Buddies" ifnone="No mutual buddies (yet)." userlist={mutuals} />
-            </ToggledSection>
+          <ToggledSection selected={(section === 'buddies')}>
+            <ListConnections title="Your Mutual Buddies" ifnone="No mutual buddies (yet)." userlist={
+              connections.mutual.map(u => <li key={u.id}><ProfileLink href={"/profile/" + ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section='mutual' /></li>)
+            } />
+          </ToggledSection>
 
-            <ToggledSection selected={(section === 'following')}>
-              <ListConnections title="Users You Follow" ifnone="You&apos;re not following any users (yet)." manageConnection={manageConnection} userlist={following} />
-            </ToggledSection>
+          <ToggledSection selected={(section === 'following')}>
+            <ListConnections title="Users You Follow" ifnone="You&apos;re not following any users (yet)." manageConnection={manageConnection} userlist={
+              connections.following.map(u => <li key={u.id}><ProfileLink href={"/profile/" + ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section='following' /></li>)
+            } />
+          </ToggledSection>
 
-            <ToggledSection selected={(section === 'pending')}>
-              <ListConnections title="Your Incoming Requests" userlist={waitingRequests} />
-              <ListConnections title="Your Outgoing Requests" userlist={pendingRequests} />
-              <ListConnections title="Your Ignored Requests" userlist={ignoredRequests} />
-            </ToggledSection>
+          <ToggledSection selected={(section === 'pending')}>
+            <ListConnections title="Your Incoming Requests" userlist={
+              connections.waiting.map(u => <li key={u.id}><ProfileLink href={"/profile/" + ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section='waiting' /></li>)
+            } />
+            <ListConnections title="Your Outgoing Requests" userlist={
+              connections.pending.map(u => <li key={u.id}><ProfileLink href={"/profile/" + ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section='pending' /></li>)
+            } />
+            <ListConnections title="Your Ignored Requests" userlist={
+              connections.ignored.map(u => <li key={u.id}><ProfileLink href={"/profile/" + ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section='ignored' /></li>)
+            } />
+          </ToggledSection>
 
-            <ToggledSection selected={(section === 'blocked')}>
-              <ListConnections title="Blocked Users" ifnone="You haven&apos;t blocked any users." userlist={blocked} />
-            </ToggledSection>
+          <ToggledSection selected={(section === 'blocked')}>
+            <ListConnections title="Blocked Users" ifnone="You haven&apos;t blocked any users." userlist={
+              connections.blocked.map(u => <li key={u.id}><ProfileLink href={"/profile/" + ((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}>{((u.initiating_user_id === user.id) ? u.connected_username : u.initiating_username)}</ProfileLink><UserActions connection={u} section='blocked' /></li>)
+            } />
+          </ToggledSection>
+          </>
+          }
         </ContentBlock>
       </ContentContainer>
     </Page>
