@@ -47,12 +47,9 @@ final class Version20251011202551 extends AbstractMigration
         $this->addSql(<<<'SQL'
             ALTER TABLE progress_entry ADD CONSTRAINT FK_C9996E4B166D1F9C FOREIGN KEY (project_id) REFERENCES project (id)
         SQL);
-        /*
-        this column does not exist in the database
         $this->addSql(<<<'SQL'
             ALTER TABLE report DROP review_notes
         SQL);
-        */
         $this->addSql(<<<'SQL'
             ALTER TABLE user ADD allow_dms TINYINT(1) NOT NULL, ADD send_email_notifications TINYINT(1) NOT NULL
         SQL);

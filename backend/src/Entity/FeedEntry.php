@@ -86,6 +86,13 @@ class FeedEntry
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[ApiProperty(readable:true)]
     private ?\DateTimeInterface $edited_at = null;
+    
+    /**
+     * @var Collection<int, Interaction>
+     */
+    #[ORM\OneToMany(targetEntity: Interaction::class, mappedBy: 'feed_entry_id', orphanRemoval: true)]
+    #[ApiProperty(readable:true)]
+    private Collection $interactions;
 
     #[ORM\Column]
     #[ApiProperty(readable:true)]
@@ -102,6 +109,7 @@ class FeedEntry
 
     public function __construct()
     {
+        $this->interactions = new ArrayCollection();
     }
 
     #[ApiResource (writable: false)]
@@ -160,6 +168,36 @@ class FeedEntry
         return $this;
     }
     
+    /**
+     * @return Collection<int, Interaction>
+     */
+    public function getInteractions(): Collection
+    {
+        return $this->interactions;
+    }
+
+    public function addInteraction(Interaction $interaction): static
+    {
+        if (!$this->interactions->contains($interaction)) {
+            $this->interactions->add($interaction);
+            $interaction->setPostId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInteraction(Interaction $interaction): static
+    {
+        if ($this->interactions->removeElement($interaction)) {
+            // set the owning side to null (unless already changed)
+            if ($interaction->getPostId() === $this) {
+                $interaction->setPostId(null);
+            }
+        }
+
+        return $this;
+    }
+
     public function getDetails(): array
     {
         return $this->details;

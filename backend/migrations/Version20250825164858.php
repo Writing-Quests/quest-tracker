@@ -35,11 +35,6 @@ final class Version20250825164858 extends AbstractMigration
         ) DEFAULT CHARACTER
         SET
           utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        /*
-        at this point I assume that everything prior to 2025-08-25
-        is in prod. 
-        so interaction exists. 
-        instead of recreating it below, let's modify it to match
         $this->addSql('CREATE TABLE IF NOT EXISTS interaction (
           id INT AUTO_INCREMENT NOT NULL,
           feed_entry_id_id INT NOT NULL,
@@ -51,7 +46,6 @@ final class Version20250825164858 extends AbstractMigration
         ) DEFAULT CHARACTER
         SET
           utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-          */
         $this->addSql('ALTER TABLE
           feed_entry
         ADD
@@ -63,11 +57,11 @@ final class Version20250825164858 extends AbstractMigration
         $this->addSql('ALTER TABLE
           interaction
         ADD
-          CONSTRAINT FK_378DFDA7EFD08CB2 FOREIGN KEY (post_id_id) REFERENCES feed_entry (id)');
+          CONSTRAINT FK_378DFDA7EFD08CB2 FOREIGN KEY (feed_entry_id_id) REFERENCES feed_entry (id)');
         $this->addSql('ALTER TABLE
           interaction
         ADD
-          CONSTRAINT FK_378DFDA7A76ED395 FOREIGN KEY (user_id_id) REFERENCES user (id)');
+          CONSTRAINT FK_378DFDA7A76ED395 FOREIGN KEY (user_id) REFERENCES user (id)');
         //$this->addSql('ALTER TABLE IF EXISTS connection_user DROP FOREIGN KEY FK_4B83D173DD03F01');
         //$this->addSql('ALTER TABLE IF EXISTS  connection_user DROP FOREIGN KEY FK_4B83D173A76ED395');
         //$this->addSql('DROP TABLE IF EXISTS connection_user');
@@ -129,7 +123,7 @@ final class Version20250825164858 extends AbstractMigration
           created_at created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
         CHANGE
           changed_at changed_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
-        //$this->addSql('ALTER TABLE project CHANGE details details JSON DEFAULT \'json_object()\'');
+        $this->addSql('ALTER TABLE project CHANGE details details JSON DEFAULT \'json_object()\'');
         $this->addSql('ALTER TABLE
           user
         CHANGE
